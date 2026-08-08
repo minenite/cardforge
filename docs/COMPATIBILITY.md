@@ -88,9 +88,16 @@ Plus an isolated `DamageProbe` (`cbtest damage`) and `ItemStackProbe`
 | `Material.values()` | 2204 entries — vanilla plus 50 Waystones materials, no duplicates; other Material calls unchanged |
 | Integration API | 8 mods enumerated; modded content resolved by real id; NeoForge item capability resolved as `WorldlyContainerWrapper` |
 
-### Real client (manual playtest)
+### Real client (manual playtest, current build)
 
-A NeoForge 26.2.0.52-beta client with Balm, Shogi and Waystones connected to a
+Re-run after this session's damage, serialization, recipe, boss bar and
+entity-lookup work. Confirmed with a connected player: mob combat, hand
+shearing, **dispenser shearing**, player-dealt sword kills, block place/break,
+Waystone GUI and teleport, `/cbtest all` (21 probes), and a clean stop/restart
+with inventory, built structures, Waystones and their names, and the mod's
+saved data all intact.
+
+An earlier session with a NeoForge 26.2.0.52-beta client with Balm, Shogi and Waystones connected to a
 server running the same mods plus two plugins. Confirmed in game: handshake and
 mod-list check, login, two accounts, PvP, `/tp`, modded GUI (Waystones naming and
 warp), block place/break, shearing by hand **and by dispenser**, entity damage
@@ -100,6 +107,24 @@ resolving a NeoForge capability.
 **That session found six bugs the automated suite could not**, three of which
 made the server unusable. Everything a console cannot reach — handshake, client,
 player, looking at a block — was where they lived.
+
+### Third-party plugins
+
+Real plugins, unmodified, from their official releases.
+
+| Plugin | Version | Result |
+| --- | --- | --- |
+| **WorldEdit** | 7.4.4 | Loads, enables, binds its own NMS adapter (`PaperweightAdapter` for `v26_2`). `//set` places a **modded** block by its real id (`waystones:andesite_waystone`, case-insensitive); setting a region to glass removes a modded block. Zero errors. |
+| **LuckPerms** | 5.5.71 | Loads, enables, H2 storage, Brigadier command registration. `/lp info`, `permission set` and `permission info` all work; nodes persist and read back. |
+
+WorldEdit binding a version-specific NMS adapter is the stronger signal here:
+it means CardForge's CraftBukkit internals match what a plugin compiled against
+Paper expects, not merely that the public API is present.
+
+**Not a defect:** `//set` on a two-tall block such as a Waystone leaves
+independent lower/upper halves rather than a working structure. WorldEdit writes
+raw block states without running placement logic and does the same to vanilla
+doors and beds on ordinary Paper.
 
 ## PARTIAL
 
@@ -133,11 +158,9 @@ either been fixed or moved to PARTIAL with a stated limit.
 
 Do not read these as working.
 
-- **Real third-party plugins.** LuckPerms, WorldEdit, Essentials-style, protection/claims — none run. Both test plugins are purpose-built probes. The suite covers the API surface such plugins use, which is not the same as running them.
-- **Third-party plugins against modded content.**
+- **Further third-party plugins.** WorldEdit and LuckPerms are verified. An Essentials-style plugin and a protection/claims plugin are not.
+- **Protection-plugin cancellation around modded blocks and entities.**
 - **Cross-ecosystem cancellation beyond block placement and shearing.**
-- **Client regression after this session's fixes.** The playtest predates the `EntityDamageEvent`, `serialize`, boss bar, recipe and entity-lookup work.
-- **Repeated persistence/restart cycles** with plugin, PDC, mod and registry state.
 - **Clean-room distributable test** after these fixes.
 - **A nontrivial technology mod.** Waystones has blocks and block entities but no machines, so the capability bridge is only lightly exercised. None was available for 26.2 at the time.
 
