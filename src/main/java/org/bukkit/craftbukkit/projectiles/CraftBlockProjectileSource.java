@@ -98,10 +98,10 @@ public class CraftBlockProjectileSource implements BlockProjectileSource {
             ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) launch).getBukkitEntity().setVelocity(velocity);
         }
         if (function != null) {
-            function.accept(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (T) launch).getBukkitEntity());
+            function.accept((T) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) launch).getBukkitEntity());
         }
 
         world.addFreshEntity(launch);
-        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (T) launch).getBukkitEntity();
+        return (T) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) launch).getBukkitEntity();
     }
 }

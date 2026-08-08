@@ -2034,7 +2034,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		net.minecraft.world.entity.projectile.arrow.AbstractArrow arrow;
 		if (TippedArrow.class.isAssignableFrom(clazz)) {
 			arrow = net.minecraft.world.entity.EntityTypes.ARROW.create(this.world, EntitySpawnReason.COMMAND);
-			(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (Arrow) arrow).getBukkitEntity()).setBasePotionType(PotionType.WATER);
+			((Arrow) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) arrow).getBukkitEntity()).setBasePotionType(PotionType.WATER);
 		} else if (SpectralArrow.class.isAssignableFrom(clazz)) {
 			arrow = net.minecraft.world.entity.EntityTypes.SPECTRAL_ARROW.create(this.world, EntitySpawnReason.COMMAND);
 		} else if (Trident.class.isAssignableFrom(clazz)) {
@@ -2046,7 +2046,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		arrow.snapTo(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
 		arrow.shoot(direction.getX(), direction.getY(), direction.getZ(), speed, spread);
 		this.world.addFreshEntity(arrow);
-		return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (T) arrow).getBukkitEntity();
+		return (T) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) arrow).getBukkitEntity();
 	}
 
 	@Override

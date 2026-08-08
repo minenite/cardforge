@@ -893,10 +893,10 @@ public class CraftEventFactory {
     }
 
     public static EntityBreedEvent callEntityBreedEvent(net.minecraft.world.entity.LivingEntity child, net.minecraft.world.entity.LivingEntity mother, net.minecraft.world.entity.LivingEntity father, net.minecraft.world.entity.LivingEntity breeder, ItemStack bredWith, int experience) {
-        LivingEntity breederEntity = breeder == null ? null : ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (LivingEntity) breeder).getBukkitEntity();
+        LivingEntity breederEntity = breeder == null ? null : (LivingEntity) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) breeder).getBukkitEntity();
         CraftItemStack bredWithStack = bredWith == null ? null : CraftItemStack.asCraftMirror(bredWith).clone();
 
-        EntityBreedEvent event = new EntityBreedEvent(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (LivingEntity) child).getBukkitEntity(), ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (LivingEntity) mother).getBukkitEntity(), ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (LivingEntity) father).getBukkitEntity(), breederEntity, bredWithStack, experience);
+        EntityBreedEvent event = new EntityBreedEvent((LivingEntity) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) child).getBukkitEntity(), (LivingEntity) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) mother).getBukkitEntity(), (LivingEntity) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) father).getBukkitEntity(), breederEntity, bredWithStack, experience);
         event.callEvent();
         return event;
     }

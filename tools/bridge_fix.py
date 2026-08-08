@@ -45,10 +45,53 @@ def collect(txt):
     return sites
 
 
-# receiver.method(   -- receiver may be a parenthesised expression or a chain
-CALL = r"((?:\([^()]*\)\s*)?[\w.$]+(?:\([^()]*\))?(?:\.[\w$]+(?:\([^()]*\))?)*)\.(%s)\("
 # Type::method  -- a method reference cannot take a cast, so it becomes a lambda
 REF = r"([\w.$]+)::(%s)\b"
+
+
+def receiver_span(line, dot):
+    """Walk back from the '.' before a call to find the whole receiver expression."""
+    i = dot - 1
+    while i >= 0 and line[i].isspace():
+        i -= 1
+    if i < 0:
+        return None
+    if line[i] == ")":
+        depth = 0
+        while i >= 0:
+            if line[i] == ")":
+                depth += 1
+            elif line[i] == "(":
+                depth -= 1
+                if depth == 0:
+                    break
+            i -= 1
+        if i < 0:
+            return None
+        # include a preceding identifier chain, e.g. this.getHandle()
+        j = i - 1
+        while j >= 0 and (line[j].isalnum() or line[j] in "_$."):
+            j -= 1
+        return j + 1
+    j = i
+    while j >= 0 and (line[j].isalnum() or line[j] in "_$."):
+        j -= 1
+    return j + 1
+
+
+def cast_call(line, meth, iface):
+    """Insert an explicit cast around the receiver of the first .meth( on the line."""
+    needle = "." + meth + "("
+    dot = line.find(needle)
+    while dot != -1:
+        start = receiver_span(line, dot)
+        if start is not None and start < dot:
+            recv = line[start:dot]
+            if "((" + iface not in recv:
+                return (line[:start] + "((" + iface + ") (Object) " + recv + ")"
+                        + line[dot:])
+        dot = line.find(needle, dot + 1)
+    return line
 
 
 def rewrite(sites):
@@ -65,8 +108,7 @@ def rewrite(sites):
             new = re.sub(REF % re.escape(meth),
                          lambda m: f"x -> (({iface}) (Object) x).{meth}()", line, count=1)
             if new == line:
-                new = re.sub(CALL % re.escape(meth),
-                             lambda m: f"(({iface}) (Object) {m.group(1)}).{meth}(", line, count=1)
+                new = cast_call(line, meth, iface)
             if new != line:
                 src[i] = new
                 n += 1

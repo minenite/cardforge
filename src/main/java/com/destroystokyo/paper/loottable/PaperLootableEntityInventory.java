@@ -22,6 +22,6 @@ public interface PaperLootableEntityInventory extends LootableEntityInventory, P
 
     /* LootableEntityInventory */
     default Entity getEntity() {
-        return ((net.minecraft.world.entity.Entity) this.getHandle()).getBukkitEntity();
+        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) ((net.minecraft.world.entity.Entity) this.getHandle())).getBukkitEntity();
     }
 }

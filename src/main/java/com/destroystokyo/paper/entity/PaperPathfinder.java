@@ -24,7 +24,7 @@ public class PaperPathfinder implements Pathfinder {
 	}
 
 	public Mob getEntity() {
-		return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (Mob)this.entity).getBukkitEntity();
+		return (Mob) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.entity).getBukkitEntity();
 	}
 
 	public void setHandle(net.minecraft.world.entity.Mob entity) {

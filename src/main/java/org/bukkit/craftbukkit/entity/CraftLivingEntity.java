@@ -835,7 +835,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
             } else {
                 launch = new LargeFireball(world, this.getHandle(), vec, 1);
             }
-            ((AbstractHurtingProjectile)launch).setProjectileSourceBukkit(this);
+            ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) ((AbstractHurtingProjectile)launch)).setProjectileSourceBukkit(this);
             // TODO: launch.preserveMotion = true;
             launch.snapTo(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
         } else if (LlamaSpit.class.isAssignableFrom(projectile)) {
@@ -876,13 +876,13 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         }
         // Preconditions.checkArgument((launch != null ? 1 : 0) != 0, (String)"Projectile (%s) not supported", (Object)projectile.getName());
         if (velocity != null) {
-            (((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (Projectile)launch).getBukkitEntity()).setVelocity(velocity);
+            ((Projectile) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) launch).getBukkitEntity()).setVelocity(velocity);
         }
         if (function != null) {
-            function.accept((T) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (Projectile) launch).getBukkitEntity());
+            function.accept((T) (Projectile) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) launch).getBukkitEntity());
         }
         world.addFreshEntity(launch);
-        return (T)(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (Projectile)launch).getBukkitEntity());
+        return (T)((Projectile) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) launch).getBukkitEntity());
 	}
 
 	@Override

@@ -14,7 +14,7 @@ public class AbstractVillagerMixin implements AbstractVillagerBridge {
     @Override
     public CraftMerchant getCraftMerchant() {
     	
-    	return (CraftAbstractVillager) ((AbstractVillager)(Object)this).getBukkitEntity();
+    	return (CraftAbstractVillager) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) ((AbstractVillager)(Object)this)).getBukkitEntity();
     	
         // return (craftMerchant == null) ? craftMerchant = new CraftMerchant((MerchantEntity)(Object) this) : craftMerchant;
     }
