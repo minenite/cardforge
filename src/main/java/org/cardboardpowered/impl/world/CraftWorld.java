@@ -2751,8 +2751,11 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public @NotNull PersistentDataContainer getPersistentDataContainer() {
-		// TODO Auto-generated method stub
-		return null;
+		// Backed by Paper's world-level SavedData, created on first access so a
+		// world that never had plugin data written to it costs nothing.
+		return this.getHandle().getDataStorage()
+				.computeIfAbsent(io.papermc.paper.world.saveddata.PaperWorldPDC.TYPE)
+				.persistentData();
 	}
 
 	@Override

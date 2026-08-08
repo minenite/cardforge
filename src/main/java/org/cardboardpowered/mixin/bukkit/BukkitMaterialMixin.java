@@ -113,11 +113,14 @@ public class BukkitMaterialMixin implements BukkitMaterialBridge {
 	}
 	*/
 	
-	@Inject(at = @At("HEAD"), method = "isItem", cancellable = true, remap = false)
-	public void mod_is_item(CallbackInfoReturnable<Boolean> ci) {
-		if (isModded()) {
-			ci.setReturnValue(moddedData.isItem());
-		}
-	}
+	// isItem() used to be forced to moddedData.isItem() here, which hardcodes false
+	// for anything registered through the block loop. That was a reasonable guess
+	// while modded Materials carried a bogus minecraft:<name> key and asItemType()
+	// could not resolve, but it is wrong now that they carry their real key: most
+	// blocks do have a BlockItem, and claiming otherwise made every modded block
+	// look like a non-item. Bukkit.recipeIterator() then threw
+	// "Cannot have non-item choice WAYSTONES_RUINED_SHARESTONE" on any recipe
+	// mentioning one, taking out recipe iteration for every plugin on the server.
+	// Paper's own implementation resolves through the key and is now correct.
 
 }

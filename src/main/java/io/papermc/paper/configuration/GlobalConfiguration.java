@@ -12,6 +12,15 @@ public class GlobalConfiguration {
 
 
     public static GlobalConfiguration get() {
+        // Paper builds this from paper-global.yml during startup. CardForge does not
+        // load that file, and nothing else ever called set(), so this returned null
+        // and any Paper code reaching through it threw NullPointerException - which
+        // is what broke the scoreboard API. Defaults are correct here: every field
+        // carries Paper's own default value, so behaviour matches an unmodified
+        // paper-global.yml rather than being absent.
+        if (instance == null) {
+            instance = new GlobalConfiguration();
+        }
         return instance;
     }
 
