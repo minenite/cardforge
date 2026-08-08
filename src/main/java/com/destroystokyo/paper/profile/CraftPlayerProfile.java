@@ -68,7 +68,7 @@ public class CraftPlayerProfile implements PlayerProfile, SharedPlayerProfile {
 	}
 
 	public CraftPlayerProfile(ResolvableProfile resolvableProfile) {
-	      this(((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) resolvableProfile).cardforge$unpack().map((GameProfile gp) -> gp.id(), p -> p.id().orElse(null)), resolvableProfile.unpack().map((GameProfile gp) -> gp.name(), p -> p.name().orElse(null)));
+	      this(((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) resolvableProfile).cardforge$unpack().map(gp -> gp.id(), p -> p.id().orElse(null)), ((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) resolvableProfile).cardforge$unpack().map(gp -> gp.name(), p -> p.name().orElse(null)));
 	      copyProfileProperties(resolvableProfile.partialProfile(), this.profile);
 	}
 	

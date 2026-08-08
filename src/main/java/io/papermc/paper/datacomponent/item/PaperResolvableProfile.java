@@ -180,8 +180,8 @@ public record PaperResolvableProfile(
     		builder.id(this.uuid())
     		.name(this.name())
     		.profileProperties(
-    				this.impl
-    				.unpack()
+    				((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) this.impl)
+    				.cardforge$unpack()
     				.map(GameProfile::properties, net.minecraft.world.item.component.ResolvableProfile.Partial::properties)
     				.values()
     				.stream()

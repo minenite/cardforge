@@ -41,7 +41,7 @@ public class CraftCreakingHeart extends CraftBlockEntityState<CreakingHeartBlock
                 info = this.getSnapshot().creakingInfo;
         if (info == null) return null;
         return info.left()
-                .map(c -> ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (org.bukkit.entity.Creaking) c).getBukkitEntity())
+                .map(c -> (org.bukkit.entity.Creaking) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) c).getBukkitEntity())
                 .orElse(null);
     }
 

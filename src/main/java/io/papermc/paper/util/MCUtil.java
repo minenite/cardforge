@@ -151,11 +151,11 @@ public final class MCUtil {
     }
 
     public static Location toLocation(Level world, double x, double y, double z) {
-        return new Location(world.cardboard$getWorld(), x, y, z);
+        return new Location(((org.cardboardpowered.bridge.world.level.LevelBridge) (Object) world).cardboard$getWorld(), x, y, z);
     }
 
     public static Location toLocation(Level world, BlockPos pos) {
-        return new Location(world.cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ());
+        return new Location(((org.cardboardpowered.bridge.world.level.LevelBridge) (Object) world).cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ());
     }
 
     public static BlockPos toBlockPosition(Location loc) {

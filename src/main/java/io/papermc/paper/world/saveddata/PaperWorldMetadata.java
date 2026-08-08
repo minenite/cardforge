@@ -22,7 +22,7 @@ public final class PaperWorldMetadata extends SavedData {
         Identifier.fromNamespaceAndPath(IdentifierExtra.PAPER_NAMESPACE, "metadata"),
         () -> new PaperWorldMetadata(UUID.randomUUID()),
         CODEC,
-        DataFixTypes.PAPER_NONE
+        DataFixTypes.LEVEL
     );
 
     private UUID uuid;

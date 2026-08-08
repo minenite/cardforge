@@ -78,8 +78,8 @@ public final class CraftPlayerProfile implements PlayerProfile, com.destroystoky
     @ApiStatus.Internal
     public CraftPlayerProfile(ResolvableProfile resolvableProfile) {
         this(
-            ((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) resolvableProfile).cardforge$unpack().map((GameProfile gp) -> gp.id(), p -> p.id().orElse(null)),
-            ((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) resolvableProfile).cardforge$unpack().map((GameProfile gp) -> gp.name(), p -> p.name().orElse(null)),
+            ((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) resolvableProfile).cardforge$unpack().map(gp -> gp.id(), p -> p.id().orElse(null)),
+            ((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) resolvableProfile).cardforge$unpack().map(gp -> gp.name(), p -> p.name().orElse(null)),
             false
         );
         this.properties.putAll(resolvableProfile.partialProfile().properties());

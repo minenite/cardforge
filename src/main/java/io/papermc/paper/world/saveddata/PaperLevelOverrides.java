@@ -25,6 +25,30 @@ import org.jspecify.annotations.Nullable;
 
 @NullMarked
 public final class PaperLevelOverrides extends SavedData implements ServerLevelData {
+
+    // 26.2: new on ServerLevelData
+    @Override
+    public void setDayTimePerTick(float dayTimePerTick) {
+        this.rootDataOrThrow().setDayTimePerTick(dayTimePerTick);
+    }
+
+    // NeoForge adds these to ServerLevelData; they do not exist in vanilla, so
+    // this file necessarily diverges from the Fabric build.
+    @Override
+    public void setDayTimeFraction(float dayTimeFraction) {
+        this.rootDataOrThrow().setDayTimeFraction(dayTimeFraction);
+    }
+
+    @Override
+    public float getDayTimeFraction() {
+        return this.rootDataOrThrow().getDayTimeFraction();
+    }
+
+    @Override
+    public float getDayTimePerTick() {
+        return this.rootDataOrThrow().getDayTimePerTick();
+    }
+
     private static final Codec<GameType> LEGACY_GAME_TYPE_CODEC = Codec.INT.xmap(GameType::byId, GameType::getId);
     public static final Codec<PaperLevelOverrides> CODEC = RecordCodecBuilder.create(instance -> instance.group(
         RespawnData.CODEC.fieldOf("spawn").forGetter(levelOverrides -> levelOverrides.respawnData),
@@ -209,10 +233,10 @@ public final class PaperLevelOverrides extends SavedData implements ServerLevelD
     private void setDifficultySettings(final LevelSettings.DifficultySettings difficultySettings) {
         if (!this.difficultySettings.equals(difficultySettings)) {
             this.difficultySettings = difficultySettings;
-            this.syncRootData(rootData -> rootData.settings = ((ILevelSettings) rootData.settings
-                .withDifficulty(this.rootDataOrThrow().getDifficulty()))
-                .cardboard$withHardcore(difficultySettings.hardcore())
-                .withDifficultyLock(difficultySettings.locked()));
+            this.syncRootData(rootData -> rootData.settings =
+                ((ILevelSettings) (Object) rootData.settings.withDifficulty(difficultySettings.difficulty()))
+                    .cardboard$withHardcore(difficultySettings.hardcore())
+                    .withDifficultyLock(difficultySettings.locked()));
             this.setDirty();
         }
     }

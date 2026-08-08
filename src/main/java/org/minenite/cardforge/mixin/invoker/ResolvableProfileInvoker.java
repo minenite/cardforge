@@ -12,5 +12,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface ResolvableProfileInvoker {
 
     @Invoker("unpack")
-    com.mojang.datafixers.util.Either cardforge$unpack();
+    com.mojang.datafixers.util.Either<com.mojang.authlib.GameProfile,
+            net.minecraft.world.item.component.ResolvableProfile.Partial> cardforge$unpack();
 }
