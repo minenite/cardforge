@@ -26,3 +26,9 @@ type = "required"
 versionRange = "[26.2,)"
 ordering = "NONE"
 side = "SERVER"
+
+[[mixins]]
+config = "bukkitfabric.mixins.json"
+
+[[mixins]]
+config = "cardforge.mixins.json"

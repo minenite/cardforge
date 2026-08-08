@@ -1,0 +1,23 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "org.minenite.cardforge.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "invoker.AbstractArrowInvoker",
+    "invoker.AbstractWindChargeInvoker",
+    "invoker.BlockBehaviourInvoker",
+    "invoker.EntityInvoker",
+    "invoker.LivingEntityInvoker",
+    "invoker.MinecraftServerInvoker",
+    "invoker.MobInvoker",
+    "invoker.ProjectileInvoker",
+    "invoker.ResolvableProfileInvoker",
+    "invoker.ThrowableItemProjectileInvoker",
+    "invoker.VehicleEntityInvoker",
+    "invoker.ZombieInvoker"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
