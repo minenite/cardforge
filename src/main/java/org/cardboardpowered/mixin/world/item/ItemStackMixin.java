@@ -222,8 +222,12 @@ public abstract class ItemStackMixin implements ItemStackBridge {
         }
     }
 
-    @Inject(method = "applyDamage", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;shrink(I)V", shift = At.Shift.BEFORE))
-    private void applyDamagePaper(int damage, @Nullable ServerPlayer player, Consumer<Item> onBreak, CallbackInfo ci) { // Paper - Add EntityDamageItemEvent
+    // NeoForge widens applyDamage to LivingEntity and reduces the vanilla
+    // ServerPlayer overload to a delegate, so the body - including the shrink
+    // call this injects before - now lives in the LivingEntity variant.
+    @Inject(method = "applyDamage(ILnet/minecraft/world/entity/LivingEntity;Ljava/util/function/Consumer;)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;shrink(I)V", shift = At.Shift.BEFORE))
+    private void applyDamagePaper(int damage, net.minecraft.world.entity.@Nullable LivingEntity player, Consumer<Item> onBreak, CallbackInfo ci) { // Paper - Add EntityDamageItemEvent
         // CraftBukkit start - Check for item breaking
         if (this.count == 1 && player instanceof final ServerPlayer serverPlayer) { // Paper - Add EntityDamageItemEvent
             org.bukkit.craftbukkit.event.CraftEventFactory.callPlayerItemBreakEvent(serverPlayer, (ItemStack)(Object)this); // Paper - Add EntityDamageItemEvent

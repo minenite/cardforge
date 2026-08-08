@@ -239,7 +239,7 @@
     "server.MixinDataLoadContext"
   ],
   "injectors": {
-    "defaultRequire": 0
+    "defaultRequire": 1
   },
   "custom": {
     "fabric:itf": {
