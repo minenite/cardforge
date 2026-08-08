@@ -49,6 +49,28 @@ the whole check can execute in an automated boot with no client attached.
 These are real and are listed rather than papered over. Each is covered by a
 probe in `CardboardTest`, so they fail loudly rather than rotting quietly.
 
+### A real NeoForge client connection is unverified
+
+`tools/client_connect_test.sh` builds a launch command from the installed
+NeoForge 26.2.0.52-beta client and auto-connects with `--quickPlayMultiplayer`,
+so no GUI driving is needed. The classpath resolves (92 entries) and the client
+process starts, but it never reached the server: nothing arrived server-side, not
+even a rejected handshake.
+
+The likely cause is the environment rather than CardForge - this is a headless
+session with no usable GPU context, and the client blocks during render
+initialisation before it ever opens a socket. That has not been confirmed, so it
+is recorded as unverified rather than explained away.
+
+**What this means:** the NeoForge channel handshake, the client/server mod-list
+compatibility check, modded content rendering, dimension transfer and
+disconnect/reconnect are all untested. Everything server-side is covered, but
+nothing that requires a client is. Anyone deploying this should connect a real
+client before trusting it.
+
+The script is committed so the test is one command away on a machine with a
+display.
+
 ### Five core probes still fail
 
 Run `cbtest core` from the console to reproduce. 84 pass, these 5 do not:
