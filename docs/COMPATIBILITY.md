@@ -192,6 +192,27 @@ Cancellation is exact; incremental drop editing is not expressible.
 in `InventoryOpenEvent` has no effect there, because NeoForge reads the title
 from the provider after CardForge's hook.
 
+### EssentialsX `/itemdb` errors on modded items
+
+Holding a modded item and running `/itemdb` prints the correct
+`ITEM: WAYSTONES_ANDESITE_WAYSTONE` line and then an error:
+`Cannot invoke "Object.toString()" because "each" is null`.
+
+**This is an EssentialsX limitation, not a CardForge fault.**
+`FlatItemDb#name(ItemStack)` resolves an item against EssentialsX's own `items`
+map, which is built from a bundled vanilla-only item database. A modded item has
+no row, so `name()` returns null, the null is added to `nameList()`, and
+EssentialsX's list joiner calls `toString()` on it. The same happens on any
+modded server running EssentialsX.
+
+Note what works: the `ITEM:` line comes from `Material.toString()` and is
+correct, so CardForge handed EssentialsX a valid modded material. Only the
+alias lookup has no entry.
+
+**Possible enhancement, not a fix.** Cardboard already injects modded content
+into WorldEdit's registry at startup; the same could be done for EssentialsX's
+item database. That would be a new feature and is not currently implemented.
+
 ## UNSUPPORTED
 
 Nothing is currently known-broken and unfixed. Every failure found so far has
