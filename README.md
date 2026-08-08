@@ -15,6 +15,23 @@ of the server NeoForge is already running, reusing
 [Cardboard](https://github.com/minenite/cardboard)'s implementation. Mods stay
 normal NeoForge mods; plugins stay normal server-side plugins.
 
+
+## Where CardForge sits
+
+| Approach | Deep Modding | Bukkit/Paper Plugins | Mod↔Plugin Integration | Overall Flexibility |
+| --- | --- | --- | --- | --- |
+| Vanilla/Paper | ❌ | ✅ Excellent | ❌ | 🟡 |
+| Fabric | ✅ | ❌ | ❌ | 🟢 |
+| NeoForge | ✅ Excellent | ❌ | ❌ | 🟢 |
+| Cardboard | ✅ Fabric | ✅ | ⚠️ Limited | 🟢 |
+| CardForge | ✅ NeoForge | ✅ | ✅ Designed for it | 🟢🟢 Excellent |
+
+The last column is the point. Running both ecosystems side by side is table
+stakes; what CardForge adds is that they can see each other - a Bukkit plugin
+can address modded content by its real namespaced id, cancel a mod's operation,
+and a CardForge-native plugin can reach NeoForge capabilities directly. See
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for what that is verified to mean.
+
 ## For server owners
 
 Grab a release and run the installer — you do not need this repository, Gradle,

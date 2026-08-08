@@ -89,6 +89,7 @@ Plus an isolated `DamageProbe` (`cbtest damage`) and `ItemStackProbe`
 | Modded block entities | `Block#getState()` returns a usable `TileState` |
 | `Material.values()` | **2735 entries** with Biomes O' Plenty installed - 1691 vanilla plus **1044 modded** - no duplicates, other Material calls unchanged. Previously verified at 2204 with Waystones alone, so the enum extension and call-site rewrite hold at roughly 20x the modded content |
 | Scale | **531 modded blocks** into the Bukkit registry and **581** into WorldEdit's, with terrain generation altered by TerraBlender. Zero errors, fresh world, no code changes required |
+| **NeoForge capabilities** | Verified against Trash Cans, which implements all three handler types: the Item can exposes an item handler only, the Fluid can a fluid handler only, the Energy can an energy handler only, and the Ultimate can **all three** - each resolving through `blockCapability` from a plugin that knows nothing about the mod |
 | Integration API | 8 mods enumerated; modded content resolved by real id; NeoForge item capability resolved as `WorldlyContainerWrapper` |
 
 ### Real client (manual playtest, current build)
@@ -224,7 +225,10 @@ either been fixed or moved to PARTIAL with a stated limit.
 Do not read these as working.
 
 - **Further third-party plugins.** WorldEdit and LuckPerms are verified. An Essentials-style plugin and a protection/claims plugin are not.
-- **A technology mod with machines.** Biomes O' Plenty exercises scale and worldgen but has no capability-bearing machines, so the capability bridge is still only lightly exercised.
+- **A large technology mod.** IndustrialCraft, Mekanism, Create, AE2, Immersive
+Engineering and Thermal have no 26.2 builds yet - 26.2 is still NeoForge beta.
+Capabilities are verified against Trash Cans, which implements item, fluid and
+energy handlers, but not against a mod with complex multi-block machines.
 
 ## Tested versions
 
