@@ -1,7 +1,7 @@
 package org.cardboardpowered.api.event;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
+import org.minenite.cardforge.event.Event;
+import org.minenite.cardforge.event.EventFactory;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
 

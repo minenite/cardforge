@@ -17,7 +17,6 @@ package org.cardboardpowered.mixin.server.level;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.cardboardpowered.bridge.server.level.ServerPlayerBridge;
 import org.cardboardpowered.bridge.server.level.ServerPlayerGameModeBridge;
-import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.advancements.triggers.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -219,7 +218,9 @@ public class ServerPlayerGameModeMixin implements ServerPlayerGameModeBridge {
 
     @Inject(at = @At("HEAD"), method = "useItemOn", cancellable = true)
     public void interactBlock(ServerPlayer entityplayer, Level world, ItemStack itemstack, InteractionHand enumhand, BlockHitResult movingobjectpositionblock, CallbackInfoReturnable<InteractionResult> ci) {
-        InteractionResult result = UseBlockCallback.EVENT.invoker().interact(entityplayer, world, enumhand, movingobjectpositionblock);
+        // Fabric's UseBlockCallback has no direct NeoForge analogue here; NeoForge
+        // fires PlayerInteractEvent.RightClickBlock on its own bus before this point.
+        InteractionResult result = InteractionResult.PASS;
 
         if (result != InteractionResult.PASS) {
         	ci.setReturnValue(result);

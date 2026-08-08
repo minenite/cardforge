@@ -1,7 +1,7 @@
 package org.cardboardpowered.fabric;
 
-import net.fabricmc.fabric.api.event.Event;
-import net.fabricmc.fabric.api.event.EventFactory;
+import org.minenite.cardforge.event.Event;
+import org.minenite.cardforge.event.EventFactory;
 
 /**
  * @author wdog5

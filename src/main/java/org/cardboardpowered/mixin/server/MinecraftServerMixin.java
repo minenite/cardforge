@@ -28,7 +28,6 @@ import org.bukkit.craftbukkit.scheduler.CraftScheduler;
 import org.cardboardpowered.bridge.IMinecraftServerStatic;
 import org.cardboardpowered.bridge.server.MinecraftServerBridge;
 import org.cardboardpowered.bridge.world.level.LevelBridge;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLevelEvents;
 import net.minecraft.CrashReport;
 import net.minecraft.ReportedException;
 import net.minecraft.commands.Commands;
@@ -281,7 +280,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
     @Override
     public void removeLevel(ServerLevel level) {
-        ServerLevelEvents.UNLOAD.invoker().onLevelUnload(((MinecraftServer) (Object) this), level);
+        // NeoForge fires LevelEvent.Unload on its own bus; nothing to dispatch here.
         this.levels.remove(level.dimension());
     }
 

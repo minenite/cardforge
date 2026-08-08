@@ -55,8 +55,6 @@ import me.isaiah.common.event.entity.EntityPortalCollideEvent;
 import me.isaiah.common.event.entity.player.PlayerGamemodeChangeEvent;
 import me.isaiah.common.event.entity.player.ServerPlayerInitEvent;
 import me.isaiah.common.event.server.ServerWorldInitEvent;
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -79,7 +77,7 @@ import org.bukkit.craftbukkit.CraftWorld;
  * @author isaiah
  */
 @SuppressWarnings({ "removal", "deprecation" })
-public class CardboardMod implements ModInitializer {
+public class CardboardMod {
 
     public static Logger LOGGER = BukkitLogger.getLogger();
     public static boolean isAfterWorldLoad = false;
@@ -91,17 +89,11 @@ public class CardboardMod implements ModInitializer {
     public static String paperVersion = "";
 	public static OptionSet options;
 
-    @Override
     public void onInitialize() {
-        FabricLoader loader = FabricLoader.getInstance();
-        Optional<ModContainer> omcc = loader.getModContainer("minecraft");
-        String mc = "";
-
-        if (omcc.isPresent()) {
-            ModContainer mcc = omcc.get();
-            String mcver = mcc.getMetadata().getVersion().getFriendlyString();
-            mc = "- Minecraft " + mcver;
-        }
+        String mc = org.minenite.cardforge.platform.Platform.get()
+                .modVersion("minecraft")
+                .map(v -> "- Minecraft " + v)
+                .orElse("");
 
         new File("plugins").mkdirs();
 
