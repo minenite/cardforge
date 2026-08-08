@@ -17,6 +17,8 @@ public net.minecraft.world.entity.LivingEntity doAutoAttackOnTouch(Lnet/minecraf
 public net.minecraft.world.entity.LivingEntity getBaseExperienceReward(Lnet/minecraft/server/level/ServerLevel;)I
 public net.minecraft.world.entity.LivingEntity getHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent;
 public net.minecraft.world.entity.LivingEntity getSoundVolume()F
+public net.minecraft.world.entity.LivingEntity hurtArmor(Lnet/minecraft/world/damagesource/DamageSource;F)V
+public net.minecraft.world.entity.LivingEntity hurtHelmet(Lnet/minecraft/world/damagesource/DamageSource;F)V
 public net.minecraft.world.entity.LivingEntity isAlwaysExperienceDropper()Z
 public net.minecraft.world.entity.LivingEntity isImmobile()Z
 public net.minecraft.world.entity.Mob getAmbientSound()Lnet/minecraft/sounds/SoundEvent;

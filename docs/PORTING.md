@@ -79,6 +79,23 @@ python3 tools/aw2at.py <cardboard>/src/main/resources/bukkitfabric.accesswidener
     src/main/resources/META-INF/accesstransformer.cfg
 ```
 
+### 3c. Cardboard depends on Fabric API's transitive access wideners
+
+Not obvious until the port: Cardboard compiles on Fabric partly because
+**Fabric API ships its own transitive access wideners** and Loom applies them
+to the compile classpath. `Display#setTransformation`, `#getViewRange` and
+friends are `private` in vanilla and absent from Cardboard's own widener, yet
+`CraftDisplay` calls them directly.
+
+NeoForge has no equivalent, so `fabric-transitive-access-wideners-v1`
+(449 lines) is converted alongside Cardboard's own widener and merged into
+the access transformer. Combined:
+
+```
+Cardboard AW + Fabric API transitive AW -> 1,130 AT entries
+468 of 502 method widenings apply; 34 need @Invoker
+```
+
 ### 4. iCommonLib — the actual blocker
 Cardboard depends on iCommonLib in **18 files**, and iCommonLib is itself a
 Fabric mod. It supplies cross-version abstractions Cardboard leans on:
