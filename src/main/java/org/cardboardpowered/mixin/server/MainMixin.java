@@ -77,10 +77,14 @@ public class MainMixin {
 	        	 OptionParser parser = new org.minenite.cardforge.CardforgeOptionParser();
 	        	OptionSet options = parser.parse(strings);
 	        	CardboardMod.options = options;
-				// PluginInitializerManager.load(options);
+	        	// Without this, nothing ever registers a plugin provider, so the later
+	        	// LaunchEntryPointHandler.enter(PLUGIN) in CraftServer#loadPlugins walks
+	        	// an empty storage and the server boots cleanly with zero plugins.
+	        	PluginInitializerManager.load(options);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// Plugin discovery failing is not survivable: the server would come up
+				// looking healthy while silently running none of the operator's plugins.
+				throw new RuntimeException("Failed to initialize the Bukkit plugin system", e);
 			}
 	    }
 

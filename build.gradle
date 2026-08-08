@@ -89,7 +89,28 @@ tasks.named('jar') {
     exclude 'com/mojang/serialization/**', 'com/mojang/authlib/**', 'it/unimi/dsi/**'
     exclude 'com/google/common/**', 'org/joml/**', 'io/netty/**'
     exclude 'org/objectweb/asm/**', 'org/apache/commons/logging/**'
-    exclude 'org/apache/maven/**', 'org/eclipse/aether/**', 'javax/inject/**'
+    // Maven needs splitting rather than excluding wholesale. NeoForge ships exactly
+    // one Maven artifact, maven-artifact, and IModInfo#getVersion returns its
+    // ArtifactVersion, so a second copy here is a loader constraint violation.
+    // But it ships neither the resolver (org/eclipse/aether) nor javax/inject, and
+    // Paper's LibraryLoader needs both to resolve the `libraries:` block in
+    // plugin.yml. Excluding all of org/apache/maven took the resolver with it and
+    // broke provider discovery with ClassNotFoundException on
+    // org.eclipse.aether.RepositorySystemSession - which surfaced only as
+    // "Initialized 0 plugins", a server that boots clean while silently running
+    // none of the operator's plugins.
+    // So exclude just what maven-artifact owns, and keep repository/internal, which
+    // belongs to maven-resolver-provider and carries MavenRepositorySystemUtils.
+    exclude 'org/apache/maven/artifact/**'
+    exclude 'org/apache/maven/repository/*'
+    exclude 'org/apache/maven/repository/legacy/**'
+    // Found by tools/check_class_overlap.py, which diffs this jar against every
+    // NeoForge library. joptsimple matters most: CardforgeOptionParser extends
+    // OptionParser and hands the resulting OptionSet to code on the other loader.
+    exclude 'joptsimple/**'
+    exclude 'org/codehaus/plexus/util/**'
+    exclude 'org/jspecify/**', 'com/google/j2objc/**'
+    exclude 'com/google/thirdparty/**'          // guava's publicsuffix tables
     exclude 'org/apache/commons/lang3/**', 'org/apache/commons/io/**'
     exclude 'org/apache/commons/collections4/**', 'com/google/errorprone/**'
     exclude 'META-INF/services/org.apache.commons.logging.LogFactory'
