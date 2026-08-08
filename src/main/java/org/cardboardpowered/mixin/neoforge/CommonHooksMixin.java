@@ -46,6 +46,9 @@ import net.neoforged.neoforge.event.EventHooks;
 @Mixin(value = CommonHooks.class, remap = false)
 public class CommonHooksMixin {
 
+    /** One warning per server run: this fires per placement and would flood the log. */
+    private static boolean cardforge$warnedPlaceFailure;
+
     @Redirect(
             method = "onPlaceItemIntoWorld",
             at = @At(value = "INVOKE",
@@ -94,8 +97,17 @@ public class CommonHooksMixin {
             BlockSnapshot first = snapshots.get(0);
             // The event wants the state that was replaced, which is what the
             // snapshot recorded before the placement ran.
-            org.bukkit.block.BlockState replaced =
-                    CraftBlockStates.getBlockState(level, first.getPos(), first.getState(), null);
+            //
+            // It has to be built against the Bukkit world, not just the NMS level:
+            // callBlockPlaceEvent calls getBlock() on it, and a CraftBlockState with
+            // no world is "unplaced" and throws "The blockState must be placed to
+            // call this method". That made every placement fail inside the try
+            // below, so BlockPlaceEvent silently never fired for any block - the
+            // only reason it was visible at all is the warning in the catch.
+            org.bukkit.World bukkitWorld =
+                    ((org.cardboardpowered.bridge.world.level.LevelBridge) level).cardboard$getWorld();
+            org.bukkit.block.BlockState replaced = CraftBlockStates.getBlockState(
+                    bukkitWorld, first.getPos(), first.getState(), null);
             // The block placed against, which is what the player actually clicked.
             net.minecraft.core.BlockPos clicked = first.getPos().relative(direction.getOpposite());
 
@@ -106,8 +118,13 @@ public class CommonHooksMixin {
             // A failure here must not swallow the placement: NeoForge has already
             // decided to allow it, so let it through rather than cancelling on an
             // internal error.
-            org.cardboardpowered.CardboardMod.LOGGER.warning(
-                    "Could not fire BlockPlaceEvent for a NeoForge placement: " + t);
+            if (!cardforge$warnedPlaceFailure) {
+                cardforge$warnedPlaceFailure = true;
+                org.cardboardpowered.CardboardMod.LOGGER.warning(
+                        "Could not fire BlockPlaceEvent for a NeoForge placement; "
+                        + "plugins will not see block placements. Further occurrences suppressed.");
+                t.printStackTrace();
+            }
             return false;
         }
     }

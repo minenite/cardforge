@@ -103,6 +103,11 @@ public class ShearsDispenseItemBehaviorMixin {
             return false;
         }
         cardboard_shearEvent = event;
+        // Same reason as ShearsItemMixin: NeoForge spawns the drops through
+        // spawnShearedDrop after onSheared returns, outside the window Cardboard
+        // used to wrap around shear() itself. Without this the drops land in the
+        // Bukkit death-drops list instead of the world.
+        ((EntityBridge) (Object) living).cardboard_setForceDrops(true);
         return true;
     }
 
@@ -115,6 +120,9 @@ public class ShearsDispenseItemBehaviorMixin {
 
         BlockShearEntityEvent event = cardboard_shearEvent;
         cardboard_shearEvent = null;
+        if (shearable instanceof LivingEntity living) {
+            ((EntityBridge) (Object) living).cardboard_setForceDrops(false);
+        }
         if (event == null || event.getDrops().isEmpty()) {
             return drops;
         }

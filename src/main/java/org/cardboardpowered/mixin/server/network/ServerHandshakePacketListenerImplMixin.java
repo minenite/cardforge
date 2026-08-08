@@ -28,10 +28,16 @@ public class ServerHandshakePacketListenerImplMixin {
     @Inject(at = @At("TAIL"), method = "handleIntention")
     public void onHandshake_Bungee(ClientIntentionPacket packet, CallbackInfo ci) {
     	if (packet.intention() == ClientIntent.LOGIN) {
-            GameVersion ver = GameVersion.INSTANCE;
+            // Ask Minecraft, not iCommonLib. GameVersion.INSTANCE is only ever
+            // populated by FabricServer.getGameVersion(), a Fabric-only class that
+            // nothing on NeoForge calls, so it was always null here and every single
+            // login died with a NullPointerException before reaching the login
+            // listener. SharedConstants is the authoritative source and needs no
+            // platform-specific bootstrap.
+            int serverProtocol = net.minecraft.SharedConstants.getProtocolVersion();
 
-            if (packet.protocolVersion() > ver.getProtocolVersion()) {
-            } else if (packet.protocolVersion() < ver.getProtocolVersion()) {
+            if (packet.protocolVersion() > serverProtocol) {
+            } else if (packet.protocolVersion() < serverProtocol) {
             } else {
                 if (org.spigotmc.SpigotConfig.bungee) {
                     String[] split = packet.hostName().split("\00");

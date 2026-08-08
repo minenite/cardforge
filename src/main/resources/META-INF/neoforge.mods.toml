@@ -12,6 +12,11 @@ description = '''
 Runs Bukkit/Spigot/Paper plugins on NeoForge by reusing Cardboard's Bukkit
 compatibility implementation.
 '''
+# CardForge is a server-side compatibility layer; a client has no use for it and
+# must not be required to install it. Without this, NeoForge defaults to
+# MATCH_VERSION and the handshake rejects any client that does not have CardForge
+# at the same version, which is every ordinary client.
+displayTest = "IGNORE_SERVER_VERSION"
 
 [[dependencies.cardforge]]
 modId = "neoforge"

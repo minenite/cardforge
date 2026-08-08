@@ -1,6 +1,7 @@
 package org.cardboardpowered.mixin.world.item;
 
 import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.cardboardpowered.bridge.world.entity.EntityBridge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -57,6 +58,33 @@ public class ShearsItemMixin {
             // Matches the vanilla-path behaviour Cardboard used: refuse the interaction
             // without consuming the item or playing effects.
             cir.setReturnValue(InteractionResult.PASS);
+            return;
+        }
+
+        // Force drops for the whole operation, not just the shear.
+        //
+        // Cardboard swallows a LivingEntity's spawnAtLocation into the Bukkit
+        // death-drops list unless forceDrops is set, and set it around
+        // Sheep#shear. That was right on vanilla, where shear() spawned the wool
+        // itself. NeoForge moved the spawn out: shear() only fills the capture
+        // list, and ShearsItem spawns the result through spawnShearedDrop after
+        // shear() has already returned - outside Cardboard's window.
+        //
+        // The wool therefore went into the death-drops list and reappeared when
+        // the sheep was later killed, which is exactly what shearing looked like:
+        // the sheep went naked and nothing dropped.
+        ((EntityBridge) (Object) entity).cardboard_setForceDrops(true);
+    }
+
+    @Inject(
+            method = "interactLivingEntity(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;"
+                    + "Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/InteractionHand;)"
+                    + "Lnet/minecraft/world/InteractionResult;",
+            at = @At("RETURN"))
+    private void cardforge$clearForceDrops(ItemStack stack, Player player, LivingEntity entity,
+                                           InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+        if (!entity.level().isClientSide()) {
+            ((EntityBridge) (Object) entity).cardboard_setForceDrops(false);
         }
     }
 }

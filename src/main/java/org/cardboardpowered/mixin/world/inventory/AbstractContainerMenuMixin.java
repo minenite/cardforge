@@ -71,8 +71,16 @@ public abstract class AbstractContainerMenuMixin implements AbstractContainerMen
     public void transferTo(AbstractContainerMenu other, CraftHumanEntity player) {
         InventoryView source = this.getBukkitView(), destination = ((AbstractContainerMenuBridge) (Object) other).getBukkitView();
 
-        if ((source.getTopInventory() instanceof CustomInventoryView) || source.getBottomInventory() instanceof CustomInventoryView ||
-                destination.getTopInventory() instanceof CustomInventoryView || destination.getBottomInventory() instanceof CustomInventoryView) {
+        // The views, not the inventories. getTopInventory() returns a CraftInventory
+        // and can never be a CustomInventoryView, so this guard never matched - and
+        // worse, evaluating getBottomInventory() on a synthetic view is itself the
+        // failure it was meant to prevent: the fallback getBukkitView() above builds
+        // CustomInventoryView with a null player, so getBottomInventory() throws NPE.
+        //
+        // Any menu without its own getBukkitView() override takes that fallback,
+        // which is every menu a mod defines. Placing a Waystone therefore killed the
+        // ServerboundUseItemOnPacket handler outright and the mod's GUI never opened.
+        if (source instanceof CustomInventoryView || destination instanceof CustomInventoryView) {
             return;
         }
 
