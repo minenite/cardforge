@@ -162,6 +162,7 @@
     "world.item.HangingEntityItemMixin",
     "world.item.ItemStackMixin",
     "world.item.ShearsItemMixin",
+    "neoforge.CommonHooksMixin",
     "world.item.LeadItemMixin",
     "world.item.MapItemMixin",
     "world.item.MinecartItemMixin",

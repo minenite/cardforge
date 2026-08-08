@@ -122,51 +122,12 @@ public abstract class ItemStackMixin implements ItemStackBridge {
     }
     // CraftBukkit end
 
-    /**
-     * @author cardboard
-     * @reason BlockPlaceEvent
-     */
-    @Overwrite
-    public InteractionResult useOn(UseOnContext context) {
-        net.minecraft.world.entity.player.Player playerEntity = context.getPlayer();
-        BlockPos blockPos = context.getClickedPos();
-        BlockInWorld cachedBlockPosition = new BlockInWorld(context.getLevel(), blockPos, false);
-        if (playerEntity != null && !playerEntity.abilities.mayBuild
-                // FIXME: 1.18.2: Adventure mode place test.
-                /*&& !((ItemStack)(Object)this).canPlaceOn(context.getWorld().getTagManager(), cachedBlockPosition)*/) {
-            return InteractionResult.PASS;
-        }
-        ((LevelBridge)context.getLevel()).setCaptureBlockStates_BF(true);
-
-        Item item = ((ItemStack)(Object)this).getItem();
-        InteractionResult actionResult = item.useOn(context);
-
-        if (actionResult != InteractionResult.FAIL) {
-            if (((LevelBridge)context.getLevel()).getCapturedBlockStates_BF().size() > 0) {
-                List<BlockState> blocks = new java.util.ArrayList<>(((LevelBridge)context.getLevel()).getCapturedBlockStates_BF().values());
-                ((LevelBridge)context.getLevel()).getCapturedBlockStates_BF().clear();
-                BlockPlaceEvent placeEvent = CraftEventFactory.callBlockPlaceEvent((ServerLevel)context.getLevel(), playerEntity, InteractionHand.MAIN_HAND, blocks.get(0), blockPos);
-                if ((placeEvent.isCancelled() || !placeEvent.canBuild())) {
-                    ((LevelBridge)context.getLevel()).setCaptureBlockStates_BF(false);
-
-                    CraftBlockState b = (CraftBlockState) blocks.get(0);
-                    BlockPos pos = b.getPosition();
-                    while (context.getLevel().getBlockState(pos) != Blocks.AIR.defaultBlockState())
-                        context.getLevel().setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-
-                    context.getItemInHand().grow(1);
-                    ((Player)((ServerPlayerBridge)context.getPlayer()).getBukkitEntity()).updateInventory();
-                    return InteractionResult.FAIL;
-                }
-            }
-        }
-
-        if (playerEntity != null && actionResult.consumesAction()) {
-            playerEntity.awardStat(Stats.ITEM_USED.get(item));
-        }
-        ((LevelBridge)context.getLevel()).setCaptureBlockStates_BF(false);
-        return actionResult;
-    }
+    // BlockPlaceEvent used to live here as an @Overwrite of useOn. NeoForge
+    // rewrote that method - on a dedicated server it fires UseItemOnBlockEvent and
+    // then delegates to CommonHooks.onPlaceItemIntoWorld, never running the vanilla
+    // body - so overwriting it silently removed both hooks for every NeoForge mod.
+    // The Bukkit event now fires inside that replacement instead; see
+    // org.cardboardpowered.mixin.neoforge.CommonHooksMixin.
 
     @Inject(method = "hurtAndBreak(ILnet/minecraft/server/level/ServerLevel;Lnet/minecraft/server/level/ServerPlayer;Ljava/util/function/Consumer;)V", at = @At("HEAD"), cancellable = true)
     public void hurtAndBreakPaper(int damage, ServerLevel level, @Nullable ServerPlayer player, Consumer<Item> onBreak, CallbackInfo ci) { // Paper - Add EntityDamageItemEvent

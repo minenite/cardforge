@@ -59,6 +59,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -336,51 +337,56 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
     }
 
     /**
-     * @reason Inventory Open Event
-     * @author Cardboard
+     * Fires Bukkit's InventoryOpenEvent inside NeoForge's menu-opening path.
+     *
+     * <p>Cardboard implemented this as a HEAD injection on openMenu that rebuilt
+     * the whole method and then ci.cancel()'d it - an @Overwrite in all but name.
+     * On NeoForge that breaks modded GUIs. NeoForge split openMenu into a
+     * one-argument delegate and a two-argument real body, and the real body sends
+     * an AdvancedOpenScreenPayload carrying the provider's client-side data
+     * whenever a menu has any, falling back to the plain ClientboundOpenScreenPacket
+     * only when it does not. It also posts PlayerContainerEvent.Open. Rebuilding
+     * the method discarded all of that, so a modded container opened with no
+     * payload and mods never saw the open.
+     *
+     * <p>Redirecting createMenu instead leaves NeoForge's body in charge of
+     * everything it added, while still giving plugins the two things Bukkit
+     * promises: the chance to see the menu, and the chance to cancel it. A cancel
+     * returns null here, which is the same signal NeoForge already handles by
+     * returning OptionalInt.empty().
+     *
+     * <p>Known gap: a plugin changing the inventory title has no effect on this
+     * path, because NeoForge reads the title straight from the provider after this
+     * point. See docs/COMPATIBILITY.md.
      */
-    @Inject(at = @At("HEAD"), method = "openMenu", cancellable = true)
-    public void openHandledScreen_c(MenuProvider factory, CallbackInfoReturnable<OptionalInt> ci) {
-        if (factory == null) {
-            ci.setReturnValue(OptionalInt.empty());
-        } else {
-            this.cardboard$nextContainerCounter();
-            AbstractContainerMenu container = factory.createMenu(this.containerCounter, ((ServerPlayer)(Object)this).inventory, ((ServerPlayer)(Object)this));
+    @Redirect(
+            method = "openMenu(Lnet/minecraft/world/MenuProvider;Ljava/util/function/Consumer;)Ljava/util/OptionalInt;",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/world/MenuProvider;createMenu(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/inventory/AbstractContainerMenu;"))
+    private AbstractContainerMenu cardforge$inventoryOpenEvent(MenuProvider provider, int syncId,
+                                                               net.minecraft.world.entity.player.Inventory inventory,
+                                                               net.minecraft.world.entity.player.Player player) {
+        AbstractContainerMenu menu = provider.createMenu(syncId, inventory, player);
+        if (menu == null) {
+            return null;
+        }
 
-            if (container != null) {
-                ((AbstractContainerMenuBridge) (Object) container).setTitle(factory.getDisplayName());
+        ((AbstractContainerMenuBridge) (Object) menu).setTitle(provider.getDisplayName());
 
-                boolean cancelled = false;
-                final com.mojang.datafixers.util.Pair<net.kyori.adventure.text.Component, AbstractContainerMenu> result = org.bukkit.craftbukkit.event.CraftEventFactory.callInventoryOpenEventWithTitle(((ServerPlayer)(Object)this), container, cancelled);
-                container = result.getSecond();
-                if (container == null && !cancelled) {
-                    if (factory instanceof Container) {
-                        ((Container) factory).stopOpen((ServerPlayer)(Object)this);
-                    } else if (factory instanceof CompoundContainer)
-                        ((CompoundContainer) factory).container1.stopOpen((ServerPlayer)(Object)this);
+        final com.mojang.datafixers.util.Pair<net.kyori.adventure.text.Component, AbstractContainerMenu> result =
+                org.bukkit.craftbukkit.event.CraftEventFactory.callInventoryOpenEventWithTitle(
+                        (ServerPlayer) (Object) this, menu, false);
 
-                    ci.setReturnValue(OptionalInt.empty());
-                }
-            }
-            if (container == null) {
-                ci.setReturnValue(OptionalInt.empty());
-            } else {
-                ((ServerPlayer)(Object)this).containerMenu = container;
-                // Fabric ExtendedMenu bookkeeping removed; NeoForge drives extended
-                // menu data itself and Bukkit inventories are vanilla menus.
-                
-                fabric_replaceVanillaScreenPacket_include(((ServerPlayer)(Object)this).connection,
-                        new ClientboundOpenScreenPacket(container.containerId, container.getType(), factory.getDisplayName()),
-                        factory);
-                /*End*/
-
-                ((ServerPlayer)(Object)this).initMenu(container);
-
-                fabric_openedScreenHandler.remove();
-                ci.setReturnValue(OptionalInt.of(this.containerCounter));
+        AbstractContainerMenu allowed = result.getSecond();
+        if (allowed == null) {
+            // Cancelled. Mirror vanilla's cleanup of the provider before bailing out.
+            if (provider instanceof CompoundContainer compound) {
+                compound.container1.stopOpen((ServerPlayer) (Object) this);
+            } else if (provider instanceof Container container) {
+                container.stopOpen((ServerPlayer) (Object) this);
             }
         }
-        ci.cancel();
+        return allowed;
     }
 
     // TODO: 1.19
