@@ -126,6 +126,26 @@ def patched_methods(patch_path):
     return methods, markers
 
 
+DELEGATE = re.compile(r'^\+\s*return\s+(?:this\.)?(\w+)\(')
+
+
+def delegating_overloads(patch_path):
+    """Method names NeoForge turned into a delegate to a wider overload.
+
+    The pattern is: keep the old signature, make its whole body `return
+    wider(...)`, and move the real code into the new one. Every internal call
+    site then moves to the wide overload. A mixin still targeting the narrow
+    signature applies cleanly - the method exists - and silently stops firing on
+    the path that matters. That is what happened to openMenu and emptyContents.
+    """
+    names = set()
+    for line in patch_path.read_text(errors='replace').splitlines():
+        m = DELEGATE.match(line)
+        if m:
+            names.add(m.group(1))
+    return names
+
+
 def main():
     if len(sys.argv) < 3:
         print(__doc__)
@@ -181,6 +201,27 @@ def main():
                     'methods': sorted(collide) or sorted(names),
                     'markers': sorted(markers),
                 })
+
+    # Separate, higher-signal check: a descriptor-less injection into a method
+    # NeoForge turned into a delegate is firing on the wrong overload.
+    delegate_hits = []
+    for cls, entries, patched, markers, patch in overlapping:
+        delegates = delegating_overloads(patch)
+        if not delegates:
+            continue
+        for path, injections in entries:
+            for inj in injections:
+                for raw in inj['methods']:
+                    name = raw.split('(')[0]
+                    if name in delegates and '(' not in raw:
+                        delegate_hits.append((cls, path.name, inj['kind'], name))
+
+    if delegate_hits:
+        print('!! Descriptor-less injections into methods NeoForge made delegates.')
+        print('   These apply cleanly and then fire on the wrong overload.\n')
+        for cls, mixin, kind, name in sorted(set(delegate_hits)):
+            print(f'   @{kind} {cls.split(".")[-1]}#{name}  ({mixin})')
+        print()
 
     findings.sort(key=lambda f: (-f['severity'], f['cls'], f['mixin']))
     print(f'{len(findings)} injection(s) land on a method NeoForge also patched.\n')

@@ -165,8 +165,14 @@ public abstract class ItemStackMixin implements ItemStackBridge {
         }
     }
 
-    @Inject(method = "processDurabilityChange", at = @At("HEAD"), cancellable = true)
-    private void processDurabilityChangePaper(int damage, ServerLevel level, @Nullable ServerPlayer player, CallbackInfoReturnable<Integer> cir) { // Paper - Add EntityDamageItemEvent
+    // NeoForge widened this to take a LivingEntity and left the ServerPlayer form
+    // as a delegate, so internal callers now use the wide one. Targeting the
+    // narrow signature applied cleanly and missed every non-player path.
+    @Inject(
+            method = "processDurabilityChange(ILnet/minecraft/server/level/ServerLevel;"
+                    + "Lnet/minecraft/world/entity/LivingEntity;)I",
+            at = @At("HEAD"), cancellable = true)
+    private void processDurabilityChangePaper(int damage, ServerLevel level, @Nullable LivingEntity player, CallbackInfoReturnable<Integer> cir) { // Paper - Add EntityDamageItemEvent
         // Paper start - itemstack damage api
         cir.setReturnValue(processDurabilityChange(damage, level, player, false));
     }

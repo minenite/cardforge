@@ -58,8 +58,20 @@ public class BucketItemMixin extends Item {
     }
     */
 
-    @Inject(method = "emptyContents", at = @At("HEAD"), cancellable = true)
-    public void placeFluid_BF(LivingEntity player, Level world, BlockPos blockposition, BlockHitResult movingobjectpositionblock, CallbackInfoReturnable<Boolean> ci) {
+    /**
+     * NeoForge widened emptyContents to carry the container ItemStack, leaving the
+     * original four-argument form as a delegate. BucketItem#useOn - the path a
+     * player actually takes - calls the five-argument version directly, so an
+     * injection on the old signature applied cleanly and then never fired for a
+     * player emptying a bucket. Targeting the wide overload covers both, since the
+     * narrow one delegates into it.
+     */
+    @Inject(
+            method = "emptyContents(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/Level;"
+                    + "Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/BlockHitResult;"
+                    + "Lnet/minecraft/world/item/ItemStack;)Z",
+            at = @At("HEAD"), cancellable = true)
+    public void placeFluid_BF(LivingEntity player, Level world, BlockPos blockposition, BlockHitResult movingobjectpositionblock, net.minecraft.world.item.ItemStack containerItem, CallbackInfoReturnable<Boolean> ci) {
         if (this.content instanceof FlowingFluid) {
             BlockState iblockdata = world.getBlockState(blockposition);
             Block block = iblockdata.getBlock();
