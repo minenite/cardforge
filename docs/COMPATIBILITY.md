@@ -115,6 +115,7 @@ Real plugins, unmodified, from their official releases.
 | Plugin | Version | Result |
 | --- | --- | --- |
 | **WorldEdit** | 7.4.4 | Loads, enables, binds its own NMS adapter (`PaperweightAdapter` for `v26_2`). `//set` places a **modded** block by its real id (`waystones:andesite_waystone`, case-insensitive); setting a region to glass removes a modded block. Zero errors. |
+| **WorldGuard** | 7.0.18 | Loads, enables, region data and UUID migration. With `__global__` set to `build: DENY` and `interact: DENY` against a non-op, building, breaking and interaction are all correctly denied - **including on modded blocks**, where right-clicking a Waystone no longer opens the mod's GUI. |
 | **LuckPerms** | 5.5.71 | Loads, enables, H2 storage, Brigadier command registration. `/lp info`, `permission set` and `permission info` all work; nodes persist and read back. |
 
 WorldEdit binding a version-specific NMS adapter is the stronger signal here:
@@ -188,7 +189,12 @@ whether the player had `worldguard.region.bypass.world`, Bukkit's default for an
 unregistered node is "operators only", the stale op answered yes, and WorldGuard
 correctly stood aside.
 
-Root cause not yet identified. `PlayerList#isOp` is
+Ruled out since: `CraftPlayer#setOp` is correct and calls
+`recalculatePermissions()`, but the vanilla `/deop` command does not go through
+it - it calls NMS `PlayerList#deop` directly, so the connected player's
+Permissible is never recalculated. Upstream CraftBukkit patches `PlayerList` to
+do that; this port appears not to. Root cause not yet confirmed.
+`PlayerList#isOp` is
 `ops.contains(nameAndId) || (isSingleplayerOwner(...) && allowCommands)`;
 `isSingleplayerOwner` is hardcoded false on a dedicated server and the on-disk
 op list was correct at the time, which points at the in-memory `ServerOpList`
@@ -207,7 +213,7 @@ Permission resolution is fine: an unregistered node is false for a non-op, a
 Do not read these as working.
 
 - **Further third-party plugins.** WorldEdit and LuckPerms are verified. An Essentials-style plugin and a protection/claims plugin are not.
-- **A real third-party protection/claims plugin.** Cancellation semantics are verified with a purpose-built guard; a production plugin such as WorldGuard or GriefPrevention is not.
+- **An Essentials-style plugin.** Not published for 26.2 at the time of testing.
 - **Clean-room distributable test** after these fixes.
 - **A nontrivial technology mod.** Waystones has blocks and block entities but no machines, so the capability bridge is only lightly exercised. None was available for 26.2 at the time.
 
