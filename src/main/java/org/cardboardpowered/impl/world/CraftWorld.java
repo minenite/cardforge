@@ -1312,10 +1312,19 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		Vector dir = direction.clone().normalize().multiply(maxDistance);
 		Vec3 startPos = new Vec3(start.getX(), start.getY(), start.getZ());
 		Vec3 endPos = new Vec3(start.getX() + dir.getX(), start.getY() + dir.getY(), start.getZ() + dir.getZ());
+		// CollisionContext.empty(), not a null Entity. 26.2's ClipContext resolves an
+		// Entity through CollisionContext.of(), which is Objects.requireNonNull, so
+		// the null-entity overload throws outright - taking out every caller of
+		// rayTraceBlocks, including Player#getTargetBlockExact. There is a
+		// CollisionContext overload for exactly this case.
 		HitResult nmsHitResult = this.getHandle().clip(new ClipContext(startPos, endPos, ignorePassableBlocks ?
-				ClipContext.Block.COLLIDER : ClipContext.Block.OUTLINE, CraftFluidCollisionMode.toFluid(mode), (net.minecraft.world.entity.Entity) null));
+				ClipContext.Block.COLLIDER : ClipContext.Block.OUTLINE, CraftFluidCollisionMode.toFluid(mode),
+				net.minecraft.world.phys.shapes.CollisionContext.empty()));
 
-		return CraftRayTraceResult.convertFromInternal((LevelAccessor) this, nmsHitResult);
+		// getHandle(), not this: CraftWorld is the Bukkit world and casting it to
+		// LevelAccessor is an unconditional ClassCastException. The compiler allowed
+		// it only because LevelAccessor is an interface.
+		return CraftRayTraceResult.convertFromInternal(this.getHandle(), nmsHitResult);
 	}
 
 	@Override
