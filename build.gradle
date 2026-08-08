@@ -1,0 +1,48 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.143'
+}
+
+group = project.mod_group
+version = project.mod_version
+base { archivesName = project.mod_name }
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+repositories {
+    mavenCentral()
+    maven { name = 'PaperMC'; url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+neoForge {
+    version = project.neoforge_version
+
+    // Cardboard's access widener, converted by tools/aw2at.py
+    accessTransformers.from('src/main/resources/META-INF/accesstransformer.cfg')
+
+    runs {
+        server {
+            server()
+            gameDirectory = file('run')
+        }
+    }
+
+    mods {
+        "${project.mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+dependencies {
+    // The Bukkit/Paper API surface Cardboard implements.
+    compileOnly "io.papermc.paper:paper-api:${project.paper_api_version}"
+    compileOnly "net.kyori:adventure-api:${project.adventure_version}"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}

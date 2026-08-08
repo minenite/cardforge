@@ -1,0 +1,28 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "GPL-3.0 (inherited from Paper via Cardboard)"
+issueTrackerURL = "https://github.com/minenite/cardforge/issues"
+
+[[mods]]
+modId = "cardforge"
+version = "${mod_version}"
+displayName = "Cardforge"
+authors = "MineNite, and the Cardboard contributors"
+description = '''
+Runs Bukkit/Spigot/Paper plugins on NeoForge by reusing Cardboard's Bukkit
+compatibility implementation.
+'''
+
+[[dependencies.cardforge]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.2,)"
+ordering = "NONE"
+side = "SERVER"
+
+[[dependencies.cardforge]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.2,)"
+ordering = "NONE"
+side = "SERVER"

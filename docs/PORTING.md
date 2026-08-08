@@ -39,7 +39,30 @@ Expect friction in the ~96 `@Overwrite`s where NeoForge itself already
 patches the same method — NeoForge modifies far more of vanilla than Fabric
 does, so overlapping patches are the main risk in this workstream.
 
-### 3. Access widener → access transformer — done
+### 3. Access widener → access transformer — partly done
+
+**Field and class widenings are applied. Method widenings are not, and this
+is a real platform difference rather than a conversion bug.**
+
+Fabric applies access wideners to *bytecode at runtime*. NeoForge applies
+access transformers during a *source recompile of Minecraft*, so Java's
+override rules are enforced. Widening `LivingEntity#getHurtSound` to public
+while `Witch`, `WanderingTrader` and every other subclass still declare it
+`protected` fails to compile:
+
+```
+ERROR getHurtSound(DamageSource) in WanderingTrader cannot override
+      getHurtSound(DamageSource) in LivingEntity
+```
+
+The 229 method entries are therefore parked in
+`accesstransformer-methods.cfg.disabled`. Each needs either widening across
+the whole override hierarchy, or - more idiomatic on NeoForge - a Mixin
+`@Invoker` accessor. Cardboard only actually calls a handful of them
+(`getSoundVolume`, `getHurtSound`, `blockedByItem`, `creakingInfo`), so
+`@Invoker` is likely the cheaper route.
+
+### 3b. Original conversion notes
 Fabric access wideners have no NeoForge equivalent; NeoForge uses access
 transformers. `tools/aw2at.py` performs the conversion:
 
