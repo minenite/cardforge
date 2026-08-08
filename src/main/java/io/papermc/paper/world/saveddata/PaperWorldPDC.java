@@ -16,13 +16,17 @@ public final class PaperWorldPDC extends SavedData {
     private static final CraftPersistentDataTypeRegistry DATA_TYPE_REGISTRY = new CraftPersistentDataTypeRegistry();
     public static final Codec<PaperWorldPDC> CODEC = CraftPersistentDataContainer.createCodec(DATA_TYPE_REGISTRY)
         .xmap(PaperWorldPDC::new, PaperWorldPDC::persistentData);
+    // No DataFixTypes on purpose. This container holds arbitrary plugin data, so
+    // Minecraft's datafixers must never be run over it. Cardboard expressed that on
+    // Fabric by using extend-enum to add a null-typed DataFixTypes.PAPER_NONE, but
+    // that is a Fabric-only mechanism and is not needed here: 26.2's SavedDataType
+    // has a constructor that leaves the fix type null, and SavedDataStorage skips
+    // the datafixer outright when it is. Passing a real type such as LEVEL, as an
+    // earlier port did, would silently run level datafixes across plugin data.
     public static final SavedDataType<PaperWorldPDC> TYPE = new SavedDataType<>(
         Identifier.fromNamespaceAndPath(IdentifierExtra.PAPER_NAMESPACE, "persistent_data_container"),
         () -> new PaperWorldPDC(new CraftPersistentDataContainer(DATA_TYPE_REGISTRY)),
-        CODEC,
-        // Fabric's extend-enum added DataFixTypes.PAPER_NONE; NeoForge has no
-        // equivalent, so use the vanilla LEVEL type (no datafixing applied).
-        DataFixTypes.LEVEL
+        CODEC
     );
 
     private final CraftPersistentDataContainer persistentData;

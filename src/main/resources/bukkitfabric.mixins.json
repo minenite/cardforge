@@ -236,7 +236,6 @@
     "world.level.storage.loot.parameters.LootContextParamsMixin",
     "world.level.storage.loot.predicates.ExplosionConditionMixin",
     "world.level.storage.loot.predicates.LootItemRandomChanceWithEnchantedBonusConditionMixin",
-    "MixinDataFixTypes",
     "server.MixinDataLoadContext"
   ],
   "injectors": {

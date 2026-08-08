@@ -3,3 +3,7 @@ out/
 .gradle/
 run/
 libs/
+
+# diagnostic run output
+server.log
+*.log

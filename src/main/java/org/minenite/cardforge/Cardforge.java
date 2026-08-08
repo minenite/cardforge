@@ -27,6 +27,5 @@ public final class Cardforge {
                 Platform.get().platformName(),
                 Platform.get().platformVersion(),
                 Platform.get().modVersion("minecraft").orElse("unknown"));
-        LOGGER.info("Bukkit layer not wired up yet - see docs/PORTING.md");
     }
 }
