@@ -18,7 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class TntBlockMixin {
 
     @Inject (method = "onProjectileHit", at = @At (value = "INVOKE",
-            target = "Lnet/minecraft/world/level/block/TntBlock;prime(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/LivingEntity;)Z"),
+            // NeoForge deprecates TntBlock#prime and rewrites its call sites to its own
+            // IBlockStateExtension#onCaughtFire hook, so that is what onProjectileHit calls.
+            target = "Lnet/minecraft/world/level/block/TntBlock;onCaughtFire(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/entity/LivingEntity;)Z"),
             cancellable = true)
     private void bukkit_entityChangeBlockEvent(Level world, BlockState state, BlockHitResult hit, Projectile projectile, CallbackInfo ci) {
         if (!CraftEventFactory.callEntityChangeBlockEvent(projectile, hit.getBlockPos(), Blocks.AIR.defaultBlockState())) { ci.cancel(); }
