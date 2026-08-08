@@ -20,7 +20,9 @@ public final class PaperWorldPDC extends SavedData {
         Identifier.fromNamespaceAndPath(IdentifierExtra.PAPER_NAMESPACE, "persistent_data_container"),
         () -> new PaperWorldPDC(new CraftPersistentDataContainer(DATA_TYPE_REGISTRY)),
         CODEC,
-        DataFixTypes.PAPER_NONE
+        // Fabric's extend-enum added DataFixTypes.PAPER_NONE; NeoForge has no
+        // equivalent, so use the vanilla LEVEL type (no datafixing applied).
+        DataFixTypes.LEVEL
     );
 
     private final CraftPersistentDataContainer persistentData;

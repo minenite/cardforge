@@ -352,8 +352,8 @@ public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
 	 */
 	@Inject(method = "saveWithoutId", at = @At(value = "INVOKE", shift = At.Shift.AFTER, ordinal = 0, target = "Lnet/minecraft/world/level/storage/ValueOutput;store(Ljava/lang/String;Lcom/mojang/serialization/Codec;Ljava/lang/Object;)V"))
     public void cardboard$writeData_saveBukkitWorldUuid(ValueOutput output, CallbackInfo ci) {
-		output.putLong("WorldUUIDLeast", this.level.cardboard$getWorld().getUID().getLeastSignificantBits());
-		output.putLong("WorldUUIDMost", this.level.cardboard$getWorld().getUID().getMostSignificantBits());
+		output.putLong("WorldUUIDLeast", ((org.cardboardpowered.bridge.world.level.LevelBridge) (Object) this.level).cardboard$getWorld().getUID().getLeastSignificantBits());
+		output.putLong("WorldUUIDMost", ((org.cardboardpowered.bridge.world.level.LevelBridge) (Object) this.level).cardboard$getWorld().getUID().getMostSignificantBits());
     }
 
     @Inject(method = "isPushable", at = @At("HEAD"), cancellable = true)

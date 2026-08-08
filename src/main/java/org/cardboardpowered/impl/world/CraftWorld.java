@@ -980,7 +980,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public UUID getUID() {
-		return world.cardboard$get_uuid();
+		return ((org.cardboardpowered.bridge.server.level.ServerLevelBridge) (Object) world).cardboard$get_uuid();
 		// return Utils.getWorldUUID(getWorldFolder());
 	}
 
