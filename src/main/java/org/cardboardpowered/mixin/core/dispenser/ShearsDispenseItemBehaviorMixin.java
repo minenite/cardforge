@@ -84,6 +84,17 @@ public class ShearsDispenseItemBehaviorMixin {
      */
 
     private static BlockShearEntityEvent cardboard_shearEvent;
+    private static LivingEntity cardboard_shearedEntity;
+
+    @org.spongepowered.asm.mixin.injection.Inject(method = "tryShearEntity", at = @At("RETURN"))
+    private static void cardforge$clearForceDrops(net.minecraft.server.level.ServerLevel level,
+            net.minecraft.core.BlockPos pos, ItemStack tool,
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+        if (cardboard_shearedEntity != null) {
+            ((EntityBridge) (Object) cardboard_shearedEntity).cardboard_setForceDrops(false);
+            cardboard_shearedEntity = null;
+        }
+    }
 
     @Redirect(at = @At(value = "INVOKE", target = "Lnet/neoforged/neoforge/common/IShearable;isShearable(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z"),
             method = "tryShearEntity")
@@ -108,6 +119,7 @@ public class ShearsDispenseItemBehaviorMixin {
         // used to wrap around shear() itself. Without this the drops land in the
         // Bukkit death-drops list instead of the world.
         ((EntityBridge) (Object) living).cardboard_setForceDrops(true);
+        cardboard_shearedEntity = living;
         return true;
     }
 
@@ -120,9 +132,15 @@ public class ShearsDispenseItemBehaviorMixin {
 
         BlockShearEntityEvent event = cardboard_shearEvent;
         cardboard_shearEvent = null;
-        if (shearable instanceof LivingEntity living) {
-            ((EntityBridge) (Object) living).cardboard_setForceDrops(false);
-        }
+        // Deliberately NOT clearing forceDrops here. tryShearEntity spawns the
+        // drops after onSheared returns:
+        //
+        //     shearable.onSheared(...).forEach(drop -> spawnShearedDrop(...))
+        //
+        // so clearing it at this point closes the window one step before the
+        // drops are actually spawned, and Cardboard swallows them into the
+        // death-drops list - the sheep goes bare and the wool turns up later when
+        // it is killed. It is cleared at RETURN of tryShearEntity instead.
         if (event == null || event.getDrops().isEmpty()) {
             return drops;
         }
