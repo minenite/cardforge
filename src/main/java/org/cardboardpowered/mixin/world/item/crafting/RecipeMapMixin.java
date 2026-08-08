@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
+import org.spongepowered.asm.mixin.Unique;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
@@ -24,10 +25,12 @@ import java.util.Map;
 @Mixin(RecipeMap.class)
 public abstract class RecipeMapMixin implements RecipeMapBridge {
     @Shadow
+    @org.spongepowered.asm.mixin.Mutable
     @Final
     public Multimap<RecipeType<?>, RecipeHolder<?>> byType;
 
     @Shadow
+    @org.spongepowered.asm.mixin.Mutable
     @Final
     public Map<ResourceKey<Recipe<?>>, RecipeHolder<?>> byKey;
 
@@ -70,13 +73,28 @@ public abstract class RecipeMapMixin implements RecipeMapBridge {
 
     @Override
     public void cardboard$addRecipe(RecipeHolder<?> holder) {
-        Collection<RecipeHolder<?>> recipes = this.byType.get(holder.value().getType());
-
         if (this.byKey.containsKey(holder.id())) {
             throw new IllegalStateException("Duplicate recipe ignored with ID " + holder.id());
-        } else {
-            recipes.add(holder);
-            this.byKey.put(holder.id(), holder);
+        }
+
+        // Make sure the collections can actually be written to. create() is patched
+        // to hand back mutable copies, but not every RecipeMap arrives through it -
+        // reloads and the empty map do not - and an immutable one made
+        // Bukkit.addRecipe throw a bare UnsupportedOperationException from deep
+        // inside Guava, with nothing naming the real problem.
+        cardboard$ensureMutable();
+
+        this.byType.get(holder.value().getType()).add(holder);
+        this.byKey.put(holder.id(), holder);
+    }
+
+    @Unique
+    private void cardboard$ensureMutable() {
+        if (!(this.byType instanceof LinkedHashMultimap)) {
+            this.byType = LinkedHashMultimap.create(this.byType);
+        }
+        if (!(this.byKey instanceof java.util.LinkedHashMap)) {
+            this.byKey = com.google.common.collect.Maps.newLinkedHashMap(this.byKey);
         }
     }
     // CraftBukkit end
@@ -84,13 +102,18 @@ public abstract class RecipeMapMixin implements RecipeMapBridge {
     // Paper start - replace removeRecipe implementation
     @Override
     public <T extends RecipeInput> boolean cardboard$removeRecipe(ResourceKey<Recipe<T>> mcKey) {
+        // Same reason as the add path: byType may still be the immutable map the
+        // vanilla constructor built, and removing from it throws.
+        cardboard$ensureMutable();
+
         //noinspection unchecked
         final RecipeHolder<Recipe<T>> remove = (RecipeHolder<Recipe<T>>) this.byKey.remove(mcKey);
         if (remove == null) {
             return false;
         }
-        final Collection<? extends RecipeHolder<? extends Recipe<T>>> recipes = this.byType(remove.value().getType());
-        return recipes.remove(remove);
+        // Through the field, not the byType(...) accessor: that returns an
+        // unmodifiable view even when the backing multimap is mutable.
+        return this.byType.get(remove.value().getType()).remove(remove);
         // Paper end - why are you using a loop???
     }
     // Paper end - replace removeRecipe implementation
