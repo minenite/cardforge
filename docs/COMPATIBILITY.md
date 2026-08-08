@@ -1,212 +1,184 @@
 # CardForge 26.2 compatibility report
 
-What is verified, what is known-broken, and how it was established. Everything
-below was observed on a real dedicated NeoForge 26.2.0.52-beta server with strict
-Mixin behaviour enabled (`defaultRequire: 1` on both configs), not inferred from
-the code.
+Every claim here is backed by something that was actually run. Areas are graded:
+
+- **VERIFIED** — exercised at runtime on a real dedicated server, result observed.
+- **PARTIAL** — works, with a stated limit.
+- **UNSUPPORTED** — known not to work, with the reason.
+- **UNTESTED** — not exercised. Not a claim of either outcome.
+
+A Mixin applying, a clean compile, or a purpose-built probe that happened to
+avoid the failing path are **not** evidence. That distinction is not academic:
+this project has twice recorded something as working on those grounds and been
+wrong both times.
 
 ## Architecture
 
-CardForge is a compatibility subsystem running **on** a real NeoForge server, not
-a reimplementation of one:
+CardForge is a compatibility subsystem on a real NeoForge server, not a
+reimplementation of one:
 
 ```
-NeoForge 26.2 (real dedicated server)
+NeoForge 26.2 (the real dedicated server)
     -> CardForge (Cardboard's Bukkit/Spigot/Paper implementation, ported)
         -> Bukkit / Spigot / Paper plugins
 ```
 
-NeoForge mods load through NeoForge exactly as they normally do. CardForge adds
-the Bukkit layer alongside them and bridges content between the two.
+Mods load through NeoForge unchanged. Plugins load through the Bukkit layer.
+Where NeoForge replaced a vanilla subsystem, CardForge hooks NeoForge's
+replacement rather than restoring the vanilla path.
 
-## Verified working
+## VERIFIED
+
+### Automated suite
+
+`tools/regression_test.sh` — **67 probes, 0 failures, 0 server errors** in one
+full run.
+
+| Area | Probes |
+| --- | --- |
+| recipes | 10 |
+| boss bars | 10 |
+| modded content | 9 |
+| entities | 7 |
+| `Material.values()` | 4 |
+| blocks | 4 |
+| registries, PDC | 3 each |
+| worlds, scoreboards, projectiles, permissions, ItemStacks, configuration, commands | 2 each |
+| world save, scheduler | 1 each |
+
+Plus an isolated `DamageProbe` (`cbtest damage`) and `ItemStackProbe`
+(`cbtest item`).
+
+### Server and platform
+
+| Item | Evidence |
+| --- | --- |
+| Strict Mixin behaviour | `defaultRequire: 1` on all configs, zero failed injections |
+| Dedicated server startup | Reaches `Done`, no ERROR/FATAL |
+| Repeated lifecycles | Consecutive start/stop cycles, clean shutdown each time |
+| Plugin lifecycle | Discovered, loaded, enabled, command registered, disabled on shutdown |
+| Class hygiene | `check_class_overlap.py` reports zero classes shadowing a NeoForge library |
+
+### Bukkit/Paper behaviour
 
 | Area | Evidence |
 | --- | --- |
-| Strict Mixin application | Boots with `defaultRequire: 1`, zero failed injections |
-| Server startup | Reaches `Done`, no ERROR or FATAL lines |
-| Repeated lifecycles | 3 consecutive start/stop cycles, clean shutdown each time |
-| External Bukkit plugin | Discovered, loaded, enabled, `onEnable` run, command registered, disabled on shutdown |
-| Coexistence with NeoForge mods | Balm, Shogi and Waystones load alongside the Bukkit layer, zero errors |
-| Modded blocks in the Bukkit API | 32 Waystones blocks registered as `Material`s |
-| Modded `Material` lookup | `Material.getMaterial("WAYSTONES_ANDESITE_WAYSTONE")` resolves |
-| Modded `NamespacedKey` | `Material#getKey()` returns `waystones:andesite_waystone` |
-| Modded items | `new ItemStack(WAYSTONES_BOUND_SCROLL)` succeeds |
-| Cross-ecosystem block write/read | A plugin places a modded block through the Bukkit API and reads it back |
-| Modded block entities | `Block#getState()` on a modded block entity returns a usable `TileState` |
-| Paper type registries | `Registry.ITEM` / `Registry.BLOCK` resolve modded ids; item-only ids correctly return `null` from `Registry.BLOCK` |
-| `Material.values()` in plugins | A precompiled plugin iterating `values()` sees 2204 entries: vanilla plus 50 Waystones materials, no duplicates |
-| Lookup behaviour unchanged | `valueOf`, `getMaterial`, `matchMaterial`, `Registry.MATERIAL`, `getKey`, `isBlock` all behave as before, and an unknown name still returns `null` |
-| Core Bukkit/Paper behaviour | 84 passing probes across worlds, blocks, entities, projectiles, ItemStack/components, PDC, scoreboards, boss bars, scheduler, permissions, commands, configuration, registries and world saving |
-| Integration API | 8 mods enumerated, modded content resolved by real namespaced id, NeoForge capabilities reachable |
-| Distributable | `install.sh` fetches and runs the official NeoForge installer, then drops CardForge into `mods/` |
+| `EntityDamageEvent` | Fires exactly once; **cancelling prevents the damage** and the entity survives; a vanilla explosion arrives as `ENTITY_EXPLOSION` |
+| `EntityDeathEvent` | Fires exactly once on lethal damage, after the damage event |
+| `setHealth(0)` / `setMaxHealth` | Death sequence runs; max health moves the maximum, not current health |
+| `Entity#teleport` (mobs) | Returns true and the world position changes |
+| `Entity#remove`, persistence | Removal unresolvable by UUID; `setRemoveWhenFarAway` round-trips |
+| `ItemStack.serialize()` | Bukkit's documented map shape; round-trip preserves type, amount, namespaced identity, name, lore, enchantments, PDC — vanilla **and** modded |
+| Recipes | Add/lookup/remove for shaped, shapeless, furnace, blasting, smoking, campfire, stonecutting; duplicate keys rejected; 1639 recipes iterate after dynamic additions |
+| Boss bars | Create, retrieve by key, retitle, progress, colour, style, visibility, players, enumerate, remove |
+| Blocks | Place, read back, `BlockData` round-trip, relative navigation, `breakNaturally` |
+| PDC | Item, entity and world containers round-trip |
+| Scoreboards, scheduler, permissions, commands, configuration, registries, world save | See suite |
 
-The plugin used is `CardboardTest`, whose `cbtest auto` runs from the console so
-the whole check can execute in an automated boot with no client attached.
+### Cross-ecosystem
 
-## Verified with a real NeoForge client
-
-A real NeoForge 26.2.0.52-beta client, with Balm, Shogi and Waystones installed,
-connected to a CardForge server running the same mods plus two plugins. Confirmed
-in game:
-
-| Area | Result |
+| Item | Evidence |
 | --- | --- |
-| NeoForge handshake and mod-list compatibility check | Passes; CardForge itself is server-side only and not required client-side |
-| Login, two accounts, PvP, `/tp` | Works |
-| Modded GUI (Waystones naming and warp screens) | Opens and functions |
-| Block place and break, vanilla and modded | Works, no warnings |
-| Shearing, by player and by dispenser | Wool drops immediately |
-| Entity damage and death in game | Events fire |
-| Waystone teleport, including Nether to Overworld | Works |
-| NeoForge capabilities through the CardForge API | `WorldlyContainerWrapper` resolved on a Waystone |
-| Custom inventory GUI, click and close events | Works |
+| Mods alongside plugins | Balm, KumaAPI, Shogi, Waystones load with the Bukkit layer, zero errors |
+| Modded blocks in Bukkit | 32 Waystones blocks registered as `Material`s |
+| Modded lookup | By name, by `NamespacedKey`, and through `Registry.ITEM`/`BLOCK`; item-only ids correctly return `null` from `Registry.BLOCK` |
+| Modded `ItemStack` | Constructed, serialized, round-tripped |
+| Modded block write/read | A plugin places a modded block via Bukkit and reads it back |
+| Modded block entities | `Block#getState()` returns a usable `TileState` |
+| `Material.values()` | 2204 entries — vanilla plus 50 Waystones materials, no duplicates; other Material calls unchanged |
+| Integration API | 8 mods enumerated; modded content resolved by real id; NeoForge item capability resolved as `WorldlyContainerWrapper` |
 
-**This session found six bugs that the automated suite could not.** Three made the
-server unusable - nobody could log in, clients were rejected for not having a
-server-side mod, and modded GUIs killed the packet handler. The other three were
-worse for being quiet: `BlockPlaceEvent` had never fired for any block and an
-overly broad catch downgraded it to a warning; shear drops were being swallowed
-into the death-drop list; and `rayTraceBlocks` - the basis of
-`getTargetBlock`/`getTargetBlockExact` - had two independent faults and had never
-once succeeded.
+### Real client (manual playtest)
 
-Every one of them sat in an area the console suite structurally cannot reach:
-there is no handshake, no client, no player, and no one looking at a block. A
-passing headless suite is necessary and nowhere near sufficient.
+A NeoForge 26.2.0.52-beta client with Balm, Shogi and Waystones connected to a
+server running the same mods plus two plugins. Confirmed in game: handshake and
+mod-list check, login, two accounts, PvP, `/tp`, modded GUI (Waystones naming and
+warp), block place/break, shearing by hand **and by dispenser**, entity damage
+and death, Waystone teleport including Nether-Overworld, and `/cfx caps`
+resolving a NeoForge capability.
 
-## Known limitations
+**That session found six bugs the automated suite could not**, three of which
+made the server unusable. Everything a console cannot reach — handshake, client,
+player, looking at a block — was where they lived.
 
-These are real and are listed rather than papered over. Each is covered by a
-probe in `CardboardTest`, so they fail loudly rather than rotting quietly.
+## PARTIAL
 
-### Six core probes still fail
+**`Material.values()` reflection paths.** `values()` itself is handled by a
+class-load rewrite to `CardForgeMaterials.values()`. But
+`EnumSet.allOf(Material.class)`, `Material.class.getEnumConstants()` and direct
+reflection on `$VALUES` read the JDK's cached copy and still return the 1691
+vanilla entries. Workarounds: `Material.values()`, `CardForgeMaterials.values()`,
+`Material.getMaterial(name)`, or the registries.
 
-Run `cbtest core` from the console to reproduce.
+**Modded block entities expose no typed API.** They yield a generic `TileState`:
+location, type and PDC work; the mod's own contents do not, because no Bukkit
+interface describes them. CardForge-native plugins can reach them through
+`blockCapability`.
 
-| Probe | Symptom | Assessment |
-| --- | --- | --- |
-| `entities: EntityDamageEvent` | `LivingEntity#damage()` reduces health but fires no event | Real. The **in-game** damage path is fine - a player hitting a mob fires it, verified by playtest - but the plugin-API entry point bypasses the hook. Matters because a plugin calling `damage()` expects other plugins to see and cancel it. |
-| `entities: EntityDeathEvent` | `setHealth(0)` kills but fires no event | Real, same shape as above. In-game deaths fire it correctly. |
-| `entities: teleport` | `Entity#teleport` does not move a mob | Real. Player teleport works, including cross-dimension via Waystones. |
-| `itemstacks: serialize` | `ItemStack.serialize()` throws NPE, `craftDelegate` is null | Paper's ItemStack delegate is not wired for plugin-constructed stacks |
-| `recipes: iterator` | `Invalid recipe type: DyeRecipe` | 26.2 added a recipe type Cardboard's converter does not map |
-| `bossbars: keyed` | `CustomBossEvent` cannot be cast to `EntityBridge` | `Bukkit.createBossBar(key, ...)` reuses an entity bridge a boss event is not |
+**`BlockShearEntityEvent` drop replacement is all-or-nothing.** NeoForge derives
+shear drops by capturing them during `onSheared`, so the list does not exist
+until after the entity is sheared, while cancellation must be decided before.
+Cancellation is exact; incremental drop editing is not expressible.
 
-None are NeoForge-specific; they are Cardboard/26.2 porting gaps.
+**Inventory title changes on the modded menu path.** A plugin changing the title
+in `InventoryOpenEvent` has no effect there, because NeoForge reads the title
+from the provider after CardForge's hook.
 
-An earlier version of this document dismissed the first three as artefacts of
-testing a freshly spawned entity, on the strength of a playtest showing damage
-and death working in game. That was wrong twice over: the probe now waits for the
-entity to be live and they still fail, and the playtest exercised the in-game
-path while the probe exercises the plugin API. Two different paths, and only one
-of them works. The lesson is that "verified by playtest" and "verified by probe"
-are not interchangeable evidence - each covers what the other cannot.
+## UNSUPPORTED
 
-## How `Material.values()` works
+Nothing is currently known-broken and unfixed. Every failure found so far has
+either been fixed or moved to PARTIAL with a stated limit.
 
-Modded materials are added by writing Material's private static final `$VALUES`
-array through Unsafe. The write lands - reading the field reflectively shows every
-modded entry - but `Material.values()` compiles to a `getstatic` on a static final
-field, which HotSpot constant-folds once the class is initialised. `values()` is
-hot during registration, so it folds early and then keeps returning the
-pre-extension array. Nothing done at the read site changes that, because the fold
-has already happened before any plugin runs.
+## UNTESTED
 
-So the read site is not where this is solved. `MaterialValuesRewriter` rewrites
-plugin classes as they load, redirecting
+Do not read these as working.
 
-```
-invokestatic org/bukkit/Material.values()[Lorg/bukkit/Material;
-```
+- **Real third-party plugins.** LuckPerms, WorldEdit, Essentials-style, protection/claims — none run. Both test plugins are purpose-built probes. The suite covers the API surface such plugins use, which is not the same as running them.
+- **Third-party plugins against modded content.**
+- **Cross-ecosystem cancellation beyond block placement and shearing.**
+- **Client regression after this session's fixes.** The playtest predates the `EntityDamageEvent`, `serialize`, boss bar, recipe and entity-lookup work.
+- **Repeated persistence/restart cycles** with plugin, PDC, mod and registry state.
+- **Clean-room distributable test** after these fixes.
+- **A nontrivial technology mod.** Waystones has blocks and block entities but no machines, so the capability bridge is only lightly exercised. None was available for 26.2 at the time.
 
-to `CardForgeMaterials.values()`, which has the identical descriptor. That makes
-it a drop-in substitution: precompiled plugin jars work unchanged, with no source
-changes and no recompilation.
+## Tested versions
 
-It is wired into two paths, because plugins do not all load the same way:
-Paper plugins go through `PaperClassloaderBytecodeModifier`, and legacy Bukkit
-plugins through `PluginClassLoader#findClass`. On the legacy path it has to run
-**before** Cardboard's remapper, which rewrites call owners - after that pass the
-instruction no longer matches `org/bukkit/Material.values()`.
-
-Only that one call is touched. `valueOf`, `getMaterial`, the registries and field
-access are left exactly as the plugin compiled them, which
-`tools/rewriter_test.sh` asserts explicitly by diffing every call site before and
-after.
-
-## Notes on porting decisions
-
-### Shearing was redesigned, not retargeted
-
-NeoForge neutralises the vanilla per-entity shear branches
-(`if (false && itemStack.is(Items.SHEARS))`) and routes everything through
-`IShearable`. Cardboard's per-mob injections had no call site left, so both
-`PlayerShearEntityEvent` and `BlockShearEntityEvent` moved onto the replacement
-subsystem. A side effect is that both now fire for modded shearable entities too.
-
-### The world PDC has no datafixer
-
-Cardboard used Fabric's extend-enum to add a null-typed `DataFixTypes.PAPER_NONE`
-so plugin data would never be datafixed. That mechanism is Fabric-only, but 26.2
-supports the same thing natively: `SavedDataType` has a constructor that leaves
-the fix type null, and `SavedDataStorage` skips the datafixer when it is.
-
-### Class shadowing is checked mechanically
-
-`tools/check_class_overlap.py` diffs the built jar against every NeoForge
-library. Shipping a second copy of a class NeoForge already provides causes
-`LinkageError: loader constraint violation` as soon as it crosses the
-TRANSFORMER/app loader boundary — invisible until runtime. The check currently
-reports zero overlap; it found 237 shadowed classes when first written,
-including `joptsimple`, which the option parser passes across that boundary.
-
-## Tested NeoForge mods
-
-| Mod | Version | Result |
-| --- | --- | --- |
-| Balm | 26.2.0.5 | Loads and initialises normally alongside the Bukkit layer |
-| KumaAPI | 26.2.0.1 | Loads (jarjar'd inside Balm) |
-| Shogi / Shogi API | 26.2.0.4 | Loads normally |
-| Waystones | 26.2.0.7 | Loads, registers 31 blocks and 48 items, config generated; all 31 blocks reach the Bukkit `Material` registry |
-
-All four run with zero errors alongside plugins. Waystones is the useful one for
-cross-ecosystem testing because it registers real blocks, block entities and
-items. A larger technology mod with machines and capabilities would exercise the
-capability bridge harder; none was available for 26.2 at the time of testing,
-since the version is new enough that most content mods have not updated.
-
-## Tested plugins
-
-| Plugin | Result |
+| Mod | Version |
 | --- | --- |
-| `CardboardTest` | Full lifecycle: discovered, loaded, enabled, command registered, disabled on shutdown. 84 of 89 core probes pass. |
-| `CardForgeExample` | Full lifecycle, and exercises the integration API against live modded content. |
+| Balm | 26.2.0.5 |
+| KumaAPI | 26.2.0.1 |
+| Shogi / Shogi API | 26.2.0.4 |
+| Waystones | 26.2.0.7 |
 
-Both are purpose-built probes rather than third-party plugins. Testing against a
-broad set of real-world plugins (EssentialsX, WorldEdit, LuckPerms and similar)
-is the obvious next step and has not been done here; the core suite covers the
-API surface those plugins depend on, but it is not a substitute for running them.
+| Plugin | Kind |
+| --- | --- |
+| `CardboardTest` | Purpose-built probe |
+| `CardForgeExample` | CardForge-native example |
 
 ## Reproducing
 
 ```sh
-./gradlew jar
+./gradlew jar apiJar dist
 python3 tools/check_class_overlap.py build/libs/Cardforge-26.2.jar <server-dir>
-cp build/libs/Cardforge-26.2.jar <server-dir>/mods/
+python3 tools/audit_overlap.py src/main/java <neoforge-repo>
+tools/rewriter_test.sh <plugin.jar>
+tools/regression_test.sh <server-dir>
 tools/cycle_test.sh <server-dir> 3
 ```
 
-Regression tests:
+In-server, from the console: `cbtest auto`, `cbtest damage`, `cbtest item`,
+`cfx compare`. `cbtest core <comma,separated,names>` skips probes, which is how
+cross-probe interference gets isolated.
 
-```sh
-# Offline: proves the values() rewrite is correct and nothing else is touched.
-tools/rewriter_test.sh <server-dir>/plugins/CardboardTest.jar
+## A note on method
 
-# In-server: boots, runs the probes from the console, fails on any FAIL line.
-tools/regression_test.sh <server-dir>
-```
+Three "bugs" in this project turned out to be artifacts of testing with nobody
+online — despawning mobs, chunks not entity-ticking, empty entity lists — and one
+looked like cross-test interference but was really a bad spawn position. In every
+case the wrong explanation was the plausible one, and only instrumenting each
+step settled it. Headless entity and world tests should keep a player connected
+or account for that explicitly.
 
-The in-server test needs Balm, Shogi and Waystones in `<server-dir>/mods/` and
-`CardboardTest.jar` in `<server-dir>/plugins/`. `cbtest mods` can also be run by
-hand from the server console.
+Equally, two real bugs were found in under a minute once measured, after repeated
+wrong guesses from reading the code: the `craftDelegate` trace and the boss-bar
+stack. Measure before theorising.
