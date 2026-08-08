@@ -87,6 +87,9 @@ public class CardboardMagicNumbers {
                 }
 
                 ((BukkitMaterialBridge)(Object)material).setModdedData(new CardboardModdedBlock(id.toString()));
+                // Before anything can memoize asItemType()/asBlockType() off the
+                // wrong minecraft:<name> key the constructor derived.
+                ((BukkitMaterialBridge)(Object)material).cardboard$setKey(CraftNamespacedKey.fromMinecraft(id));
                 CraftMagicNumbers.MATERIAL_BLOCK.put(material, block);
                 BY_NAME.put(name, material);
                 list.add(material);
@@ -131,6 +134,7 @@ public class CardboardMagicNumbers {
                 }
 
                 ((BukkitMaterialBridge)(Object)material).setModdedData(new CardboardModdedItem(id.toString()));
+                ((BukkitMaterialBridge)(Object)material).cardboard$setKey(CraftNamespacedKey.fromMinecraft(id));
                 CraftMagicNumbers.MATERIAL_ITEM.put(material, item);
                 BY_NAME.put(name, material);
                 list.add(material);
@@ -148,6 +152,26 @@ public class CardboardMagicNumbers {
         //    FLUID_MATERIAL.put(fluid, org.bukkit.Registries.FLUID.get(CraftNamespacedKey.fromMinecraft(Registries.FLUID.getId(fluid))));
 
         EnumHelper.addEnums(Material.class, list);
+
+        // Publish the extended set for Material.values(). The Unsafe write to
+        // $VALUES above is not enough on its own: values() reads a static final
+        // field that HotSpot has already constant-folded, so without this the
+        // modded materials stay invisible to anything that iterates values().
+        if (!list.isEmpty()) {
+            // Additive, and skipped when nothing new was added. This method can run
+            // more than once; on a later pass every material already exists, so
+            // list is empty and rebuilding from the vanilla constants would drop
+            // everything registered earlier.
+            Material[] base = org.cardboardpowered.impl.MaterialValues.get();
+            if (base == null) {
+                base = Material.class.getEnumConstants();
+            }
+            Material[] all = java.util.Arrays.copyOf(base, base.length + list.size());
+            for (int k = 0; k < list.size(); k++) {
+                all[base.length + k] = list.get(k);
+            }
+            org.cardboardpowered.impl.MaterialValues.set(all);
+        }
 
         for (Material material : list) {
             Identifier key = key(material);

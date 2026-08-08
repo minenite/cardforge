@@ -79,6 +79,16 @@ public final class CraftBlockStates {
         }
     };
 
+    /** Generic state for block entities a NeoForge mod registered. */
+    private static final BlockStateFactory<?> MODDED_BLOCK_ENTITY_FACTORY =
+            new BlockStateFactory<CraftModdedBlockEntity>(CraftModdedBlockEntity.class) {
+        @Override
+        public CraftModdedBlockEntity createBlockState(World world, BlockPos pos,
+                net.minecraft.world.level.block.state.BlockState state, BlockEntity blockEntity) {
+            return new CraftModdedBlockEntity(world, blockEntity);
+        }
+    };
+
     private static final Map<BlockEntityType<?>, BlockStateFactory<?>> FACTORIES_BY_BLOCK_ENTITY_TYPE = new HashMap<>();
     private static void register(BlockEntityType<?> type, BlockStateFactory<?> factory) {
         FACTORIES_BY_BLOCK_ENTITY_TYPE.put(type, factory);
@@ -175,10 +185,28 @@ public final class CraftBlockStates {
 
     private static BlockStateFactory<?> getFactory(Material material, BlockEntityType<?> type) {
         if (type != null) {
-            return CraftBlockStates.FACTORIES_BY_BLOCK_ENTITY_TYPE.getOrDefault(type, getFactory(material));
+            BlockStateFactory<?> factory = CraftBlockStates.FACTORIES_BY_BLOCK_ENTITY_TYPE.get(type);
+            if (factory != null) {
+                return factory;
+            }
+            // A block-entity type with no mapping is a missing case for vanilla, but
+            // the normal state of affairs for a mod. Falling through to the default
+            // factory would trip its "Unexpected BlockState" assertion and break
+            // Block#getState for every plugin near modded content, so hand modded
+            // types a generic TileState instead. See CraftModdedBlockEntity.
+            if (CraftBlockStates.isModded(type)) {
+                return CraftBlockStates.MODDED_BLOCK_ENTITY_FACTORY;
+            }
+            return getFactory(material);
         } else {
             return getFactory(material);
         }
+    }
+
+    private static boolean isModded(BlockEntityType<?> type) {
+        net.minecraft.resources.Identifier id =
+                net.minecraft.core.registries.BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type);
+        return id != null && !"minecraft".equals(id.getNamespace());
     }
 
     public static Class<? extends CraftBlockState> getBlockStateType(Material material) {
