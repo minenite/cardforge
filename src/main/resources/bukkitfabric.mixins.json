@@ -77,6 +77,7 @@
     "server.players.NameAndIdMixin",
     "server.players.PlayerListMixin",
     "server.players.PlayerListMixin_ChatEvent",
+    "server.players.PlayerListMixin_OpEvent",
     "stats.ServerStatsCounterMixin",
     "stats.StatsCounterMixin",
     "world.MixinContainer",

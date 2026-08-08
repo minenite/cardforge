@@ -173,32 +173,44 @@ from the provider after CardForge's hook.
 
 ## UNSUPPORTED
 
-### `/op` and `/deop` do not take effect until the player reconnects
+### `/op` and `/deop` do not take effect on a connected player
 
-Deopping a connected player leaves `Player#isOp()` returning `true` for the rest
-of their session. After a reconnect it is correct.
+Op state appears to be captured when a player logs in and never refreshed.
+Both directions are wrong, and the evidence is symmetric:
 
-Verified: with `ops.json` containing only another player, a deopped
-`baecomeover` still reported `isOp=true`; after a restart and rejoin the same
-probe reported `isOp=false`, the correct UUID, the correct `NameAndId`, and the
-correct operator list.
+| Situation | `Bukkit.getOperators()` | `Player#isOp()` |
+| --- | --- | --- |
+| Opped while offline, then joined | contains them | `true` (correct) |
+| Opped while connected | **contains them** | **`false`** |
+| Deopped while connected | does not contain them | **`true`** |
 
-**Consequence:** anything gating on op status is wrong for the rest of that
-session. It is how a stale op silently defeated WorldGuard - WorldGuard asked
-whether the player had `worldguard.region.bypass.world`, Bukkit's default for an
-unregistered node is "operators only", the stale op answered yes, and WorldGuard
-correctly stood aside.
+So the operator list is updated correctly and persisted correctly - `ops.json`
+matches it - but the connected player's answer does not follow.
 
-Ruled out since: `CraftPlayer#setOp` is correct and calls
-`recalculatePermissions()`, but the vanilla `/deop` command does not go through
-it - it calls NMS `PlayerList#deop` directly, so the connected player's
-Permissible is never recalculated. Upstream CraftBukkit patches `PlayerList` to
-do that; this port appears not to. Root cause not yet confirmed.
-`PlayerList#isOp` is
-`ops.contains(nameAndId) || (isSingleplayerOwner(...) && allowCommands)`;
-`isSingleplayerOwner` is hardcoded false on a dedicated server and the on-disk
-op list was correct at the time, which points at the in-memory `ServerOpList`
-or a cached permission level on the connected player rather than at the lookup.
+**Consequence:** anything gating on op status is wrong until the player
+reconnects. This is what silently defeated WorldGuard: it asked whether the
+player had `worldguard.region.bypass.world`, Bukkit's default for an
+unregistered node is operators-only, a stale operator answered yes, and
+WorldGuard correctly stood aside.
+
+**Attempted fix that did not work.** `PlayerListMixin_OpEvent` injects at the
+tail of NMS `PlayerList#op` and `#deop` and calls `recalculatePermissions()` on
+the connected player, which is what upstream CraftBukkit does and what
+`CraftPlayer#setOp` already did. It is committed because it is correct and
+needed regardless, but it does not fix this - so the stale value is not
+Bukkit's cached Permissible.
+
+**Ruled out:** `CraftPlayer#setOp` is correct; `NameAndIdMixin` only adds a
+conversion helper and does not touch equality; `DedicatedServer#isSingleplayerOwner`
+is hardcoded false; `getOperators()` reads the live list and is right;
+`handle.nameAndId()` reports the correct UUID and name.
+
+**Next step:** `PlayerList#isOp` is
+`ops.contains(nameAndId) || (isSingleplayerOwner && allowCommands)`. Since the
+list demonstrably contains the player while `isOp()` returns false,
+`ServerOpList#contains` is not matching - most likely a key mismatch between how
+entries are stored and how they are looked up in 26.2. Instrument
+`getKeyForUser` on both paths before changing anything.
 
 **Correction to an earlier version of this document:** it claimed
 `Player#hasPermission` returned true for every node, and that no permission
