@@ -34,6 +34,27 @@ import org.cardboardpowered.bridge.world.entity.EntityBridge;
 
 public class CraftContainer extends AbstractContainerMenu implements AbstractContainerMenuBridge {
 
+    // CraftContainer already has a real view, so it can answer this directly
+    // rather than relying on the fallback the mixin provides.
+    private org.bukkit.entity.HumanEntity cardboard$viewer;
+
+    @Override
+    public void cardboard$setViewer(org.bukkit.entity.HumanEntity viewer) {
+        this.cardboard$viewer = viewer;
+    }
+
+    @Override
+    public org.bukkit.entity.HumanEntity cardboard$getViewer() {
+        if (this.cardboard$viewer != null) {
+            return this.cardboard$viewer;
+        }
+        try {
+            return this.getBukkitView().getPlayer();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     private final InventoryView view;
     private InventoryType cachedType;
     private AbstractContainerMenu delegate;

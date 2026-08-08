@@ -372,6 +372,11 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
         }
 
         ((AbstractContainerMenuBridge) (Object) menu).setTitle(provider.getDisplayName());
+        // Give the menu its viewer, so the fallback getBukkitView() can build a
+        // view with a real player instead of null.
+        ((AbstractContainerMenuBridge) (Object) menu).cardboard$setViewer(
+                (org.bukkit.entity.HumanEntity) ((org.cardboardpowered.bridge.world.entity.EntityBridge)
+                        (Object) (ServerPlayer) (Object) this).getBukkitEntity());
 
         final com.mojang.datafixers.util.Pair<net.kyori.adventure.text.Component, AbstractContainerMenu> result =
                 org.bukkit.craftbukkit.event.CraftEventFactory.callInventoryOpenEventWithTitle(

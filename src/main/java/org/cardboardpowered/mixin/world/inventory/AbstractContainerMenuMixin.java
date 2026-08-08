@@ -30,10 +30,26 @@ public abstract class AbstractContainerMenuMixin implements AbstractContainerMen
 
     public boolean checkReachable = true;
 
+    private org.bukkit.entity.HumanEntity cardboard$viewer;
+
+    @Override
+    public void cardboard$setViewer(org.bukkit.entity.HumanEntity viewer) {
+        this.cardboard$viewer = viewer;
+    }
+
+    @Override
+    public org.bukkit.entity.HumanEntity cardboard$getViewer() {
+        return this.cardboard$viewer;
+    }
+
     @Override
     public InventoryView getBukkitView() {
         CraftInventory cbi = new CraftInventory(new SimpleContainer( ((AbstractContainerMenu)(Object)this).getItems().toArray(new ItemStack[0]) ));
-        return new CustomInventoryView(null, cbi, ((AbstractContainerMenu)(Object)this));
+        // Pass the recorded viewer rather than null. Every menu a mod defines takes
+        // this fallback, and a view with no player throws the moment anything asks
+        // it for the bottom inventory - which is what InventoryClickEvent does, so
+        // clicking inside any modded GUI failed.
+        return new CustomInventoryView(this.cardboard$viewer, cbi, ((AbstractContainerMenu)(Object)this));
     }
 
     @Shadow

@@ -217,6 +217,31 @@ item database. That would be a new feature and is not currently implemented.
 
 ## UNSUPPORTED
 
+### Clicking in a modded GUI does not reach the mod
+
+Opening a modded menu works, and the NullPointerException that used to kill
+`ServerboundContainerClickPacket` is fixed - the fallback `getBukkitView()` now
+carries the real viewer instead of null. But clicks still do not reach the mod:
+verified with Pipez, whose wrench GUI opens and whose buttons do nothing, so a
+pipe can never be set to Extract and no items move. Energy transfer through the
+same mod works, so capabilities and block-entity ticking are fine; it is
+specific to menu interaction.
+
+Suspected cause, not confirmed: Cardboard's `doBukkitEvent_InventoryClickedEvent`
+mixin appears to reimplement click handling rather than observe it, which is the
+same shape as the `openMenu` problem fixed earlier - a modded menu's non-slot
+widgets would then be handled as vanilla slots and do nothing. Needs
+verification before changing anything.
+
+### `ServerListPingEvent.iterator()` throws
+
+`UnsupportedOperationException` from the bundled API. EssentialsX calls it on
+every server-list ping to hide vanished players and logs a warning each time.
+Harmless in that the caller catches it, but any plugin iterating the ping player
+list will fail.
+
+
+
 Nothing is currently known-broken and unfixed. Every failure found so far has
 either been fixed or moved to PARTIAL with a stated limit.
 

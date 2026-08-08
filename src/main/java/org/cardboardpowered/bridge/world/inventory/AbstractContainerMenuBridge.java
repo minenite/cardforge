@@ -28,6 +28,20 @@ import org.bukkit.inventory.InventoryView;
 
 public interface AbstractContainerMenuBridge {
 
+    /**
+     * The player this menu was opened for.
+     *
+     * <p>AbstractContainerMenu has no player of its own, so the fallback
+     * getBukkitView() had to build its view with a null one - and anything that
+     * then asked the view for the bottom (player) inventory threw. Recording the
+     * viewer when the menu is opened gives that fallback a real player, which is
+     * what every menu a mod defines relies on.
+     */
+    void cardboard$setViewer(org.bukkit.entity.HumanEntity viewer);
+
+    org.bukkit.entity.HumanEntity cardboard$getViewer();
+
+
     default InventoryView getBukkitView() {
         return null;
     }
