@@ -172,35 +172,35 @@ from the provider after CardForge's hook.
 
 ## UNSUPPORTED
 
-### Permission checks always return true
+### `/op` and `/deop` do not take effect until the player reconnects
 
-`Player#hasPermission` returns **true for any node**, including nodes nobody
-registered. Verified with a deopped player:
+Deopping a connected player leaves `Player#isOp()` returning `true` for the rest
+of their session. After a reconnect it is correct.
 
-```
-/lp user <player> permission check some.nonexistent.node.xyz
-  Result: true
-```
+Verified: with `ops.json` containing only another player, a deopped
+`baecomeover` still reported `isOp=true`; after a restart and rejoin the same
+probe reported `isOp=false`, the correct UUID, the correct `NameAndId`, and the
+correct operator list.
 
-**Consequence: no permission plugin can deny anything.** LuckPerms installs,
-stores and reports nodes correctly, but the value is never honoured. WorldGuard
-is the visible symptom - with `__global__` set to `build: DENY` and
-`interact: DENY` against a deopped player, every action still succeeded, because
-WorldGuard asks whether the player has `worldguard.region.bypass.world`, gets
-`true`, and steps aside. Any plugin gating on permissions - protection, claims,
-staff commands, economy - is affected the same way.
+**Consequence:** anything gating on op status is wrong for the rest of that
+session. It is how a stale op silently defeated WorldGuard - WorldGuard asked
+whether the player had `worldguard.region.bypass.world`, Bukkit's default for an
+unregistered node is "operators only", the stale op answered yes, and WorldGuard
+correctly stood aside.
 
-This is severe for a public server: permissions are the mechanism by which
-untrusted players are restricted, and here they grant everything.
+Root cause not yet identified. `PlayerList#isOp` is
+`ops.contains(nameAndId) || (isSingleplayerOwner(...) && allowCommands)`;
+`isSingleplayerOwner` is hardcoded false on a dedicated server and the on-disk
+op list was correct at the time, which points at the in-memory `ServerOpList`
+or a cached permission level on the connected player rather than at the lookup.
 
-**Root cause not yet identified.** Ruled out so far: `CraftPlayer#isOp` is
-correct and delegates to the NMS op list; `CraftHumanEntity#perm` is a stock
-paper-api `PermissibleBase`; there is no Mixin on `PermissibleBase`;
-`calculatePermissionDefault` is commented out rather than overridden; the
-`PermissionDefault.TRUE` registrations are ordinary Bukkit command permissions.
-The next step is a probe calling `player.hasPermission(...)` directly, to
-confirm the fault is in Bukkit's own path rather than in how LuckPerms reports
-it.
+**Correction to an earlier version of this document:** it claimed
+`Player#hasPermission` returned true for every node, and that no permission
+plugin could deny anything. That was wrong. It was measured while the player was
+still an operator, where "true" for an unregistered node is the correct answer.
+Permission resolution is fine: an unregistered node is false for a non-op, a
+`FALSE`-default permission is false even for an op, and `isPermissionSet` and
+`getPermission` behave correctly.
 
 ## UNTESTED
 
