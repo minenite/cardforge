@@ -59,6 +59,35 @@ public final class CraftItemStack extends ItemStack {
         }
     }
 
+    /**
+     * Paper's API ItemStack forwards serialize() to its craftDelegate, and a
+     * CraftItemStack is the delegate - so it has to do the real work here. Without
+     * this override CraftItemStack inherited the forwarder and recursed into its
+     * own null delegate, which is why every ItemStack.serialize() call ended in a
+     * NullPointerException with ItemStack.serialize appearing twice in the trace.
+     *
+     * <p>The map is Bukkit's documented shape, so anything already persisted by a
+     * plugin on another server deserializes here unchanged.
+     */
+    @Override
+    public java.util.Map<String, Object> serialize() {
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+
+        result.put("v", org.bukkit.Bukkit.getUnsafe().getDataVersion());
+        result.put("type", this.getType().name());
+
+        if (this.getAmount() != 1) {
+            result.put("amount", this.getAmount());
+        }
+
+        org.bukkit.inventory.meta.ItemMeta meta = this.getItemMeta();
+        if (!org.bukkit.Bukkit.getItemFactory().equals(meta, null)) {
+            result.put("meta", meta);
+        }
+
+        return result;
+    }
+
     private static CraftItemStack getCraftStack(final ItemStack bukkit) {
         if (bukkit instanceof final CraftItemStack craftItemStack) {
             return craftItemStack;
