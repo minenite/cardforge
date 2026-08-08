@@ -60,7 +60,7 @@ public abstract class MobMixin extends LivingEntity implements MobBridge, Entity
             }
             CraftLivingEntity ctarget = null;
             if (target != null) {
-                ctarget = (CraftLivingEntity) target.getBukkitEntity();
+                ctarget = ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (CraftLivingEntity) target).getBukkitEntity();
             }
             org.bukkit.event.entity.EntityTargetLivingEntityEvent event = new org.bukkit.event.entity.EntityTargetLivingEntityEvent(this.getBukkitEntity(), ctarget, reason);
             if (!event.callEvent()) {

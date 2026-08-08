@@ -213,7 +213,7 @@ public class CraftEventFactory {
     public static BlockIgniteEvent callBlockIgniteEvent(Level world, int x, int y, int z, Explosion explosion) {
         org.bukkit.World bukkitWorld = ((LevelBridge) world).cardboard$getWorld();
         // org.bukkit.entity.Entity igniter = explosion.entity == null ? null : ((IMixinEntity)explosion.entity).getBukkitEntity();
-        org.bukkit.entity.Entity igniter = explosion.getDirectSourceEntity() == null ? null : explosion.getDirectSourceEntity().getBukkitEntity();
+        org.bukkit.entity.Entity igniter = explosion.getDirectSourceEntity() == null ? null : ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) explosion.getDirectSourceEntity()).getBukkitEntity();
 
         BlockIgniteEvent event = new BlockIgniteEvent(bukkitWorld.getBlockAt(x, y, z), IgniteCause.EXPLOSION, igniter);
         CraftServer.INSTANCE.getPluginManager().callEvent(event);
@@ -341,7 +341,7 @@ public class CraftEventFactory {
             player.connection.handleContainerClose(new ServerboundContainerClosePacket(player.containerMenu.containerId));
         }
 
-        CraftServer server = player.level().getCraftServer();
+        CraftServer server = ((org.cardboardpowered.bridge.server.level.ServerLevelBridge) (Object) player.level()).getCraftServer();
         CraftPlayer craftPlayer = (CraftPlayer) ((EntityBridge)player).getBukkitEntity();
         ((AbstractContainerMenuBridge)player.containerMenu).transferTo(container, craftPlayer);
 
@@ -381,7 +381,7 @@ public class CraftEventFactory {
         CraftBlockState snapshot = CraftBlockStates.getBlockState(world, pos);
         snapshot.setData(state);
 
-        BlockFormEvent event = (entity == null) ? new BlockFormEvent(snapshot.getBlock(), snapshot) : new EntityBlockFormEvent(entity.getBukkitEntity(), snapshot.getBlock(), snapshot);
+        BlockFormEvent event = (entity == null) ? new BlockFormEvent(snapshot.getBlock(), snapshot) : new EntityBlockFormEvent(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) entity).getBukkitEntity(), snapshot.getBlock(), snapshot);
         if (event.callEvent()) {
             boolean result = snapshot.place(flags);
             return !checkSetResult || result;
@@ -838,7 +838,7 @@ public class CraftEventFactory {
     public static boolean callEntityChangeBlockEvent(Entity entity, BlockPos pos, net.minecraft.world.level.block.state.BlockState newState, boolean cancelled) {
         Block block = CraftBlock.at(entity.level(), pos);
 
-        EntityChangeBlockEvent event = new EntityChangeBlockEvent(entity.getBukkitEntity(), block, CraftBlockData.fromData(newState));
+        EntityChangeBlockEvent event = new EntityChangeBlockEvent(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) entity).getBukkitEntity(), block, CraftBlockData.fromData(newState));
         event.setCancelled(cancelled);
         event.getEntity().getServer().getPluginManager().callEvent(event);
         return !event.isCancelled();
@@ -893,10 +893,10 @@ public class CraftEventFactory {
     }
 
     public static EntityBreedEvent callEntityBreedEvent(net.minecraft.world.entity.LivingEntity child, net.minecraft.world.entity.LivingEntity mother, net.minecraft.world.entity.LivingEntity father, net.minecraft.world.entity.LivingEntity breeder, ItemStack bredWith, int experience) {
-        LivingEntity breederEntity = breeder == null ? null : (LivingEntity) breeder.getBukkitEntity();
+        LivingEntity breederEntity = breeder == null ? null : ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (LivingEntity) breeder).getBukkitEntity();
         CraftItemStack bredWithStack = bredWith == null ? null : CraftItemStack.asCraftMirror(bredWith).clone();
 
-        EntityBreedEvent event = new EntityBreedEvent((LivingEntity) child.getBukkitEntity(), (LivingEntity) mother.getBukkitEntity(), (LivingEntity) father.getBukkitEntity(), breederEntity, bredWithStack, experience);
+        EntityBreedEvent event = new EntityBreedEvent(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (LivingEntity) child).getBukkitEntity(), ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (LivingEntity) mother).getBukkitEntity(), ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (LivingEntity) father).getBukkitEntity(), breederEntity, bredWithStack, experience);
         event.callEvent();
         return event;
     }

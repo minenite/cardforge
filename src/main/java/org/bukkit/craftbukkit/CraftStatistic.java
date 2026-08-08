@@ -251,7 +251,7 @@ public enum CraftStatistic {
 
         // Update scoreboards
         if (player != null) {
-            player.level().getCraftServer().getScoreboardManager().forAllObjectives(nmsStatistic, player, score -> {
+            ((org.cardboardpowered.bridge.server.level.ServerLevelBridge) (Object) player.level()).getCraftServer().getScoreboardManager().forAllObjectives(nmsStatistic, player, score -> {
                 score.set(newValue);
             });
         }
@@ -315,7 +315,7 @@ public enum CraftStatistic {
 
         // Update scoreboards
         if (player != null) {
-            player.level().getCraftServer().getScoreboardManager().forAllObjectives(nmsStatistic, player, score -> {
+            ((org.cardboardpowered.bridge.server.level.ServerLevelBridge) (Object) player.level()).getCraftServer().getScoreboardManager().forAllObjectives(nmsStatistic, player, score -> {
                 score.set(newValue);
             });
         }
@@ -359,7 +359,7 @@ public enum CraftStatistic {
 
         // Update scoreboards
         if (player != null) {
-            player.level().getCraftServer().getScoreboardManager().forAllObjectives(nmsStatistic, player, score -> {
+            ((org.cardboardpowered.bridge.server.level.ServerLevelBridge) (Object) player.level()).getCraftServer().getScoreboardManager().forAllObjectives(nmsStatistic, player, score -> {
                 score.set(newValue);
             });
         }

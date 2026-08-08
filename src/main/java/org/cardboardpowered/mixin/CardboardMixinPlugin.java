@@ -88,8 +88,7 @@ public class CardboardMixinPlugin implements IMixinConfigPlugin, IEnvironmentTok
         }
 
         if (mixin.equals("world.item.consume_effects.TeleportRandomlyConsumeEffectMixin")) {
-            FabricLoader loader = FabricLoader.getInstance();
-            boolean create_mod = loader.isModLoaded("porting_lib");
+            boolean create_mod = org.minenite.cardforge.platform.Platform.get().isModLoaded("porting_lib");
             if (create_mod) {
                 return false;
             }
@@ -168,10 +167,11 @@ public class CardboardMixinPlugin implements IMixinConfigPlugin, IEnvironmentTok
     	if (null == papi) {
     		return null;
     	}
+        // Fabric exposed each mod's root as a NIO path. NeoForge has no equivalent,
+        // and this classpath is only used to seed the plugin remapper, so the mod's
+        // own code source plus paper-api is sufficient.
         URL[] jar = {
-                FabricLoader.getInstance().getModContainer("cardboard").get().getRootPath().toUri().toURL(),
-                FabricLoader.getInstance().getModContainer("minecraft").get().getRootPath().toUri().toURL(),
-                FabricLoader.getInstance().getModContainer("fabricloader").get().getRootPath().toUri().toURL(),
+                CardboardMixinPlugin.class.getProtectionDomain().getCodeSource().getLocation(),
                 papi.toURI().toURL()
         };
         return new URLClassLoader(jar);

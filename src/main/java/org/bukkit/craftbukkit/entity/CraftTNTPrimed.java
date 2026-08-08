@@ -53,7 +53,7 @@ public class CraftTNTPrimed extends CraftEntity implements TNTPrimed {
     public Entity getSource() {
         net.minecraft.world.entity.LivingEntity source = this.getHandle().getOwner();
 
-        return (source != null) ? source.getBukkitEntity() : null;
+        return (source != null) ? ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) source).getBukkitEntity() : null;
     }
 
     @Override

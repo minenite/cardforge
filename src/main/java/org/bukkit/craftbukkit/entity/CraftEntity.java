@@ -388,7 +388,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         List<org.bukkit.entity.Entity> result = new java.util.ArrayList<>(entities.size());
 
         for (Entity entity : entities) {
-            result.add(entity.getBukkitEntity());
+            result.add(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) entity).getBukkitEntity());
         }
         return result;
     }
@@ -503,7 +503,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     @Override
     public org.bukkit.entity.Entity getPassenger() {
-        return this.isEmpty() ? null : this.getHandle().getPassengers().getFirst().getBukkitEntity();
+        return this.isEmpty() ? null : ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle().getPassengers().getFirst()).getBukkitEntity();
     }
 
     @Override
@@ -519,7 +519,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     @Override
     public List<org.bukkit.entity.Entity> getPassengers() {
-        return Lists.newArrayList(Lists.transform(this.getHandle().getPassengers(), (Function<Entity, org.bukkit.entity.Entity>) Entity::getBukkitEntity));
+        return Lists.newArrayList(Lists.transform(this.getHandle().getPassengers(), (Function<Entity, org.bukkit.entity.Entity>) x -> ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) x).getBukkitEntity()));
     }
 
     @Override
@@ -667,7 +667,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
             return null;
         }
 
-        return this.getHandle().getVehicle().getBukkitEntity();
+        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle().getVehicle()).getBukkitEntity();
     }
 
     @Override
@@ -1023,7 +1023,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         Entity copy = this.copy(this.getHandle().level());
         Preconditions.checkArgument(copy != null, "Error creating new entity.");
 
-        return copy.getBukkitEntity();
+        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) copy).getBukkitEntity();
     }
 
     @Override
@@ -1034,7 +1034,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         Preconditions.checkArgument(copy != null, "Error creating new entity.");
 
         copy.setPos(location.getX(), location.getY(), location.getZ());
-        return location.getWorld().addEntity(copy.getBukkitEntity());
+        return location.getWorld().addEntity(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) copy).getBukkitEntity());
     }
 
     private Entity copy(net.minecraft.world.level.Level level) {

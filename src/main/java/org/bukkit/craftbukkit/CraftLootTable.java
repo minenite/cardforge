@@ -159,14 +159,14 @@ public class CraftLootTable implements org.bukkit.loot.LootTable {
         LootContext.Builder contextBuilder = new LootContext.Builder(location);
 
         if (info.hasParameter(LootContextParams.ATTACKING_ENTITY)) {
-            CraftEntity killer = info.getOptionalParameter(LootContextParams.ATTACKING_ENTITY).getBukkitEntity();
+            CraftEntity killer = ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) info.getOptionalParameter(LootContextParams.ATTACKING_ENTITY)).getBukkitEntity();
             if (killer instanceof CraftHumanEntity) {
                 contextBuilder.killer((CraftHumanEntity) killer);
             }
         }
 
         if (info.hasParameter(LootContextParams.THIS_ENTITY)) {
-            contextBuilder.lootedEntity(info.getOptionalParameter(LootContextParams.THIS_ENTITY).getBukkitEntity());
+            contextBuilder.lootedEntity(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) info.getOptionalParameter(LootContextParams.THIS_ENTITY)).getBukkitEntity());
         }
 
         contextBuilder.luck(info.getLuck());

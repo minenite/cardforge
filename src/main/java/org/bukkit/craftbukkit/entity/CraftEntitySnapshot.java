@@ -40,7 +40,7 @@ public class CraftEntitySnapshot implements EntitySnapshot {
     public Entity createEntity(World world) {
         net.minecraft.world.entity.Entity internal = this.createInternal(world);
 
-        return internal.getBukkitEntity();
+        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) internal).getBukkitEntity();
     }
 
     @Override
@@ -50,7 +50,7 @@ public class CraftEntitySnapshot implements EntitySnapshot {
         net.minecraft.world.entity.Entity internal = this.createInternal(location.getWorld());
 
         internal.setPos(location.getX(), location.getY(), location.getZ());
-        return location.getWorld().addEntity(internal.getBukkitEntity());
+        return location.getWorld().addEntity(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) internal).getBukkitEntity());
     }
 
     @Override

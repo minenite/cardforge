@@ -27,7 +27,7 @@ public final class CraftRayTraceResult {
         BlockFace hitBlockFace = null;
 
         if (hitResult.getType() == Type.ENTITY) {
-            Entity hitEntity = ((EntityHitResult) hitResult).getEntity().getBukkitEntity();
+            Entity hitEntity = ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) ((EntityHitResult) hitResult).getEntity()).getBukkitEntity();
             return new RayTraceResult(hitPos, hitEntity, null);
         }
 

@@ -36,12 +36,12 @@ public class CraftDamageSource implements DamageSource {
 
     @Override
     public org.bukkit.entity.Entity getCausingEntity() {
-        return Optionull.map(this.getHandle().getEntity(), net.minecraft.world.entity.Entity::getBukkitEntity);
+        return Optionull.map(this.getHandle().getEntity(), x -> ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) x).getBukkitEntity());
     }
 
     @Override
     public org.bukkit.entity.Entity getDirectEntity() {
-        return Optionull.map(this.getHandle().getDirectEntity(), net.minecraft.world.entity.Entity::getBukkitEntity);
+        return Optionull.map(this.getHandle().getDirectEntity(), x -> ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) x).getBukkitEntity());
     }
 
     @Override

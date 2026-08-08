@@ -181,7 +181,7 @@ public class CraftFishHook extends CraftProjectile implements FishHook {
     @Override
     public Entity getHookedEntity() {
         net.minecraft.world.entity.Entity hooked = this.getHandle().hookedIn;
-        return (hooked != null) ? hooked.getBukkitEntity() : null;
+        return (hooked != null) ? ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) hooked).getBukkitEntity() : null;
     }
 
     @Override

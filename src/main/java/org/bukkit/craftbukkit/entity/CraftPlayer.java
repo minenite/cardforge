@@ -2657,7 +2657,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     @Override
     public org.bukkit.entity.Entity getSpectatorTarget() {
         Entity followed = this.getHandle().getCamera();
-        return followed == this.getHandle() ? null : followed.getBukkitEntity();
+        return followed == this.getHandle() ? null : ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) followed).getBukkitEntity();
     }
 
     @Override
@@ -3380,7 +3380,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
                         TagValueInput.create(scopedCollector.forChild(() -> ".shoulder"), this.getHandle().registryAccess(), this.getHandle().getShoulderEntityLeft()),
                         this.getHandle().level(),
                         new net.minecraft.world.entity.EntitySpawnRequest(EntitySpawnReason.LOAD, false)
-                ).map(Entity::getBukkitEntity).orElse(null);
+                ).map(x -> ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) x).getBukkitEntity()).orElse(null);
             }
         }
 
@@ -3406,7 +3406,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
                         TagValueInput.create(scopedCollector.forChild(() -> ".shoulder"), this.getHandle().registryAccess(), this.getHandle().getShoulderEntityRight()),
                         this.getHandle().level(),
                         new net.minecraft.world.entity.EntitySpawnRequest(EntitySpawnReason.LOAD, false)
-                ).map(Entity::getBukkitEntity).orElse(null);
+                ).map(x -> ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) x).getBukkitEntity()).orElse(null);
             }
         }
 

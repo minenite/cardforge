@@ -710,7 +710,7 @@ public final class CraftMagicNumbers implements UnsafeValues, IMagicNumbers {
         (serializePassengers ? nmsEntity.getSelfAndPassengers() : Stream.of(nmsEntity)).forEach(e -> {
             // Ensure force flag is not needed
             Preconditions.checkArgument(
-                    (e.getBukkitEntity().isValid() && e.getBukkitEntity().isPersistent()) || forceSerialization,
+                    (((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) e).getBukkitEntity().isValid() && ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) e).getBukkitEntity().isPersistent()) || forceSerialization,
                     "Cannot serialize invalid or non-persistent entity %s(%s) without the FORCE flag",
                     e.getType().toShortString(),
                     e.getStringUUID()
@@ -768,7 +768,7 @@ public final class CraftMagicNumbers implements UnsafeValues, IMagicNumbers {
             compound.remove("Passengers");
         }
         net.minecraft.world.entity.Entity nmsEntity = deserializeEntity(compound, ((CraftWorld) world).getHandle(), preserveUUID);
-        return nmsEntity.getBukkitEntity();
+        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) nmsEntity).getBukkitEntity();
     }
 
     private net.minecraft.world.entity.Entity deserializeEntity(CompoundTag compound, ServerLevel world, boolean preserveUUID) {

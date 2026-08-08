@@ -71,7 +71,7 @@ public abstract class CraftMob extends CraftLivingEntity implements Mob, io.pape
     public CraftLivingEntity getTarget() {
         if (this.getHandle().getTarget() == null) return null;
 
-        return (CraftLivingEntity) this.getHandle().getTarget().getBukkitEntity();
+        return (CraftLivingEntity) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle().getTarget()).getBukkitEntity();
     }
 
     @Override

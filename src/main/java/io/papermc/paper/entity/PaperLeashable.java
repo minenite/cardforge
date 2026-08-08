@@ -17,7 +17,7 @@ public interface PaperLeashable extends io.papermc.paper.entity.Leashable {
     @Override
     default Entity getLeashHolder() throws IllegalStateException {
         Preconditions.checkState(this.isLeashed(), "Entity not leashed");
-        return this.getHandle().getLeashHolder().getBukkitEntity();
+        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle().getLeashHolder()).getBukkitEntity();
     }
 
     private boolean unleash() {

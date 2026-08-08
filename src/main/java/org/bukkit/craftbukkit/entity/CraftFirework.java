@@ -56,7 +56,7 @@ public class CraftFirework extends CraftProjectile implements Firework {
     @Override
     public LivingEntity getAttachedTo() {
         net.minecraft.world.entity.LivingEntity entity = this.getHandle().attachedToEntity;
-        return (entity != null) ? (LivingEntity) entity.getBukkitEntity() : null;
+        return (entity != null) ? ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (LivingEntity) entity).getBukkitEntity() : null;
     }
 
     @Override

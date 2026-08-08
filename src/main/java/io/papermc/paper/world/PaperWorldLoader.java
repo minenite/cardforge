@@ -190,7 +190,7 @@ public record PaperWorldLoader(MinecraftServer server, String levelId) {
         }
         */
 
-        this.server.createLevel(stem, loading, worldDataAndGenSettings);
+        ((org.cardboardpowered.bridge.server.MinecraftServerBridge) (Object) this.server).createLevel(stem, loading, worldDataAndGenSettings);
     }
 
     public static WorldGenSettings loadWorldGenSettings(

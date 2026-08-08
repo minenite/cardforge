@@ -47,6 +47,6 @@ public class PaperSchoolableFish extends CraftFish implements SchoolableFish {
             return null;
         }
 
-        return (SchoolableFish) leader.getBukkitEntity();
+        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (SchoolableFish) leader).getBukkitEntity();
     }
 }

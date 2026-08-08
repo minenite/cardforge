@@ -799,7 +799,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         } else if (AbstractArrow.class.isAssignableFrom(projectile)) {
             if (TippedArrow.class.isAssignableFrom(projectile)) {
                 launch = new Arrow(world, this.getHandle(), new net.minecraft.world.item.ItemStack(Items.ARROW), null);
-                ((org.bukkit.entity.Arrow)launch.getBukkitEntity()).setBasePotionType(PotionType.WATER);
+                (((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (org.bukkit.entity.Arrow)launch).getBukkitEntity()).setBasePotionType(PotionType.WATER);
             } else {
                 launch = SpectralArrow.class.isAssignableFrom(projectile) ? new net.minecraft.world.entity.projectile.arrow.SpectralArrow(world, this.getHandle(), new net.minecraft.world.item.ItemStack(Items.SPECTRAL_ARROW), null) : (Trident.class.isAssignableFrom(projectile) ? new ThrownTrident(world, this.getHandle(), new net.minecraft.world.item.ItemStack(Items.TRIDENT)) : new Arrow(world, this.getHandle(), new net.minecraft.world.item.ItemStack(Items.ARROW), null));
             }
@@ -876,13 +876,13 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         }
         // Preconditions.checkArgument((launch != null ? 1 : 0) != 0, (String)"Projectile (%s) not supported", (Object)projectile.getName());
         if (velocity != null) {
-            ((Projectile)launch.getBukkitEntity()).setVelocity(velocity);
+            (((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (Projectile)launch).getBukkitEntity()).setVelocity(velocity);
         }
         if (function != null) {
-            function.accept((T) (Projectile) launch.getBukkitEntity());
+            function.accept((T) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (Projectile) launch).getBukkitEntity());
         }
         world.addFreshEntity(launch);
-        return (T)((Projectile)launch.getBukkitEntity());
+        return (T)(((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (Projectile)launch).getBukkitEntity());
 	}
 
 	@Override
