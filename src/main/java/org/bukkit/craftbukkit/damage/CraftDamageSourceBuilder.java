@@ -1,0 +1,66 @@
+package org.bukkit.craftbukkit.damage;
+
+import com.google.common.base.Preconditions;
+import org.bukkit.Location;
+import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
+import org.bukkit.entity.Entity;
+
+public class CraftDamageSourceBuilder implements DamageSource.Builder {
+
+    private final DamageType damageType;
+    private Entity causingEntity;
+    private Entity directEntity;
+    private Location damageLocation;
+
+    public CraftDamageSourceBuilder(DamageType damageType) {
+        Preconditions.checkArgument(damageType != null, "DamageType cannot be null");
+        this.damageType = damageType;
+    }
+
+    @Override
+    public DamageSource.Builder withCausingEntity(Entity entity) {
+        Preconditions.checkArgument(entity != null, "Entity cannot be null");
+        this.causingEntity = entity;
+        return this;
+    }
+
+    @Override
+    public DamageSource.Builder withDirectEntity(Entity entity) {
+        Preconditions.checkArgument(entity != null, "Entity cannot be null");
+        this.directEntity = entity;
+        return this;
+    }
+
+    @Override
+    public DamageSource.Builder withDamageLocation(Location location) {
+        Preconditions.checkArgument(location != null, "Location cannot be null");
+        this.damageLocation = location.clone();
+        return this;
+    }
+
+    @Override
+    public DamageSource build() {
+        final DamageSource built = CraftDamageSource.buildFromBukkit(
+                this.damageType, this.causingEntity, this.directEntity, this.damageLocation);
+        // 26.2: carry the damage context onto the built source
+        if (this.damageContext != null && built instanceof CraftDamageSource craft) {
+            craft.setDamageContext(this.damageContext);
+        }
+        return built;
+    }
+
+
+    // 26.2: DamageSource.Builder gained a damage-context hook
+    @Override
+    public org.bukkit.damage.DamageSource.Builder withDamageContext(
+            java.util.function.Consumer<net.kyori.adventure.pointer.Pointers.Builder> consumer) {
+        final net.kyori.adventure.pointer.Pointers.Builder builder = net.kyori.adventure.pointer.Pointers.builder();
+        consumer.accept(builder);
+        this.damageContext = builder.build();
+        return this;
+    }
+
+    private net.kyori.adventure.pointer.Pointers damageContext;
+
+}
