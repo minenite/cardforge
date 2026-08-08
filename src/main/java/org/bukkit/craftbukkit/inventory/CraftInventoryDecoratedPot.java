@@ -25,6 +25,6 @@ public class CraftInventoryDecoratedPot extends CraftInventory implements Decora
 
     @Override
     public DecoratedPot getHolder() {
-        return (DecoratedPot) ((ContainerBridge)this.inventory).getOwner();
+        return (DecoratedPot) ((ContainerBridge) (Object) this.inventory).getOwner();
     }
 }

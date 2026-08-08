@@ -60,6 +60,6 @@ public class CraftInventoryFurnace extends CraftInventory implements FurnaceInve
 
     @Override
     public Furnace getHolder() {
-        return (Furnace) ((ContainerBridge)this.inventory).getOwner();
+        return (Furnace) ((ContainerBridge) (Object) this.inventory).getOwner();
     }
 }

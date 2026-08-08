@@ -78,7 +78,7 @@ public class CommandsMixin {
         for (CommandNode node : rootcommandnode.getChildren())
             bukkit.add(node.getName());
 
-        PlayerCommandSendEvent event = new PlayerCommandSendEvent((Player) ((ServerPlayerBridge)entityplayer).getBukkitEntity(), new LinkedHashSet<>(bukkit));
+        PlayerCommandSendEvent event = new PlayerCommandSendEvent((Player) ((ServerPlayerBridge) (Object) entityplayer).getBukkitEntity(), new LinkedHashSet<>(bukkit));
         CraftEventFactory.callEvent(event);
 
         // Remove labels that were removed during the event

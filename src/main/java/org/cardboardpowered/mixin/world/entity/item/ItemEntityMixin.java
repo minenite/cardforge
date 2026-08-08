@@ -107,7 +107,7 @@ public class ItemEntityMixin extends EntityMixin implements ItemEntityBridge {
         if (this.pickupDelay <= 0 && canHold > 0) {
             itemstack.setCount(canHold);
             // Call legacy event
-            PlayerPickupItemEvent playerEvent = new PlayerPickupItemEvent((org.bukkit.entity.Player) ((ServerPlayerBridge)entityhuman).getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
+            PlayerPickupItemEvent playerEvent = new PlayerPickupItemEvent((org.bukkit.entity.Player) ((ServerPlayerBridge) (Object) entityhuman).getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
             //playerEvent.setCancelled(!entityhuman.canPickUpLoot);
             Bukkit.getServer().getPluginManager().callEvent(playerEvent);
             if (playerEvent.isCancelled()) {
@@ -116,7 +116,7 @@ public class ItemEntityMixin extends EntityMixin implements ItemEntityBridge {
             }
 
             // Call newer event afterwards
-            EntityPickupItemEvent entityEvent = new EntityPickupItemEvent((org.bukkit.entity.Player) ((ServerPlayerBridge)entityhuman).getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
+            EntityPickupItemEvent entityEvent = new EntityPickupItemEvent((org.bukkit.entity.Player) ((ServerPlayerBridge) (Object) entityhuman).getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
             //entityEvent.setCancelled(!entityhuman.canPickUpLoot);
             Bukkit.getServer().getPluginManager().callEvent(entityEvent);
             if (entityEvent.isCancelled()) {

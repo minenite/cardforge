@@ -415,7 +415,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
         }
         this.damage = meta.damage;
         this.maxDamage = meta.maxDamage;
-        ((DataComponentPatch_BuilderBridge)this.unhandledTags).copy(meta.unhandledTags.build());
+        ((DataComponentPatch_BuilderBridge) (Object) this.unhandledTags).copy(meta.unhandledTags.build());
         this.removedTags.addAll(meta.removedTags);
         this.persistentDataContainer.putAll(meta.persistentDataContainer.getTagsCloned()); // Paper - deep clone NBT tags
         this.canPlaceOnPredicates = meta.canPlaceOnPredicates;
@@ -780,14 +780,14 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
                 CraftMetaItem.getOrEmpty(unhandledPatch, CraftMetaItem.CAN_BREAK).ifPresent(data -> {
                     this.canBreakPredicates = List.copyOf(data.predicates);
                 });
-                ((DataComponentPatch_BuilderBridge)this.unhandledTags).copy(unhandledPatch.forget(type -> type == CraftMetaItem.CAN_PLACE_ON.TYPE || type == CraftMetaItem.CAN_BREAK.TYPE));
+                ((DataComponentPatch_BuilderBridge) (Object) this.unhandledTags).copy(unhandledPatch.forget(type -> type == CraftMetaItem.CAN_PLACE_ON.TYPE || type == CraftMetaItem.CAN_BREAK.TYPE));
 
                 for (Entry<DataComponentType<?>, Optional<?>> entry : unhandledPatch.entrySet()) {
                     // Move removed unhandled tags to dedicated removedTags
                     if (entry.getValue().isEmpty()) {
                         DataComponentType<?> key = entry.getKey();
 
-                        ((DataComponentPatch_BuilderBridge)this.unhandledTags).clear(key);
+                        ((DataComponentPatch_BuilderBridge) (Object) this.unhandledTags).clear(key);
                         this.removedTags.add(key);
                     }
                 }
@@ -1053,7 +1053,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
         }
 
         for (DataComponentType<?> removed : this.removedTags) {
-            if (!((DataComponentPatch_BuilderBridge)tag.builder).isSet(removed)) {
+            if (!((DataComponentPatch_BuilderBridge) (Object) tag.builder).isSet(removed)) {
                 tag.builder.remove(removed);
             }
         }
@@ -2274,7 +2274,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
             this.unhandledTags.set(DataComponents.CAN_PLACE_ON, new net.minecraft.world.item.AdventureModePredicate(this.canPlaceOnPredicates));
         }
 
-        if (!((DataComponentPatch_BuilderBridge)this.unhandledTags).isEmpty()) {
+        if (!((DataComponentPatch_BuilderBridge) (Object) this.unhandledTags).isEmpty()) {
             net.minecraft.nbt.Tag unhandled = DataComponentPatch.CODEC.encodeStart(CraftRegistry.getMinecraftRegistry().createSerializationContext(NbtOps.INSTANCE), this.unhandledTags.build()).getOrThrow(IllegalStateException::new);
             try {
                 ByteArrayOutputStream buf = new ByteArrayOutputStream();
@@ -2286,10 +2286,10 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
         }
 
         if (canBreakAddToUnhandled) {
-            ((DataComponentPatch_BuilderBridge)this.unhandledTags).clear(DataComponents.CAN_BREAK);
+            ((DataComponentPatch_BuilderBridge) (Object) this.unhandledTags).clear(DataComponents.CAN_BREAK);
         }
         if (canPlaceOnAddToUnhandled) {
-            ((DataComponentPatch_BuilderBridge)this.unhandledTags).clear(DataComponents.CAN_PLACE_ON);
+            ((DataComponentPatch_BuilderBridge) (Object) this.unhandledTags).clear(DataComponents.CAN_PLACE_ON);
         }
 
         if (!this.removedTags.isEmpty()) {

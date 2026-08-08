@@ -281,7 +281,7 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 						return event.getResult();
 					}
 				};
-				((MinecraftServerBridge) CraftServer.server).getProcessQueue().add(waitable);
+				((MinecraftServerBridge) (Object) CraftServer.server).getProcessQueue().add(waitable);
 				if (waitable.get() != Result.ALLOWED) {
 					this.disconnect(PaperAdventure.asVanilla(event.kickMessage()));
 				}
@@ -318,7 +318,7 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 				}
 			};
 
-			((MinecraftServerBridge) CraftServer.server).getProcessQueue().add(waitable);
+			((MinecraftServerBridge) (Object) CraftServer.server).getProcessQueue().add(waitable);
 			if(waitable.get() != PlayerPreLoginEvent.Result.ALLOWED) {
 				disconnect(event.getKickMessage());
 				return;
@@ -352,7 +352,7 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 	@Overwrite
 	private void verifyLoginAndFinishConnectionSetup(GameProfile profile) {
 		PlayerList playerList = this.server.getPlayerList();
-		net.minecraft.network.chat.Component component = org.bukkit.craftbukkit.event.CraftEventFactory.handleLoginResult(((PlayerListBridge)playerList).cardboard$canPlayerLogin(this.connection.getRemoteAddress(), new NameAndId(profile)), this.paperLoginConnection(), this.connection, profile, this.server, true); // Paper
+		net.minecraft.network.chat.Component component = org.bukkit.craftbukkit.event.CraftEventFactory.handleLoginResult(((PlayerListBridge) (Object) playerList).cardboard$canPlayerLogin(this.connection.getRemoteAddress(), new NameAndId(profile)), this.paperLoginConnection(), this.connection, profile, this.server, true); // Paper
 		if (component != null) {
 			this.disconnect(component);
 		} else {
@@ -403,8 +403,8 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 	// Spigot start
 	public void initUUID() {
 		UUID uuid;
-		if(((ConnectionBridge) connection).getSpoofedUUID() != null)
-			uuid = ((ConnectionBridge) connection).getSpoofedUUID();
+		if(((ConnectionBridge) (Object) connection).getSpoofedUUID() != null)
+			uuid = ((ConnectionBridge) (Object) connection).getSpoofedUUID();
 		else {
 			// Note: PlayerEntity (1.18) -> DynamicSerializableUuid (1.19) -> Uuids (1.19.4)
 			uuid = UUIDUtil.createOfflinePlayerUUID(this.authenticatedProfile.name());
@@ -412,8 +412,8 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 
 		this.authenticatedProfile = new GameProfile(uuid, this.authenticatedProfile.name());
 
-		if(((ConnectionBridge) connection).getSpoofedProfile() != null)
-			for(com.mojang.authlib.properties.Property property : ((ConnectionBridge) connection).getSpoofedProfile())
+		if(((ConnectionBridge) (Object) connection).getSpoofedProfile() != null)
+			for(com.mojang.authlib.properties.Property property : ((ConnectionBridge) (Object) connection).getSpoofedProfile())
 				this.authenticatedProfile.properties().put(property.name(), property);
 	}
 	// Spigot end

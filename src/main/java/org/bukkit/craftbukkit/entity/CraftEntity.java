@@ -174,7 +174,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     @Override
     public Location getLocation() {
-        return CraftLocation.toBukkit(this.entity.position(), this.getWorld(), ((EntityBridge)this.entity).cardboard$getBukkitYaw(), this.entity.getXRot());
+        return CraftLocation.toBukkit(this.entity.position(), this.getWorld(), ((EntityBridge) (Object) this.entity).cardboard$getBukkitYaw(), this.entity.getXRot());
     }
 
     @Override
@@ -184,7 +184,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
             loc.setX(this.entity.getX());
             loc.setY(this.entity.getY());
             loc.setZ(this.entity.getZ());
-            loc.setYaw(((EntityBridge)this.entity).cardboard$getBukkitYaw());
+            loc.setYaw(((EntityBridge) (Object) this.entity).cardboard$getBukkitYaw());
             loc.setPitch(this.entity.getXRot());
         }
 
@@ -308,7 +308,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     protected boolean teleport0(Location location, TeleportCause cause, TeleportFlag... flags) {
         Entity entity = this.getHandle();
-        if (!entity.isAlive() || !((EntityBridge)entity).isValidBF()) {
+        if (!entity.isAlive() || !((EntityBridge) (Object) entity).isValidBF()) {
             return false;
         }
 
@@ -482,7 +482,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     @Override
     public boolean isValid() {
-        return this.entity.isAlive() && ((EntityBridge)this.entity).isValidBF();
+        return this.entity.isAlive() && ((EntityBridge) (Object) this.entity).isValidBF();
     }
 
     @Override
@@ -556,7 +556,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
     @Override
     public ItemStack getPickItemStack() {
         net.minecraft.world.item.ItemStack stack = this.getHandle().getPickResult();
-        return stack == null ? ItemStack.empty() : ((ItemStackBridge)stack).cardboard$asBukkitCopy();
+        return stack == null ? ItemStack.empty() : ((ItemStackBridge) (Object) stack).cardboard$asBukkitCopy();
     }
 
     @Override
@@ -1253,7 +1253,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
         this.entity.setLevel(((CraftWorld) location.getWorld()).getHandle());
         this.entity.setPos(location.getX(), location.getY(), location.getZ());
         this.entity.setRot(location.getYaw(), location.getPitch());
-        final boolean spawned = !((EntityBridge)this.entity).isValidBF() && this.entity.level().addFreshEntity(this.entity);//, reason); // TODO
+        final boolean spawned = !((EntityBridge) (Object) this.entity).isValidBF() && this.entity.level().addFreshEntity(this.entity);//, reason); // TODO
         if (!spawned) return false; // Do not attempt to spawn rest if root was not spawned in
         // Like net.minecraft.world.level.ServerLevelAccessor.addFreshEntityWithPassengers(net.minecraft.world.entity.Entity, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason)
         this.entity.getIndirectPassengers().forEach(e -> e.level().addFreshEntity(e));//, reason)); // TODO
@@ -1287,7 +1287,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     @Override
     public float getYaw() {
-        return this.entity.cardboard$getBukkitYaw();
+        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.entity).cardboard$getBukkitYaw();
     }
 
     @Override

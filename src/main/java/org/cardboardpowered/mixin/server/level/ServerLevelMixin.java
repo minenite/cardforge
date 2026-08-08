@@ -132,7 +132,7 @@ public class ServerLevelMixin extends LevelMixin implements ServerLevelBridge {
         // TODO 1.17ify
        // return null; return (MapState) CraftServer.INSTANCE.getServer().getOverworld().getPersistentStateManager().get(() -> {
            /*MapState newMap = new MapState(s);
-            MapInitializeEvent event = new MapInitializeEvent(((IMixinMapState)newMap).getMapViewBF());
+            MapInitializeEvent event = new MapInitializeEvent(((IMixinMapState) (Object) newMap).getMapViewBF());
             Bukkit.getServer().getPluginManager().callEvent(event);
             return newMap;
         }, s);*/
@@ -141,7 +141,7 @@ public class ServerLevelMixin extends LevelMixin implements ServerLevelBridge {
     // TODO 1.17ify
    /* @Inject(at = @At("TAIL"), method = "unloadEntity")
     public void unvalidateEntityBF(Entity entity, CallbackInfo ci) {
-        ((IMixinEntity)entity).setValid(false);
+        ((IMixinEntity) (Object) entity).setValid(false);
     } 
 
     @Inject(at = @At("TAIL"), method = "loadEntityUnchecked")

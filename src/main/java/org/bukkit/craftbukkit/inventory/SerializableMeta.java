@@ -83,7 +83,7 @@ public final class SerializableMeta implements ConfigurationSerializable {
             // Convert Shield CraftMetaBlockState to CraftMetaShield
             if (meta instanceof CraftMetaBlockState state && state.hasBlockState() && state.getBlockState() instanceof Banner) {
                 meta = new CraftMetaShield(meta);
-                ((DataComponentPatch_BuilderBridge)meta.unhandledTags).clear(CraftMetaShield.BASE_COLOR.TYPE);
+                ((DataComponentPatch_BuilderBridge) (Object) meta.unhandledTags).clear(CraftMetaShield.BASE_COLOR.TYPE);
             }
 
             return meta;

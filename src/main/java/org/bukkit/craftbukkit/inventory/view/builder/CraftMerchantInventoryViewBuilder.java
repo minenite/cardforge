@@ -57,12 +57,12 @@ public class CraftMerchantInventoryViewBuilder<V extends InventoryView> extends 
             this.merchant = this.title == null ? new CraftMerchantCustom().getMerchant() : new CraftMerchantCustom(title).getMerchant();
         }
 
-        container = new MerchantMenu(((ServerPlayerBridge)player).cardboard$nextContainerCounter(), serverPlayer.getInventory(), this.merchant);
+        container = new MerchantMenu(((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter(), serverPlayer.getInventory(), this.merchant);
 
-        ((AbstractContainerMenuBridge)container).cardboard$setCheckReachable(super.checkReachable);
+        ((AbstractContainerMenuBridge) (Object) container).cardboard$setCheckReachable(super.checkReachable);
         setDefaultTitle(this.merchant);
-        ((AbstractContainerMenuBridge)container).setTitle(super.title != null ? PaperAdventure.asVanilla(this.title) : super.defaultTitle);
-        return (V) ((AbstractContainerMenuBridge)container).getBukkitView();
+        ((AbstractContainerMenuBridge) (Object) container).setTitle(super.title != null ? PaperAdventure.asVanilla(this.title) : super.defaultTitle);
+        return (V) ((AbstractContainerMenuBridge) (Object) container).getBukkitView();
     }
 
     private void setDefaultTitle(final net.minecraft.world.item.trading.Merchant merchant) {

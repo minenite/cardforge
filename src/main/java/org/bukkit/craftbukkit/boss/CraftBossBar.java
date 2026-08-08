@@ -173,7 +173,7 @@ public class CraftBossBar implements BossBar {
     public List<Player> getPlayers() {
         ImmutableList.Builder<Player> players = ImmutableList.builder();
         for (ServerPlayer p : this.handle.getPlayers()) {
-            players.add(((CraftPlayer)((EntityBridge)p).getBukkitEntity()));
+            players.add(((CraftPlayer)((EntityBridge) (Object) p).getBukkitEntity()));
         }
         return players.build();
     }

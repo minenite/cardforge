@@ -105,7 +105,7 @@ public class CraftBanner extends CraftBlockEntityState<BannerBlockEntity> implem
         for (Pattern p : this.patterns) {
             newPatterns.add(new BannerPatternLayers.Layer(CraftPatternType.bukkitToMinecraftHolder(p.getPattern()), net.minecraft.world.item.DyeColor.byId(p.getColor().getWoolData())));
         }
-        ((BannerBlockEntityBridge)blockEntity).cardboard$setPatterns(new BannerPatternLayers(newPatterns));
+        ((BannerBlockEntityBridge) (Object) blockEntity).cardboard$setPatterns(new BannerPatternLayers(newPatterns));
     }
 
     @Override

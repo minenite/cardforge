@@ -23,7 +23,7 @@ public class CraftInventoryBrewer extends CraftInventory implements BrewerInvent
 
     @Override
     public BrewingStand getHolder() {
-        return (BrewingStand) ((ContainerBridge)this.inventory).getOwner();
+        return (BrewingStand) ((ContainerBridge) (Object) this.inventory).getOwner();
     }
 
     @Override

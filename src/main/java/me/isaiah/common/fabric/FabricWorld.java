@@ -68,12 +68,12 @@ public class FabricWorld implements IWorld {
 
 	@Override
 	public boolean isTheEnd(ServerLevel world) {
-		return ((IMixinWorld) mc1).icommon$is_the_end();
+		return ((IMixinWorld) (Object) mc1).icommon$is_the_end();
 	}
 
 	@Override
 	public BlockPos getSpawnPoint() {
-		return ((IMixinWorld) mc1).icommon$get_spawn_point();
+		return ((IMixinWorld) (Object) mc1).icommon$get_spawn_point();
 	}
 
 }

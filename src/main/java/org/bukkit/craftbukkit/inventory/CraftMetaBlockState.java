@@ -116,11 +116,11 @@ public class CraftMetaBlockState extends CraftMetaItem implements BlockStateMeta
 
             // we don't care about what's in here, all
             // we want is to know which data component types are referenced
-            Set<DataComponentType<?>> applied = ((BlockEntityBridge)dummyBlockEntity).applyComponentsSet(DataComponentMap.EMPTY, DataComponentPatch.EMPTY);
+            Set<DataComponentType<?>> applied = ((BlockEntityBridge) (Object) dummyBlockEntity).applyComponentsSet(DataComponentMap.EMPTY, DataComponentPatch.EMPTY);
             // Paper end - store data in a DataComponentMap to be used to construct CraftBlockEntityStates
             // Mark applied components as handled
             for (DataComponentType<?> seen : applied) {
-                ((DataComponentPatch_BuilderBridge)this.unhandledTags).clear(seen);
+                ((DataComponentPatch_BuilderBridge) (Object) this.unhandledTags).clear(seen);
             }
             // Only set blockEntityTag if something was applied
             if (!applied.isEmpty()) {

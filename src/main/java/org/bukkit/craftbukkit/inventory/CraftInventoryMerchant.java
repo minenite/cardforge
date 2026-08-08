@@ -24,7 +24,7 @@ public class CraftInventoryMerchant extends CraftInventory implements MerchantIn
     @Override
     public MerchantRecipe getSelectedRecipe() {
         net.minecraft.world.item.trading.MerchantOffer nmsRecipe = this.getInventory().getActiveOffer();
-        return (nmsRecipe == null) ? null : ((MerchantOfferBridge)nmsRecipe).asBukkit();
+        return (nmsRecipe == null) ? null : ((MerchantOfferBridge) (Object) nmsRecipe).asBukkit();
     }
 
     @Override
@@ -34,6 +34,6 @@ public class CraftInventoryMerchant extends CraftInventory implements MerchantIn
 
     @Override
     public Merchant getMerchant() {
-        return ((AbstractVillagerBridge)this.merchant).getCraftMerchant();
+        return ((AbstractVillagerBridge) (Object) this.merchant).getCraftMerchant();
     }
 }

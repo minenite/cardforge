@@ -49,7 +49,7 @@ public class BucketItemMixin extends Item {
     
             if (event.isCancelled()) {
                 ((ServerPlayerEntity) player).networkHandler.sendPacket(new BlockUpdateS2CPacket(world, blockposition)); // SPIGOT-5163 (see PlayerInteractManager)
-                ((Player)((IMixinServerEntityPlayer) player).getBukkitEntity()).updateInventory(); // SPIGOT-4541
+                ((Player)((IMixinServerEntityPlayer) (Object) player).getBukkitEntity()).updateInventory(); // SPIGOT-4541
                 // ci.setReturnValue(new TypedActionResult(ActionResult.FAIL, player.getStackInHand(enumhand)));
                 ci.setReturnValue(ActionResult.FAIL);
                 return;
@@ -72,7 +72,7 @@ public class BucketItemMixin extends Item {
 	                PlayerBucketEmptyEvent event = CraftEventFactory.callPlayerBucketEmptyEvent(world, (net.minecraft.world.entity.player.Player) player, blockposition, movingobjectpositionblock.getBlockPos(), movingobjectpositionblock.getDirection(), player.getItemInHand(player.getUsedItemHand()), player.getUsedItemHand());
 	                if (event.isCancelled()) {
 	                    ((ServerPlayer) player).connection.send(new ClientboundBlockUpdatePacket(world, blockposition));
-	                    ((Player)((EntityBridge) player).getBukkitEntity()).updateInventory();
+	                    ((Player)((EntityBridge) (Object) player).getBukkitEntity()).updateInventory();
 	                    ci.setReturnValue(false);
 	                    return;
 	                }

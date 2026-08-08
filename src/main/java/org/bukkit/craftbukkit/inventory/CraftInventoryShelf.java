@@ -25,6 +25,6 @@ public class CraftInventoryShelf extends CraftInventory implements ShelfInventor
 
     @Override
     public Shelf getHolder() {
-        return (Shelf) ((ContainerBridge)this.inventory).getOwner();
+        return (Shelf) ((ContainerBridge) (Object) this.inventory).getOwner();
     }
 }

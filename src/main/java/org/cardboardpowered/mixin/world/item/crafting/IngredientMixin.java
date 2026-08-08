@@ -110,7 +110,7 @@ public class IngredientMixin implements IngredientBridge {
             cancellable = true)
     private void cardboard$does_ingredient_equal(Object other, CallbackInfoReturnable<Boolean> cir) {
     	if (other instanceof Ingredient ingredient) {
-    		boolean paper_equals = Objects.equals(this.itemStacks, ((IngredientBridge)ingredient).cb$itemStacks());
+    		boolean paper_equals = Objects.equals(this.itemStacks, ((IngredientBridge) (Object) ingredient).cb$itemStacks());
     		if (!paper_equals) {
     			cir.setReturnValue(false);
     			return;

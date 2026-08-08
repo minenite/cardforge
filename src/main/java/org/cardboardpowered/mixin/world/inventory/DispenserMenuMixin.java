@@ -34,7 +34,7 @@ public class DispenserMenuMixin extends AbstractContainerMenuMixin {
             return bukkitEntity;
 
         CraftInventory inventory = new CraftInventory(this.dispenser);
-        bukkitEntity = new CraftInventoryView((Player)((EntityBridge)this.playerInv.player).getBukkitEntity(), inventory, (DispenserMenu)(Object)this);
+        bukkitEntity = new CraftInventoryView((Player)((EntityBridge) (Object) this.playerInv.player).getBukkitEntity(), inventory, (DispenserMenu)(Object)this);
         return bukkitEntity;
     }
 

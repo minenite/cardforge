@@ -38,11 +38,11 @@ public class ServerHandshakePacketListenerImplMixin {
                     if ( split.length == 3 || split.length == 4 ) {
                        // TODO 1.17ify packethandshakinginsetprotocol.address = split[0];
                         connection.address = new java.net.InetSocketAddress(split[1], ((java.net.InetSocketAddress) connection.getRemoteAddress()).getPort());
-                        ((ConnectionBridge)connection).setSpoofedUUID(fromString( split[2] ));
+                        ((ConnectionBridge) (Object) connection).setSpoofedUUID(fromString( split[2] ));
                     } else {
                         return;
                     }
-                    if ( split.length == 4 ) ((ConnectionBridge)connection).setSpoofedProfile(gson.fromJson(split[3], com.mojang.authlib.properties.Property[].class));
+                    if ( split.length == 4 ) ((ConnectionBridge) (Object) connection).setSpoofedProfile(gson.fromJson(split[3], com.mojang.authlib.properties.Property[].class));
                 }
                 ((ServerLoginPacketListenerImplBridge)((ServerLoginPacketListenerImpl) this.connection.getPacketListener())).setHostname(packet.hostName() + ":" + packet.port()); // Bukkit - set hostname
             }

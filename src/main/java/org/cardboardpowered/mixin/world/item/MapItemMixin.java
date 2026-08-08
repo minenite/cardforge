@@ -21,7 +21,7 @@ public class MapItemMixin {
         world.putMapState(worldmap);
         itemstack.getOrCreateTag().putInt("map", l);
 
-        MapInitializeEvent event = new MapInitializeEvent(((IMixinMapState)worldmap).getMapViewBF());
+        MapInitializeEvent event = new MapInitializeEvent(((IMixinMapState) (Object) worldmap).getMapViewBF());
         Bukkit.getServer().getPluginManager().callEvent(event);
         return worldmap;
     }*/

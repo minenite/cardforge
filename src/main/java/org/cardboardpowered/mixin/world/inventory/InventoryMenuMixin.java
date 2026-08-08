@@ -43,7 +43,7 @@ public class InventoryMenuMixin extends AbstractContainerMenuMixin implements Me
         InventoryMenu thiz = (InventoryMenu)(Object)this;
 
         CraftInventoryCrafting inventory = new CraftInventoryCrafting(thiz.craftSlots, thiz.resultSlots);
-        bukkitEntity = new CraftInventoryView((Player)((ServerPlayerBridge)this.player.player).getBukkitEntity(), inventory, (InventoryMenu)(Object)this);
+        bukkitEntity = new CraftInventoryView((Player)((ServerPlayerBridge) (Object) this.player.player).getBukkitEntity(), inventory, (InventoryMenu)(Object)this);
         return bukkitEntity;
     }
 

@@ -168,7 +168,7 @@ public class ServerPlayerGameModeMixin implements ServerPlayerGameModeBridge {
             // TODO 1.17ify packet.state = Blocks.AIR.getDefaultState();
             this.player.connection.send(packet);
         }
-        BlockBreakEvent event = new BlockBreakEvent(bblock, (Player) ((ServerPlayerBridge)this.player).getBukkitEntity());
+        BlockBreakEvent event = new BlockBreakEvent(bblock, (Player) ((ServerPlayerBridge) (Object) this.player).getBukkitEntity());
         event.setCancelled(isSwordNoBreak);
 
         CraftServer.INSTANCE.getPluginManager().callEvent(event);
@@ -250,9 +250,9 @@ public class ServerPlayerGameModeMixin implements ServerPlayerGameModeBridge {
                 boolean bottom = iblockdata.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER;
                 entityplayer.connection.send(new ClientboundBlockUpdatePacket(world, bottom ? blockposition.above() : blockposition.below()));
             } else if (iblockdata.getBlock() instanceof CakeBlock) {
-                // TODO ((CraftPlayer)((IMixinServerEntityPlayer)entityplayer).getBukkitEntity()).sendHealthUpdate();
+                // TODO ((CraftPlayer)((IMixinServerEntityPlayer) (Object) entityplayer).getBukkitEntity()).sendHealthUpdate();
             }
-            ((CraftPlayer)((ServerPlayerBridge)entityplayer).getBukkitEntity()).updateInventory();
+            ((CraftPlayer)((ServerPlayerBridge) (Object) entityplayer).getBukkitEntity()).updateInventory();
             enuminteractionresult = (event.useItemInHand() != Event.Result.ALLOW) ? InteractionResult.SUCCESS : InteractionResult.PASS;
         } else if (this.gameModeForPlayer == GameType.SPECTATOR) {
             MenuProvider itileinventory = iblockdata.getMenuProvider(world, blockposition);

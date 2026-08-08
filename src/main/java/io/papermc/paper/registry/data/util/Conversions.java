@@ -114,8 +114,8 @@ public class Conversions {
             final RegistryEntryMeta.Buildable<M, A, B> buildableMeta
     ) {
         final ResourceKey<? extends Registry<M>> resourceRegistryKey = PaperRegistries.registryToNms(registryKey);
-        final HolderLookup.RegistryLookup<M> lookupForBuilders = ((RegistryInfoLookupBridge)this.lookup).lookupForValueCopyViaBuilders().lookupOrThrow(resourceRegistryKey);
-        return new PaperRegistryBuilderFactory<>(resourceRegistryKey, this, buildableMeta.builderFiller(), ((RegistryLookupBridge)lookupForBuilders)::getValueForCopying);
+        final HolderLookup.RegistryLookup<M> lookupForBuilders = ((RegistryInfoLookupBridge) (Object) this.lookup).lookupForValueCopyViaBuilders().lookupOrThrow(resourceRegistryKey);
+        return new PaperRegistryBuilderFactory<>(resourceRegistryKey, this, buildableMeta.builderFiller(), ((RegistryLookupBridge) (Object) lookupForBuilders)::getValueForCopying);
     }
 
 }

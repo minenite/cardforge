@@ -96,7 +96,7 @@ public abstract class InventoryMixin implements Container, ContainerBridge, Inve
 
     @Override
     public org.bukkit.inventory.InventoryHolder getOwner() {
-        return (InventoryHolder) ((EntityBridge)this.player).getBukkitEntity();
+        return (InventoryHolder) ((EntityBridge) (Object) this.player).getBukkitEntity();
     }
 
     @Override
@@ -111,7 +111,7 @@ public abstract class InventoryMixin implements Container, ContainerBridge, Inve
 
     @Override
     public org.bukkit.Location getLocation() {
-        return ((EntityBridge)this.player).getBukkitEntity().getLocation();
+        return ((EntityBridge) (Object) this.player).getBukkitEntity().getLocation();
     }
     // Paper end - add fields and methods
 

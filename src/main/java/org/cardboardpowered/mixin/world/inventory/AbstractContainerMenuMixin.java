@@ -69,7 +69,7 @@ public abstract class AbstractContainerMenuMixin implements AbstractContainerMen
 
     @Override
     public void transferTo(AbstractContainerMenu other, CraftHumanEntity player) {
-        InventoryView source = this.getBukkitView(), destination = ((AbstractContainerMenuBridge)other).getBukkitView();
+        InventoryView source = this.getBukkitView(), destination = ((AbstractContainerMenuBridge) (Object) other).getBukkitView();
 
         if ((source.getTopInventory() instanceof CustomInventoryView) || source.getBottomInventory() instanceof CustomInventoryView ||
                 destination.getTopInventory() instanceof CustomInventoryView || destination.getBottomInventory() instanceof CustomInventoryView) {

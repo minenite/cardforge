@@ -23,7 +23,7 @@ public class CraftDoubleChestInventoryViewBuilder<V extends InventoryView> exten
     @Override
     protected AbstractContainerMenu buildContainer(final ServerPlayer player) {
         if (super.world == null) {
-            return handle.create(((ServerPlayerBridge)player).cardboard$nextContainerCounter(), player.getInventory());
+            return handle.create(((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter(), player.getInventory());
         }
 
         final ChestBlock chest = (ChestBlock) Blocks.CHEST;
@@ -31,15 +31,15 @@ public class CraftDoubleChestInventoryViewBuilder<V extends InventoryView> exten
                 super.world.getBlockState(super.position), super.world, super.position, false
         );
         if (result instanceof DoubleBlockCombiner.NeighborCombineResult.Single<? extends ChestBlockEntity>) {
-            return handle.create(((ServerPlayerBridge)player).cardboard$nextContainerCounter(), player.getInventory());
+            return handle.create(((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter(), player.getInventory());
         }
 
         final MenuProvider combined = result.apply(ChestBlock.MENU_PROVIDER_COMBINER).orElse(null);
         if (combined == null) {
-            return handle.create(((ServerPlayerBridge)player).cardboard$nextContainerCounter(), player.getInventory());
+            return handle.create(((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter(), player.getInventory());
         }
 
-        return combined.createMenu(((ServerPlayerBridge)player).cardboard$nextContainerCounter(), player.getInventory(), player);
+        return combined.createMenu(((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter(), player.getInventory(), player);
     }
 
     @Override

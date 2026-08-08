@@ -127,7 +127,7 @@ public class PlayerListMixin_ChatEvent {
             });
             
             if (async)
-                ((MinecraftServerBridge)CraftServer.server).getProcessQueue().add(waitable);
+                ((MinecraftServerBridge) (Object) CraftServer.server).getProcessQueue().add(waitable);
             else waitable.run();
             try {
                 waitable.get();

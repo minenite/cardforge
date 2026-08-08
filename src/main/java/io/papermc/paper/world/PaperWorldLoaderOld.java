@@ -123,7 +123,7 @@ public record PaperWorldLoaderOld(MinecraftServer server, String levelId) {
 			PaperWorldLoader.WorldLoadingInfo info = this.getWorldInfo(this.levelId, stem);
 			this.migrateWorldFolder(info);
 			if (info.enabled()) {
-				LevelStorageSource.LevelStorageAccess levelStorageAccess = ((MinecraftServerBridge) this.server).getSessionBF();
+				LevelStorageSource.LevelStorageAccess levelStorageAccess = ((MinecraftServerBridge) (Object) this.server).getSessionBF();
 				if (info.dimension() != 0) {
 					try {
 						levelStorageAccess = ((LevelStorageSourceBridge) LevelStorageSource.createDefault(CraftServer.INSTANCE.getWorldContainer().toPath()))
@@ -158,7 +158,7 @@ public record PaperWorldLoaderOld(MinecraftServer server, String levelId) {
 							.worldData();
 				}
 
-				((PrimaryLevelDataBridge) primaryLevelData).checkName(info.name());
+				((PrimaryLevelDataBridge) (Object) primaryLevelData).checkName(info.name());
 				primaryLevelData.setModdedInfo(this.server.getServerModName(), this.server.getModdedStatus().shouldReportAsModified());
 
 				/*
@@ -175,7 +175,7 @@ public record PaperWorldLoaderOld(MinecraftServer server, String levelId) {
 			}
 				 *
 
-				((MinecraftServerBridge) this.server).createLevel(stem, info, levelStorageAccess, primaryLevelData);
+				((MinecraftServerBridge) (Object) this.server).createLevel(stem, info, levelStorageAccess, primaryLevelData);
 			}
 		}
 

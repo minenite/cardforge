@@ -208,7 +208,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                 });
 
                 if (async)
-                    ((IMixinMinecraftServer)CraftServer.server).getProcessQueue().add(waitable);
+                    ((IMixinMinecraftServer) (Object) CraftServer.server).getProcessQueue().add(waitable);
                 else waitable.run();
                 try {
                     waitable.get();
@@ -554,7 +554,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                                         }
 
                                         if (!oldTo.equals(event.getTo()) && !event.isCancelled()) {
-                                            ((Player)((EntityBridge)this.player).getBukkitEntity()).
+                                            ((Player)((EntityBridge) (Object) this.player).getBukkitEntity()).
                                                     teleport(event.getTo(), PlayerTeleportEvent.TeleportCause.PLUGIN);
                                             return;
                                         }
@@ -682,9 +682,9 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                 org.bukkit.event.player.PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.player, Action.RIGHT_CLICK_AIR, itemstack, enumhand);
                 cancelled = event.useItemInHand() == org.bukkit.event.Event.Result.DENY;
             } else {
-                if (((ServerPlayerGameModeBridge)player.gameMode).getFiredInteractBF()) {
-                    ((ServerPlayerGameModeBridge)player.gameMode).setFiredInteractBF(false);
-                    cancelled = ((ServerPlayerGameModeBridge)player.gameMode).getInteractResultBF();
+                if (((ServerPlayerGameModeBridge) (Object) player.gameMode).getFiredInteractBF()) {
+                    ((ServerPlayerGameModeBridge) (Object) player.gameMode).setFiredInteractBF(false);
+                    cancelled = ((ServerPlayerGameModeBridge) (Object) player.gameMode).getInteractResultBF();
                 } else {
                     BlockHitResult movingobjectpositionblock = (BlockHitResult) movingobjectposition;
                     org.bukkit.event.player.PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(player, Action.RIGHT_CLICK_BLOCK, movingobjectpositionblock.getBlockPos(), movingobjectpositionblock.getDirection(), itemstack, true, enumhand);
@@ -693,7 +693,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
             }
 
             if (cancelled) {
-                ((Player)((ServerPlayerBridge)this.player).getBukkitEntity()).updateInventory(); // SPIGOT-2524
+                ((Player)((ServerPlayerBridge) (Object) this.player).getBukkitEntity()).updateInventory(); // SPIGOT-2524
                 ci.cancel();
                 return;
             }
@@ -728,7 +728,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
     @Inject(at = @At("TAIL"), method = "handlePlayerAbilities")
     public void doBukkitEvent_PlayerToggleFlightEvent(ServerboundPlayerAbilitiesPacket packet, CallbackInfo ci) {
         if (this.player.abilities.mayfly && this.player.abilities.flying != packet.isFlying()) {
-            PlayerToggleFlightEvent event = new PlayerToggleFlightEvent((Player)(((ServerPlayerBridge)this.player).getBukkitEntity()), packet.isFlying());
+            PlayerToggleFlightEvent event = new PlayerToggleFlightEvent((Player)(((ServerPlayerBridge) (Object) this.player).getBukkitEntity()), packet.isFlying());
             Bukkit.getPluginManager().callEvent(event);
             if (!event.isCancelled()) {
                 this.player.abilities.flying = packet.isFlying();

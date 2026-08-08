@@ -180,7 +180,7 @@ public class CraftBlockState implements BlockState {
 
     @Override
     public Material getType() {
-        return ((BlockStateBridge)this.data).cardboard$getBukkitMaterial();
+        return ((BlockStateBridge) (Object) this.data).cardboard$getBukkitMaterial();
     }
 
     public void setFlags(@net.minecraft.world.level.block.Block.UpdateFlags int flags) {

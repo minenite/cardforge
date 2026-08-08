@@ -60,17 +60,17 @@ public class FabricEntity implements IEntity {
 
     @Override
     public void remove(IRemoveReason r) {
-        ((IMixinEntity)mc).Iremove(r);
+        ((IMixinEntity) (Object) mc).Iremove(r);
     }
 
     @Override
     public void message(String msg) {
-        ((IMixinEntity)mc).IsendText(Component.nullToEmpty(msg), UUID.randomUUID());
+        ((IMixinEntity) (Object) mc).IsendText(Component.nullToEmpty(msg), UUID.randomUUID());
     }
 
     @Override
     public boolean isRemoved() {
-        return ((IMixinEntity)mc).ic_isRemoved();
+        return ((IMixinEntity) (Object) mc).ic_isRemoved();
     }
 
     @Override
@@ -82,7 +82,7 @@ public class FabricEntity implements IEntity {
     public void teleport(double x, double y, double z) {
     	// TODO: ServerWorld argument is currently null;
     	// used to future proof
-    	((IMixinEntity)mc).IC$teleport(null, x, y, z);
+    	((IMixinEntity) (Object) mc).IC$teleport(null, x, y, z);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class FabricEntity implements IEntity {
     @Override
     public void set_tamed(boolean tame, boolean updateAttrib) {
     	if (mc instanceof IMixinTameableEntity) {
-    		((IMixinTameableEntity)mc).IC$set_tamed(tame, updateAttrib);
+    		((IMixinTameableEntity) (Object) mc).IC$set_tamed(tame, updateAttrib);
     	} else {
     		// Not TameableEntity
     	}

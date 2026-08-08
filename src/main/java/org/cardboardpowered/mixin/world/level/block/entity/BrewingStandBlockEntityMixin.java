@@ -74,10 +74,10 @@ public abstract class BrewingStandBlockEntityMixin implements Container, Contain
      */
     @Inject(at = @At("HEAD"), method = "serverTick", cancellable = true)
     private static void doBukkitEvent_BrewingStandFuelEvent(Level world, BlockPos pos, BlockState state, BrewingStandBlockEntity be, CallbackInfo ci) {
-        ItemStack itemstack = (ItemStack) ((BrewingStandBlockEntityBridge)be).cardboard_getInventory().get(4);
+        ItemStack itemstack = (ItemStack) ((BrewingStandBlockEntityBridge) (Object) be).cardboard_getInventory().get(4);
 
         if (be.fuel <= 0 && itemstack.getItem() == Items.BLAZE_POWDER) {
-            BrewingStandFuelEvent event = new BrewingStandFuelEvent(((LevelBridge)be.level).cardboard$getWorld().getBlockAt(be.worldPosition.getX(), be.worldPosition.getY(), be.worldPosition.getZ()), CraftItemStack.asCraftMirror(itemstack), 20);
+            BrewingStandFuelEvent event = new BrewingStandFuelEvent(((LevelBridge) (Object) be.level).cardboard$getWorld().getBlockAt(be.worldPosition.getX(), be.worldPosition.getY(), be.worldPosition.getZ()), CraftItemStack.asCraftMirror(itemstack), 20);
             CraftServer.INSTANCE.getPluginManager().callEvent(event);
 
             if (event.isCancelled()) {

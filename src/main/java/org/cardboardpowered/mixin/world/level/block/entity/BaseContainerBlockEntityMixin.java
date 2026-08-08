@@ -15,7 +15,7 @@ public class BaseContainerBlockEntityMixin implements BaseContainerBlockEntityBr
     public Location getLocation() {
         BaseContainerBlockEntity lc = (BaseContainerBlockEntity)(Object)this;
         BlockPos pos = lc.getBlockPos();
-        return new Location(((LevelBridge)lc.level).cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ());
+        return new Location(((LevelBridge) (Object) lc.level).cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ());
     }
 
 }

@@ -33,7 +33,7 @@ public class MerchantMenuMixin extends AbstractContainerMenuMixin {
     @Override
     public CraftInventoryView getBukkitView() {
         if (bukkitEntity == null)
-            bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((EntityBridge)this.player.player).getBukkitEntity(), new CraftInventoryMerchant(trader, tradeContainer), (MerchantMenu)(Object)this);
+            bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((EntityBridge) (Object) this.player.player).getBukkitEntity(), new CraftInventoryMerchant(trader, tradeContainer), (MerchantMenu)(Object)this);
         return bukkitEntity;
     }
 

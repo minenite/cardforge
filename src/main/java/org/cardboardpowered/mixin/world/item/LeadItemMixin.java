@@ -55,7 +55,7 @@ public class LeadItemMixin extends Item {
                 if (leashKnotEntity == null) {
                     leashKnotEntity = LeashFenceKnotEntity.getOrCreateKnot(world, pos);
 
-                    HangingPlaceEvent event = new HangingPlaceEvent((Hanging) ((EntityBridge) leashKnotEntity).getBukkitEntity(), player != null ? (Player) ((ServerPlayerBridge) player).getBukkitEntity() : null, CraftBlock.at((ServerLevel) world, pos), BlockFace.SELF, EquipmentSlot.HAND);
+                    HangingPlaceEvent event = new HangingPlaceEvent((Hanging) ((EntityBridge) (Object) leashKnotEntity).getBukkitEntity(), player != null ? (Player) ((ServerPlayerBridge) (Object) player).getBukkitEntity() : null, CraftBlock.at((ServerLevel) world, pos), BlockFace.SELF, EquipmentSlot.HAND);
                     Bukkit.getPluginManager().callEvent(event);
 
                     if (event.isCancelled()) {

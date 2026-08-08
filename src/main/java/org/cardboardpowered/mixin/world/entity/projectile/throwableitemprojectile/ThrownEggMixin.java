@@ -46,7 +46,7 @@ public abstract class ThrownEggMixin {
 
             Entity shooter = egg.getOwner();
             if (shooter instanceof ServerPlayer) {
-                PlayerEggThrowEvent event = new PlayerEggThrowEvent((Player) ((EntityBridge)shooter).getBukkitEntity(), (org.bukkit.entity.Egg) ((EntityBridge)egg).getBukkitEntity(), hatching, b0, hatchingType);
+                PlayerEggThrowEvent event = new PlayerEggThrowEvent((Player) ((EntityBridge) (Object) shooter).getBukkitEntity(), (org.bukkit.entity.Egg) ((EntityBridge) (Object) egg).getBukkitEntity(), hatching, b0, hatchingType);
                 CraftServer.INSTANCE.getPluginManager().callEvent(event);
 
                 b0 = event.getNumHatches();
@@ -55,7 +55,7 @@ public abstract class ThrownEggMixin {
             }
 
             // Paper start
-            ThrownEggHatchEvent event = new ThrownEggHatchEvent((org.bukkit.entity.Egg) ((EntityBridge)egg).getBukkitEntity(), hatching, b0, hatchingType);
+            ThrownEggHatchEvent event = new ThrownEggHatchEvent((org.bukkit.entity.Egg) ((EntityBridge) (Object) egg).getBukkitEntity(), hatching, b0, hatchingType);
             event.callEvent();
 
             b0 = event.getNumHatches();
@@ -64,10 +64,10 @@ public abstract class ThrownEggMixin {
             // Paper end
             if (hatching) {
                 for (int i = 0; i < b0; ++i) {
-                    CraftWorld cw = ((LevelBridge)world).cardboard$getWorld();
+                    CraftWorld cw = ((LevelBridge) (Object) world).cardboard$getWorld();
                     Entity entity = cw.createEntity_Old(new org.bukkit.Location(cw, egg.getX(), egg.getY(), egg.getZ(), egg.getYRot(), 0.0F), hatchingType.getEntityClass());
-                    if (((EntityBridge)entity).getBukkitEntity() instanceof Ageable)
-                        ((Ageable) ((EntityBridge)entity).getBukkitEntity()).setBaby();
+                    if (((EntityBridge) (Object) entity).getBukkitEntity() instanceof Ageable)
+                        ((Ageable) ((EntityBridge) (Object) entity).getBukkitEntity()).setBaby();
                     cw.addEntity(entity, SpawnReason.EGG);
                 }
             }

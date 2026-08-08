@@ -91,7 +91,7 @@ public class CraftBlockProjectileSource implements BlockProjectileSource {
 
         Position position = dispenseConfig.positionFunction().getDispensePosition(blockSource, direction);
         net.minecraft.world.entity.projectile.Projectile launch = projectileItem.asProjectile(world, position, itemstack, direction);
-        ((EntityBridge)launch).setProjectileSourceBukkit(this);
+        ((EntityBridge) (Object) launch).setProjectileSourceBukkit(this);
         projectileItem.shoot(launch, direction.getStepX(), direction.getStepY(), direction.getStepZ(), dispenseConfig.power(), dispenseConfig.uncertainty());
 
         if (velocity != null) {

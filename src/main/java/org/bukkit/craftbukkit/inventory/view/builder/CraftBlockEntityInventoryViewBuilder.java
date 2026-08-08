@@ -56,7 +56,7 @@ public class CraftBlockEntityInventoryViewBuilder<V extends InventoryView> exten
             return buildFakeBlockEntity(player);
         }
 
-        final AbstractContainerMenu atBlock = container.createMenu(((ServerPlayerBridge)player).cardboard$nextContainerCounter(), player.getInventory(), player);
+        final AbstractContainerMenu atBlock = container.createMenu(((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter(), player.getInventory(), player);
         if (atBlock.getType() != super.handle) {
             return buildFakeBlockEntity(player);
         }
@@ -77,10 +77,10 @@ public class CraftBlockEntityInventoryViewBuilder<V extends InventoryView> exten
         }
 
         if (!this.useFakeBlockEntity) { // gets around open noise for chest
-            return handle.create(((ServerPlayerBridge)player).cardboard$nextContainerCounter(), player.getInventory());
+            return handle.create(((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter(), player.getInventory());
         }
 
-        return inventory.createMenu(((ServerPlayerBridge)player).cardboard$nextContainerCounter(), player.getInventory(), player);
+        return inventory.createMenu(((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter(), player.getInventory(), player);
     }
 
     @Override

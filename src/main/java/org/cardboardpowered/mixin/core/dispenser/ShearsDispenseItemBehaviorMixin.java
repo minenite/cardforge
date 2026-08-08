@@ -80,7 +80,7 @@ public class ShearsDispenseItemBehaviorMixin {
 
     	BlockShearEntityEvent bse = new BlockShearEntityEvent(
     			dispenser,
-    			((EntityBridge)animal).getBukkitEntity(),
+    			((EntityBridge) (Object) animal).getBukkitEntity(),
     			is,
     			Lists.transform(drops, CraftItemStack::asCraftMirror)
     	);

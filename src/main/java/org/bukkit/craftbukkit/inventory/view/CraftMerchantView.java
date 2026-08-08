@@ -26,7 +26,7 @@ public class CraftMerchantView extends CraftInventoryView<MerchantMenu, Merchant
     public Merchant getMerchant() {
     	
     	if (this.trader instanceof AbstractVillager) {
-    		return (CraftAbstractVillager) (((EntityBridge)this.trader).getBukkitEntity());
+    		return (CraftAbstractVillager) (((EntityBridge) (Object) this.trader).getBukkitEntity());
     	}
     	
     	return null; // TODO

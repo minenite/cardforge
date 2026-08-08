@@ -29,8 +29,8 @@ public class AnvilMenuMixin extends ItemCombinerMenuMixin implements AnvilMenuBr
             return bukkitEntity;
 
         org.bukkit.craftbukkit.inventory.CraftInventory inventory = new CraftInventoryAnvil(
-                ((ContainerLevelAccessBridge)access).getLocation(), this.inputSlots, this.resultSlots);
-        bukkitEntity = new CraftInventoryView((Player)((ServerPlayerBridge)this.player).getBukkitEntity(), inventory, (AnvilMenu)(Object)this);
+                ((ContainerLevelAccessBridge) (Object) access).getLocation(), this.inputSlots, this.resultSlots);
+        bukkitEntity = new CraftInventoryView((Player)((ServerPlayerBridge) (Object) this.player).getBukkitEntity(), inventory, (AnvilMenu)(Object)this);
         return bukkitEntity;
     }
 

@@ -66,7 +66,7 @@ public class CraftContainer extends AbstractContainerMenu implements AbstractCon
 
             @Override
             public HumanEntity getPlayer() {
-                return (HumanEntity) ((EntityBridge)player).getBukkitEntity();
+                return (HumanEntity) ((EntityBridge) (Object) player).getBukkitEntity();
             }
 
             @Override

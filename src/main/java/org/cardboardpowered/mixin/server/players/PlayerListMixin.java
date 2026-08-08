@@ -292,7 +292,7 @@ public abstract class PlayerListMixin implements PlayerListBridge {
             respawnReason = RespawnReason.END_PORTAL;
         }
 
-        ServerPlayer_RespawnResult result = ((ServerPlayerBridge) player).cardboard$findRespawnPositionAndUseSpawnBlock0(
+        ServerPlayer_RespawnResult result = ((ServerPlayerBridge) (Object) player).cardboard$findRespawnPositionAndUseSpawnBlock0(
                 !keepInventory,
                 TeleportTransition.DO_NOTHING,
                 respawnReason
@@ -327,8 +327,8 @@ public abstract class PlayerListMixin implements PlayerListBridge {
     /*@Inject(method = "respawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;snapTo(DDDFF)V", shift = At.Shift.BEFORE))
     private void cardboard$beforeSnapTo(ServerPlayer player, boolean keepInventory, Entity.RemovalReason removalReason, CallbackInfoReturnable<ServerPlayer> cir) {
         // Paper start - Once we not reuse the player entity we can remove this.
-        if (!keepInventory) ((ServerPlayerBridge)player).reset();
-        ((ServerPlayerBridge)player).spawnIn(player.level());
+        if (!keepInventory) ((ServerPlayerBridge) (Object) player).reset();
+        ((ServerPlayerBridge) (Object) player).spawnIn(player.level());
         player.unsetRemoved();
         player.setShiftKeyDown(false);
         // Paper end
@@ -344,12 +344,12 @@ public abstract class PlayerListMixin implements PlayerListBridge {
 
     /*@Inject(method = "respawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V", ordinal = 0, shift = At.Shift.AFTER))
     private void cardboard$clearRespawnIfBlocked(ServerPlayer player, boolean keepInventory, Entity.RemovalReason removalReason, CallbackInfoReturnable<ServerPlayer> cir) {
-        ((ServerPlayerBridge)player).cardboard$setRespawnPosition(null, false, PlayerSetSpawnEvent.Cause.PLAYER_RESPAWN); // CraftBukkit - SPIGOT-5988: Clear respawn location when obstructed
+        ((ServerPlayerBridge) (Object) player).cardboard$setRespawnPosition(null, false, PlayerSetSpawnEvent.Cause.PLAYER_RESPAWN); // CraftBukkit - SPIGOT-5988: Clear respawn location when obstructed
     }*/
 
     @WrapOperation(method = "respawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;teleport(DDDFF)V"))
     private void cardboard$respawnUseInternalTeleport(ServerGamePacketListenerImpl connection, double x, double y, double z, float yRot, float xRot, Operation<Void> original) {
-        ((ServerGamePacketListenerImplBridge)connection).cardboard$internalTeleport(x, y, z, yRot, xRot);
+        ((ServerGamePacketListenerImplBridge) (Object) connection).cardboard$internalTeleport(x, y, z, yRot, xRot);
     }
 
     @Inject(method = "respawn", at = @At("RETURN"))
@@ -368,19 +368,19 @@ public abstract class PlayerListMixin implements PlayerListBridge {
 
         // Paper start
         // Save player file again if they were disconnected
-        if (((ServerGamePacketListenerImplBridge)player.connection).isDisconnected()) {
+        if (((ServerGamePacketListenerImplBridge) (Object) player.connection).isDisconnected()) {
             this.save(player);
         }
 
         // It's possible for respawn to be in a diff dimension
         if (fromLevel != currentLevel) {
-            new org.bukkit.event.player.PlayerChangedWorldEvent((Player) ((EntityBridge)player).getBukkitEntity(), ((LevelBridge)fromLevel).cardboard$getWorld()).callEvent();
+            new org.bukkit.event.player.PlayerChangedWorldEvent((Player) ((EntityBridge) (Object) player).getBukkitEntity(), ((LevelBridge) (Object) fromLevel).cardboard$getWorld()).callEvent();
             player.triggerDimensionChangeTriggers(currentLevel);
         }
 
         // Call post respawn event
         new com.destroystokyo.paper.event.player.PlayerPostRespawnEvent(
-                (Player) ((EntityBridge)player).getBukkitEntity(),
+                (Player) ((EntityBridge) (Object) player).getBukkitEntity(),
                 org.bukkit.craftbukkit.util.CraftLocation.toBukkit(teleportTransition.position(), currentLevel, teleportTransition.yRot(), teleportTransition.xRot()),
                 result.isBedSpawn(),
                 result.isAnchorSpawn(),

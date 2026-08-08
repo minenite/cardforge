@@ -23,15 +23,15 @@ public class PaperPlayerLoginConnection extends ReadablePlayerCookieConnectionIm
 	}
 	
 	private ServerLoginPacketListenerImplBridge ipacketListener() {
-		return ((ServerLoginPacketListenerImplBridge) this.packetListener);
+		return ((ServerLoginPacketListenerImplBridge) (Object) this.packetListener);
 	}
 	
 	private Connection packetListener_connection() {
-		return ((ServerLoginPacketListenerImplBridge) this.packetListener).cb_get_connection();
+		return ((ServerLoginPacketListenerImplBridge) (Object) this.packetListener).cb_get_connection();
 	}
 
 	public PaperPlayerLoginConnection(ServerLoginPacketListenerImpl packetListener) {
-		super(((ServerLoginPacketListenerImplBridge) packetListener).cb_get_connection());
+		super(((ServerLoginPacketListenerImplBridge) (Object) packetListener).cb_get_connection());
 		this.packetListener = packetListener;
 	}
 

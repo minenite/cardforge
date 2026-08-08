@@ -74,7 +74,7 @@ public class CraftBlockData implements BlockData {
 
     @Override
     public Material getMaterial() {
-        return ((BlockStateBridge)this.state).cardboard$getBukkitMaterial(); // Paper - optimise getType calls
+        return ((BlockStateBridge) (Object) this.state).cardboard$getBukkitMaterial(); // Paper - optimise getType calls
     }
 
     public net.minecraft.world.level.block.state.BlockState getState() {
@@ -613,11 +613,11 @@ public class CraftBlockData implements BlockData {
 
     public static void reloadCache() {
         stringDataCache.clear();
-        Block.BLOCK_STATE_REGISTRY.forEach(blockData -> stringDataCache.put(blockData.toString(), ((BlockStateBaseBridge)blockData).cardboard$createCraftBlockData()));
+        Block.BLOCK_STATE_REGISTRY.forEach(blockData -> stringDataCache.put(blockData.toString(), ((BlockStateBaseBridge) (Object) blockData).cardboard$createCraftBlockData()));
     
         ENCODER_CACHE.clear();
         Block.BLOCK_STATE_REGISTRY.forEach(state -> {
-            CraftBlockData data = ((BlockStateBaseBridge)state).cardboard$createCraftBlockData();
+            CraftBlockData data = ((BlockStateBaseBridge) (Object) state).cardboard$createCraftBlockData();
             ENCODER_CACHE.put(data.getAsString(), data);
         });
     }
@@ -716,10 +716,10 @@ public class CraftBlockData implements BlockData {
     // Paper start - optimize creating BlockData to not need a map lookup
     static {
         // Initialize cached data for all BlockState instances after registration
-        Block.BLOCK_STATE_REGISTRY.iterator().forEachRemaining(blockState -> ((BlockStateBaseBridge)blockState).cardboard$createCraftBlockData());
+        Block.BLOCK_STATE_REGISTRY.iterator().forEachRemaining(blockState -> ((BlockStateBaseBridge) (Object) blockState).cardboard$createCraftBlockData());
     }
     public static CraftBlockData fromData(net.minecraft.world.level.block.state.BlockState data) {
-        return ((BlockStateBaseBridge)data).cardboard$createCraftBlockData();
+        return ((BlockStateBaseBridge) (Object) data).cardboard$createCraftBlockData();
     }
 
     public static CraftBlockData createData(net.minecraft.world.level.block.state.BlockState data) {

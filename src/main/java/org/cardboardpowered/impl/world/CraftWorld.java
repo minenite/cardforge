@@ -301,7 +301,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		ItemEntity entity = new ItemEntity(world, loc.getX(), loc.getY(), loc.getZ(), CraftItemStack.asNMSCopy(arg1));
 		entity.pickupDelay = 10;
 		world.addEntity(entity);
-		return (org.bukkit.entity.Item) (((EntityBridge) entity).getBukkitEntity());
+		return (org.bukkit.entity.Item) (((EntityBridge) (Object) entity).getBukkitEntity());
 	}
 
 	@Override
@@ -533,7 +533,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		List<Entity> list = new ArrayList<>();
 
 		world.getAllEntities().forEach(entity -> {
-			Entity bukkitEntity = ((EntityBridge) entity).getBukkitEntity();
+			Entity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntity();
 			if(bukkitEntity != null && bukkitEntity.isValid())
 				list.add(bukkitEntity);
 		});
@@ -813,7 +813,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		for(Object o : world.getAllEntities()) {
 			if(o instanceof net.minecraft.world.entity.Entity) {
 				net.minecraft.world.entity.Entity mcEnt = (net.minecraft.world.entity.Entity) o;
-				Entity bukkitEntity = ((EntityBridge) mcEnt).getBukkitEntity();
+				Entity bukkitEntity = ((EntityBridge) (Object) mcEnt).getBukkitEntity();
 
 				// Assuming that bukkitEntity isn't null
 				if(bukkitEntity != null && bukkitEntity instanceof LivingEntity && bukkitEntity.isValid())
@@ -836,7 +836,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	private static Chunk getBukkitChunkForChunk(LevelChunk mc) {
-		return ((LevelChunkBridge) mc).getBukkitChunk();
+		return ((LevelChunkBridge) (Object) mc).getBukkitChunk();
 	}
 
 	@Override
@@ -878,7 +878,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		List<Entity> bukkitEntityList = new ArrayList<org.bukkit.entity.Entity>(entityList.size());
 
 		for(net.minecraft.world.entity.Entity entity : entityList) {
-			Entity bukkitEntity = ((EntityBridge) entity).getBukkitEntity();
+			Entity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntity();
 			if(filter == null || filter.test(bukkitEntity))
 				bukkitEntityList.add(bukkitEntity);
 		}
@@ -897,7 +897,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		List<Player> list = new ArrayList<>(world.players().size());
 
 		for(ServerPlayer player : world.players())
-			list.add((Player) ((ServerPlayerBridge) player).getBukkitEntity());
+			list.add((Player) ((ServerPlayerBridge) (Object) player).getBukkitEntity());
 
 		return list;
 	}
@@ -1653,7 +1653,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	private ServerLevelData worldProperties() {
-		return ((ServerLevelBridge) world).cardboard_worldProperties();
+		return ((ServerLevelBridge) (Object) world).cardboard_worldProperties();
 	}
 
 	@Override
@@ -2019,10 +2019,10 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		//    ((MobEntity) entity).initialize(nms, getHandle().getLocalDifficulty(entity.getBlockPos()), net.minecraft.entity.SpawnReason.COMMAND, (EntityData) null, null);
 
 		if(function != null)
-			function.accept((T) ((EntityBridge) entity).getBukkitEntity());
+			function.accept((T) ((EntityBridge) (Object) entity).getBukkitEntity());
 
 		world.addEntity(entity); // TODO spawn reason
-		return (T) ((EntityBridge) entity).getBukkitEntity();
+		return (T) ((EntityBridge) (Object) entity).getBukkitEntity();
 	}
 
 	@Override
@@ -2070,7 +2070,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		entity.time = 1;
 
 		world.addEntity(entity/*, SpawnReason.CUSTOM*/);
-		return (FallingBlock) ((EntityBridge) entity).getBukkitEntity();
+		return (FallingBlock) ((EntityBridge) (Object) entity).getBukkitEntity();
 	}
 
 	@Override
@@ -2086,7 +2086,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		entity.time = 1;
 
 		world.addEntity(entity/*, SpawnReason.CUSTOM*/);
-		return (FallingBlock) ((EntityBridge) entity).getBukkitEntity();
+		return (FallingBlock) ((EntityBridge) (Object) entity).getBukkitEntity();
 	}
 
 	@Override
@@ -2182,7 +2182,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		LightningBolt lightning = net.minecraft.world.entity.EntityTypes.LIGHTNING_BOLT.create(world, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
 		lightning.snapTo(loc.getX(), loc.getY(), loc.getZ());
 		// nms.strikeLightning(lightning);
-		return (LightningStrike) ((EntityBridge) lightning).getBukkitEntity();
+		return (LightningStrike) ((EntityBridge) (Object) lightning).getBukkitEntity();
 	}
 
 	@Override
@@ -2197,7 +2197,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		lightning.snapTo(loc.getX(), loc.getY(), loc.getZ());
 		// lightning.isEffect = isVisual;
 		// this.nms.strikeLightning(lightning);
-		return (LightningStrike) ((EntityBridge) lightning).getBukkitEntity();
+		return (LightningStrike) ((EntityBridge) (Object) lightning).getBukkitEntity();
 	}
 
 	@Override
@@ -2410,7 +2410,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		Preconditions.checkArgument(location != null, "Location cannot be null");
 		Preconditions.checkArgument(item != null, "ItemStack cannot be null");
 		ItemEntity entity = new ItemEntity(this.world, location.getX(), location.getY(), location.getZ(), CraftItemStack.asNMSCopy(item));
-		Item itemEntity = (Item) ((EntityBridge) entity).getBukkitEntity();
+		Item itemEntity = (Item) ((EntityBridge) (Object) entity).getBukkitEntity();
 		entity.pickupDelay = 10;
 		if (function != null) {
 			function.accept(itemEntity);
@@ -2958,7 +2958,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
             // entity.setGeneration(true);
         }
 
-        return (T) ((EntityBridge)entity).getBukkitEntity();
+        return (T) ((EntityBridge) (Object) entity).getBukkitEntity();
     }
 	
 	// 1.20.4 API
@@ -3042,7 +3042,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 		return players.stream()
 				.filter(Objects::nonNull)
-				.map((serverPlayer -> ((CraftPlayer)((EntityBridge)serverPlayer).getBukkitEntity())))
+				.map((serverPlayer -> ((CraftPlayer)((EntityBridge) (Object) serverPlayer).getBukkitEntity())))
 				.collect(Collectors.toUnmodifiableSet());
 	}
 	

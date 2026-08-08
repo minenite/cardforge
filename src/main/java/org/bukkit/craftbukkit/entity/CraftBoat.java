@@ -97,7 +97,7 @@ public abstract class CraftBoat extends CraftVehicle implements Boat, io.papermc
         // Paper start - Fix NPE on Boat getStatus
         final AbstractBoat handle = this.getHandle();
         if (handle.status == null) {
-            if (((EntityBridge)handle).isValidBF()) {
+            if (((EntityBridge) (Object) handle).isValidBF()) {
                 // Don't actually set the status because it would skew the old status check in the next tick
                 return CraftBoat.boatStatusFromNms(handle.getStatus());
             } else {

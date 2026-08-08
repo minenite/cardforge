@@ -140,7 +140,7 @@ public abstract class ServerGamePacketListenerImplMixin_ChatEvent extends Server
                 });
 
                 if (async)
-                    ((IMixinMinecraftServer)CraftServer.server).getProcessQueue().add(waitable);
+                    ((IMixinMinecraftServer) (Object) CraftServer.server).getProcessQueue().add(waitable);
                 else waitable.run();
                 try {
                     waitable.get();

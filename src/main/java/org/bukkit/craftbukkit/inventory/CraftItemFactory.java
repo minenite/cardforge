@@ -321,7 +321,7 @@ public final class CraftItemFactory implements ItemFactory {
 			return null;
 		}
         Holder<Item> eggItem = eggItemOpt.get();
-        return eggItem == null ? null : ((ItemStackBridge)new net.minecraft.world.item.ItemStack(eggItem)).cardboard$asBukkitMirror();
+        return eggItem == null ? null : ((ItemStackBridge) (Object) new net.minecraft.world.item.ItemStack(eggItem)).cardboard$asBukkitMirror();
     }
     
     // Paper end - old getSpawnEgg API

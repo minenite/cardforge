@@ -271,7 +271,7 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
 
     @Override
     public HumanEntity getHolder() {
-        return (HumanEntity) ((ContainerBridge)this.inventory).getOwner();
+        return (HumanEntity) ((ContainerBridge) (Object) this.inventory).getOwner();
     }
 
     @Override

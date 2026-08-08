@@ -102,22 +102,22 @@ public final class PaperInventoryCustomHolderContainer implements Container, Con
 
     @Override
     public List<ItemStack> getContents() {
-        return ((ContainerBridge)this.delegate).getContents();
+        return ((ContainerBridge) (Object) this.delegate).getContents();
     }
 
     @Override
     public void onOpen(CraftHumanEntity player) {
-        ((ContainerBridge)this.delegate).onOpen(player);
+        ((ContainerBridge) (Object) this.delegate).onOpen(player);
     }
 
     @Override
     public void onClose(CraftHumanEntity player) {
-        ((ContainerBridge)this.delegate).onClose(player);
+        ((ContainerBridge) (Object) this.delegate).onClose(player);
     }
 
     @Override
     public List<HumanEntity> getViewers() {
-        return ((ContainerBridge)this.delegate).getViewers();
+        return ((ContainerBridge) (Object) this.delegate).getViewers();
     }
 
     @Override
@@ -127,12 +127,12 @@ public final class PaperInventoryCustomHolderContainer implements Container, Con
 
     @Override
     public void cardboard$setMaxStackSize(int size) {
-        ((ContainerBridge)this.delegate).cardboard$setMaxStackSize(size);
+        ((ContainerBridge) (Object) this.delegate).cardboard$setMaxStackSize(size);
     }
 
     @Override
     public Location getLocation() {
-        return ((ContainerBridge)this.delegate).getLocation();
+        return ((ContainerBridge) (Object) this.delegate).getLocation();
     }
 
     @Override

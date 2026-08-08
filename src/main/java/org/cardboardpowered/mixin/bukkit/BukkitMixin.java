@@ -18,9 +18,9 @@ public class BukkitMixin {
 	 */
 	@Overwrite(remap = false)
     public static String getVersionMessage() {
-		ModMetadata metadata = FabricLoader.getInstance().getModContainer("cardboard").get().getMetadata();
+		String metadataVersion = org.minenite.cardforge.platform.Platform.get().modVersion("cardforge").orElse("unknown");
 		
-		String ver = metadata.getVersion().getFriendlyString();
+		String ver = metadataVersion;
         if (ver.contains("version")) ver = CraftServer.INSTANCE.getShortVersion(); // Dev ENV
 		
 		return "This server is running " + Bukkit.getName() + " version " + ver + " (Implementing API version " + Bukkit.getBukkitVersion() + ")";

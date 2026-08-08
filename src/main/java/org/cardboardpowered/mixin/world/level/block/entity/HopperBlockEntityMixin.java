@@ -67,7 +67,7 @@ public abstract class HopperBlockEntityMixin implements Container, ContainerBrid
     public InventoryHolder getOwner() {
         HopperBlockEntity b = (HopperBlockEntity) (Object)this;
         if (b.level == null) return null;
-        org.bukkit.block.Block block = ((LevelBridge)b.level).cardboard$getWorld().getBlockAt(b.worldPosition.getX(), b.worldPosition.getY(), b.worldPosition.getZ());
+        org.bukkit.block.Block block = ((LevelBridge) (Object) b.level).cardboard$getWorld().getBlockAt(b.worldPosition.getX(), b.worldPosition.getY(), b.worldPosition.getZ());
         if (block == null) {
             org.bukkit.Bukkit.getLogger().log(java.util.logging.Level.WARNING, "No block for owner at %s %d %d %d", new Object[]{b.level, b.worldPosition.getX(), b.worldPosition.getY(), b.worldPosition.getZ()});
             return null;
@@ -79,14 +79,14 @@ public abstract class HopperBlockEntityMixin implements Container, ContainerBrid
     @Override
     public Location getLocation() {
         HopperBlockEntity b = (HopperBlockEntity) (Object)this;
-        return new Location(((LevelBridge)b.level).cardboard$getWorld(), b.worldPosition.getX(), b.worldPosition.getY(), b.worldPosition.getZ());
+        return new Location(((LevelBridge) (Object) b.level).cardboard$getWorld(), b.worldPosition.getX(), b.worldPosition.getY(), b.worldPosition.getZ());
     }
 
     @Inject(at = @At("HEAD"), method = "addItem(Lnet/minecraft/world/Container;Lnet/minecraft/world/entity/item/ItemEntity;)Z", cancellable = true)
     private static void extract1(net.minecraft.world.Container iinventory, ItemEntity entityitem, CallbackInfoReturnable<Boolean> ci) {
         try {
             if (iinventory instanceof ContainerBridge) {
-                InventoryPickupItemEvent event = new InventoryPickupItemEvent(((ContainerBridge)iinventory).getOwner().getInventory(),(org.bukkit.entity.Item) ((EntityBridge)entityitem).getBukkitEntity());
+                InventoryPickupItemEvent event = new InventoryPickupItemEvent(((ContainerBridge) (Object) iinventory).getOwner().getInventory(),(org.bukkit.entity.Item) ((EntityBridge) (Object) entityitem).getBukkitEntity());
                 Bukkit.getServer().getPluginManager().callEvent(event);
                 if (event.isCancelled())
                     ci.setReturnValue(false);
@@ -110,13 +110,13 @@ public abstract class HopperBlockEntityMixin implements Container, ContainerBrid
                     if (iinventory instanceof CompoundContainer) {
                         sourceInventory = new CraftInventoryDoubleChest((CompoundContainer) iinventory);
                     } else {
-                       // sourceInventory = ((IMixinInventory)iinventory).getOwner().getInventory();
+                       // sourceInventory = ((IMixinInventory) (Object) iinventory).getOwner().getInventory();
                     }
                     
                     sourceInventory = new CraftInventory(iinventory);
 
 
-                    InventoryMoveItemEvent event = new InventoryMoveItemEvent(sourceInventory, oitemstack.clone(), ((ContainerBridge)ihopper).getOwner().getInventory(), false);
+                    InventoryMoveItemEvent event = new InventoryMoveItemEvent(sourceInventory, oitemstack.clone(), ((ContainerBridge) (Object) ihopper).getOwner().getInventory(), false);
                     Bukkit.getServer().getPluginManager().callEvent(event);
                     if (event.isCancelled()) {
                         iinventory.setItem(i, itemstack1);

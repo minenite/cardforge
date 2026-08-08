@@ -215,7 +215,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
     }
 
     private File getDataFile() {
-        return new File(((PlayerDataStorageBridge)this.storage).cardboard$getPlayerDir(), this.getUniqueId() + ".dat");
+        return new File(((PlayerDataStorageBridge) (Object) this.storage).cardboard$getPlayerDir(), this.getUniqueId() + ".dat");
     }
 
     @Override

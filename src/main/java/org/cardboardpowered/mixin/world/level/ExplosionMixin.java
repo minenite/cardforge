@@ -68,7 +68,7 @@ public interface ExplosionMixin {
 
             // CraftBukkit start
             org.bukkit.World bworld = ((IMixinWorld)(ServerWorld)this.world).getCraftWorld();
-            org.bukkit.entity.Entity explode = this.entity == null ? null : ((IMixinEntity)this.entity).getBukkitEntity();
+            org.bukkit.entity.Entity explode = this.entity == null ? null : ((IMixinEntity) (Object) this.entity).getBukkitEntity();
             Location location = new Location(bworld, this.x, this.y, this.z);
 
             List<org.bukkit.block.Block> blockList = Lists.newArrayList();

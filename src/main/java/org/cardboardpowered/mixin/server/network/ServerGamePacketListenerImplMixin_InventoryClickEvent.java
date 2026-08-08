@@ -52,7 +52,7 @@ public class ServerGamePacketListenerImplMixin_InventoryClickEvent {
             return;
 
         this.doCl = false;
-        InventoryView inventory = ((AbstractContainerMenuBridge) player.containerMenu).getBukkitView();
+        InventoryView inventory = ((AbstractContainerMenuBridge) (Object) player.containerMenu).getBukkitView();
 
         InventoryType.SlotType type = inventory.getSlotType(packet.slotNum());
 

@@ -58,7 +58,7 @@ public abstract class AbstractArrowMixin implements AbstractArrowBridge {
             ItemStack itemstack = this.getPickupItem();
             if (this.pickup == Pickup.ALLOWED && !itemstack.isEmpty()) {
                 ItemEntity item = new ItemEntity(getBF().level(), getBF().getX(), getBF().getY(), getBF().getZ(), itemstack);
-                PlayerPickupArrowEvent event = new PlayerPickupArrowEvent((org.bukkit.entity.Player) ((EntityBridge)entityhuman).getBukkitEntity(), new CraftItem(CraftServer.INSTANCE, item), (org.bukkit.entity.AbstractArrow) ((EntityBridge)this).getBukkitEntity());
+                PlayerPickupArrowEvent event = new PlayerPickupArrowEvent((org.bukkit.entity.Player) ((EntityBridge) (Object) entityhuman).getBukkitEntity(), new CraftItem(CraftServer.INSTANCE, item), (org.bukkit.entity.AbstractArrow) ((EntityBridge) (Object) this).getBukkitEntity());
                 Bukkit.getServer().getPluginManager().callEvent(event);
 
                 if (event.isCancelled()) {

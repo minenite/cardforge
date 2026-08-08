@@ -33,25 +33,25 @@ public class CardboardEventManager {
     private void callCardboardEntityMountEvent() {
         CardboardEntityMountEvent.EVENT.register((vehicle, entity) -> {
             if (vehicle.getPassengers().isEmpty()) {
-                CraftEntity craft = (CraftEntity) ((EntityBridge) vehicle).getBukkitEntity().getVehicle();
+                CraftEntity craft = (CraftEntity) ((EntityBridge) (Object) vehicle).getBukkitEntity().getVehicle();
                 Entity orig = craft == null ? null : craft.getHandle();
-                if (((EntityBridge) vehicle).getBukkitEntity() instanceof Vehicle && ((EntityBridge) vehicle).getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
+                if (((EntityBridge) (Object) vehicle).getBukkitEntity() instanceof Vehicle && ((EntityBridge) (Object) vehicle).getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
                     VehicleExitEvent CBevent = new VehicleExitEvent(
-                            (Vehicle) ((EntityBridge) vehicle).getBukkitEntity(),
-                            (LivingEntity) ((EntityBridge) entity).getBukkitEntity()
+                            (Vehicle) ((EntityBridge) (Object) vehicle).getBukkitEntity(),
+                            (LivingEntity) ((EntityBridge) (Object) entity).getBukkitEntity()
                     );
-                    if (((EntityBridge) entity).isValidBF()) {
+                    if (((EntityBridge) (Object) entity).isValidBF()) {
                         Bukkit.getPluginManager().callEvent(CBevent);
                     }
-                    CraftEntity craftn = (CraftEntity) ((EntityBridge) vehicle).getBukkitEntity().getVehicle();
+                    CraftEntity craftn = (CraftEntity) ((EntityBridge) (Object) vehicle).getBukkitEntity().getVehicle();
                     Entity n = craftn == null ? null : craftn.getHandle();
                     if (CBevent.isCancelled() || n != orig) {
                         return InteractionResult.FAIL;
                     }
                 }
 
-                org.bukkit.event.entity.EntityDismountEvent SPevent = new org.bukkit.event.entity.EntityDismountEvent(((EntityBridge) vehicle).getBukkitEntity(), ((EntityBridge) entity).getBukkitEntity());
-                if (((EntityBridge) vehicle).isValidBF()) {
+                org.bukkit.event.entity.EntityDismountEvent SPevent = new org.bukkit.event.entity.EntityDismountEvent(((EntityBridge) (Object) vehicle).getBukkitEntity(), ((EntityBridge) (Object) entity).getBukkitEntity());
+                if (((EntityBridge) (Object) vehicle).isValidBF()) {
                     Bukkit.getPluginManager().callEvent(SPevent);
                 }
                 if (SPevent.isCancelled()) {
@@ -61,25 +61,25 @@ public class CardboardEventManager {
             if (!vehicle.getPassengers().isEmpty()) {
                 com.google.common.base.Preconditions.checkState(!vehicle.getPassengers().contains(vehicle), "Circular entity riding! %s %s", this, entity);
 
-                CraftEntity craft = (CraftEntity) ((EntityBridge) vehicle).getBukkitEntity().getVehicle();
+                CraftEntity craft = (CraftEntity) ((EntityBridge) (Object) vehicle).getBukkitEntity().getVehicle();
                 Entity orig = craft == null ? null : craft.getHandle();
-                if (((EntityBridge) entity).getBukkitEntity() instanceof Vehicle && ((EntityBridge) vehicle).getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
+                if (((EntityBridge) (Object) entity).getBukkitEntity() instanceof Vehicle && ((EntityBridge) (Object) vehicle).getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
                     VehicleEnterEvent CBevent = new VehicleEnterEvent(
-                            (Vehicle) ((EntityBridge) entity).getBukkitEntity(),
-                            ((EntityBridge) vehicle).getBukkitEntity()
+                            (Vehicle) ((EntityBridge) (Object) entity).getBukkitEntity(),
+                            ((EntityBridge) (Object) vehicle).getBukkitEntity()
                             );
-                    if (((EntityBridge) entity).isValidBF()) {
+                    if (((EntityBridge) (Object) entity).isValidBF()) {
                         Bukkit.getPluginManager().callEvent(CBevent);
                     }
-                    CraftEntity craftn = (CraftEntity) ((EntityBridge) vehicle).getBukkitEntity().getVehicle();
+                    CraftEntity craftn = (CraftEntity) ((EntityBridge) (Object) vehicle).getBukkitEntity().getVehicle();
                     Entity n = craftn == null ? null : craftn.getHandle();
                     if (CBevent.isCancelled() || n != orig) {
                         return InteractionResult.FAIL;
                     }
                 }
 
-                org.bukkit.event.entity.EntityMountEvent SPevent = new org.bukkit.event.entity.EntityMountEvent(((EntityBridge) vehicle).getBukkitEntity(), ((EntityBridge) entity).getBukkitEntity());
-                if (((EntityBridge) entity).isValidBF()) {
+                org.bukkit.event.entity.EntityMountEvent SPevent = new org.bukkit.event.entity.EntityMountEvent(((EntityBridge) (Object) vehicle).getBukkitEntity(), ((EntityBridge) (Object) entity).getBukkitEntity());
+                if (((EntityBridge) (Object) entity).isValidBF()) {
                     Bukkit.getPluginManager().callEvent(SPevent);
                     if (SPevent.isCancelled()) {
                         return InteractionResult.FAIL;

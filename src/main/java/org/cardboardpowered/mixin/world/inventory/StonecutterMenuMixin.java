@@ -28,7 +28,7 @@ public class StonecutterMenuMixin extends AbstractContainerMenuMixin {
 
     @Inject(method = "<init>(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/inventory/ContainerLevelAccess;)V", at = @At("TAIL"))
     public void setPlayerInv(int i, Inventory playerinventory, final ContainerLevelAccess containeraccess, CallbackInfo ci) {
-        this.player = (org.bukkit.entity.Player)((ServerPlayerBridge)playerinventory.player).getBukkitEntity();
+        this.player = (org.bukkit.entity.Player)((ServerPlayerBridge) (Object) playerinventory.player).getBukkitEntity();
     }
 
     @Override

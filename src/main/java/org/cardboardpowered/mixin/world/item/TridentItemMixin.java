@@ -30,7 +30,7 @@ public class TridentItemMixin {
     public void doBukkitEvent_PlayerRiptideEvent(ItemStack itemstack, Level world, LivingEntity entity, int i, CallbackInfoReturnable<Boolean> ci) {
         float k = EnchantmentHelper.getTridentSpinAttackStrength(itemstack, entity);
         if (k > 0.0f) {
-            PlayerRiptideEvent event = new PlayerRiptideEvent((Player)((EntityBridge)entity).getBukkitEntity(), CraftItemStack.asCraftMirror(itemstack));
+            PlayerRiptideEvent event = new PlayerRiptideEvent((Player)((EntityBridge) (Object) entity).getBukkitEntity(), CraftItemStack.asCraftMirror(itemstack));
             event.getPlayer().getServer().getPluginManager().callEvent(event);
         }
     }

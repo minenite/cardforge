@@ -151,7 +151,7 @@ public class CraftBlockType<B extends @NonNull BlockData> extends HolderableBase
         final ImmutableList<BlockState> possibleStates = this.getHandle().getStateDefinition().getPossibleStates();
         final ImmutableList.Builder<B> builder = ImmutableList.builderWithExpectedSize(possibleStates.size());
         for (final BlockState possibleState : possibleStates) {
-            builder.add(this.blockDataClass.get().cast(((BlockStateBaseBridge)possibleState).cardboard$createCraftBlockData()));
+            builder.add(this.blockDataClass.get().cast(((BlockStateBaseBridge) (Object) possibleState).cardboard$createCraftBlockData()));
         }
         return builder.build();
     }

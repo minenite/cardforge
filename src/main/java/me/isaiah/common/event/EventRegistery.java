@@ -10,9 +10,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.minecarts.api.util.Multithreading;
 
 public class EventRegistery {
+
+    private static final java.util.concurrent.ExecutorService ASYNC =
+            java.util.concurrent.Executors.newCachedThreadPool(r -> {
+                Thread t = new Thread(r, "Cardforge Async Event");
+                t.setDaemon(true);
+                return t;
+            });
+
 
     public static HashMap<Class<?>, List<RegisteredListener>> map = new HashMap<>();
 
@@ -57,7 +64,9 @@ public class EventRegistery {
     }
 
     public static void invoke(List<RegisteredListener> ls, Event ev) {
-        if (ev.isAsync()) Multithreading.runAsync(() -> invoke0(ls,ev)); else invoke0(ls,ev);
+        // iCommon referenced a Multithreading helper from another of its consumers.
+        // A plain executor keeps the same semantics without the extra dependency.
+        if (ev.isAsync()) ASYNC.execute(() -> invoke0(ls, ev)); else invoke0(ls, ev);
     }
 
     public static void invoke0(List<RegisteredListener> ls, Event ev) {

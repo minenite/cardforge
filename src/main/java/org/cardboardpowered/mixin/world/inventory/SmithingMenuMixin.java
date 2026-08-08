@@ -24,8 +24,8 @@ public class SmithingMenuMixin extends ItemCombinerMenuMixin {
         }
 
         org.bukkit.craftbukkit.inventory.CraftInventory inventory = new org.bukkit.craftbukkit.inventory.CraftInventorySmithing(
-                ((ContainerLevelAccessBridge)this.access).getLocation(), this.inputSlots, this.resultSlots);
-        this.bukkitEntity = new org.bukkit.craftbukkit.inventory.CraftInventoryView((HumanEntity) ((EntityBridge)this.player).getBukkitEntity(), inventory, (SmithingMenu)(Object)this);
+                ((ContainerLevelAccessBridge) (Object) this.access).getLocation(), this.inputSlots, this.resultSlots);
+        this.bukkitEntity = new org.bukkit.craftbukkit.inventory.CraftInventoryView((HumanEntity) ((EntityBridge) (Object) this.player).getBukkitEntity(), inventory, (SmithingMenu)(Object)this);
         return this.bukkitEntity;
     }
     // CraftBukkit end

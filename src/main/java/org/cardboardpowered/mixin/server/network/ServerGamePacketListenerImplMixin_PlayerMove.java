@@ -101,7 +101,7 @@ public class ServerGamePacketListenerImplMixin_PlayerMove {
     public Vec3 awaitingPositionFromClient;
 	
 	public CraftPlayer getCraftPlayer() {
-        return this.player == null ? null : (CraftPlayer) ((EntityBridge)this.player).getBukkitEntity();
+        return this.player == null ? null : (CraftPlayer) ((EntityBridge) (Object) this.player).getBukkitEntity();
     }
 	
 	// Cardboard - Paper start
@@ -325,7 +325,7 @@ public class ServerGamePacketListenerImplMixin_PlayerMove {
                                         return;
                                     }
                                     if (!oldTo.equals((Object)event6.getTo()) && !event6.isCancelled()) {
-                                        ((ServerPlayerBridge)this.player).getBukkitEntity().teleport(event6.getTo(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+                                        ((ServerPlayerBridge) (Object) this.player).getBukkitEntity().teleport(event6.getTo(), PlayerTeleportEvent.TeleportCause.PLUGIN);
                                         return;
                                     }
                                     if (!from.equals((Object)this.getCraftPlayer().getLocation()) && this.justTeleported) {

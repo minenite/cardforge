@@ -28,7 +28,7 @@ public class BeehiveBlockEntityMixin extends BlockEntity {
             method = "Lnet/minecraft/block/entity/BeehiveBlockEntity;tryEnterHive(Lnet/minecraft/entity/passive/BeeEntity;)V")
     public void bukkitize_tryEnterHive(BeeEntity entity, CallbackInfo ci) {
         if (this.world != null) {
-            org.bukkit.event.entity.EntityEnterBlockEvent event = new org.bukkit.event.entity.EntityEnterBlockEvent(((IMixinEntity)entity).getBukkitEntity(), CraftBlock.at((ServerWorld) world, getPos()));
+            org.bukkit.event.entity.EntityEnterBlockEvent event = new org.bukkit.event.entity.EntityEnterBlockEvent(((IMixinEntity) (Object) entity).getBukkitEntity(), CraftBlock.at((ServerWorld) world, getPos()));
             org.bukkit.Bukkit.getPluginManager().callEvent(event);
             if (event.isCancelled()) {
                 entity.setCannotEnterHiveTicks(400);

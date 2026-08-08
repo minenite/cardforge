@@ -35,7 +35,7 @@ public class BrewingStandMenuMixin extends AbstractContainerMenuMixin {
         if (bukkitEntity != null) return bukkitEntity;
 
         CraftInventoryBrewer inventory = new CraftInventoryBrewer(this.brewingStand);
-        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((ServerPlayerBridge)this.player.player).getBukkitEntity(), inventory, (BrewingStandMenu)(Object)this);
+        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((ServerPlayerBridge) (Object) this.player.player).getBukkitEntity(), inventory, (BrewingStandMenu)(Object)this);
         return bukkitEntity;
     }
 

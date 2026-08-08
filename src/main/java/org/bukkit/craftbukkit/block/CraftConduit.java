@@ -123,7 +123,7 @@ public class CraftConduit extends CraftBlockEntityState<ConduitBlockEntity> impl
         }
 
         final net.minecraft.world.entity.LivingEntity nmsEntity = EntityReference.get(conduit.destroyTarget, (Level) this.getWorldHandle(), net.minecraft.world.entity.LivingEntity.class);
-        return nmsEntity == null ? null : (LivingEntity) ((EntityBridge)nmsEntity).getBukkitEntity();
+        return nmsEntity == null ? null : (LivingEntity) ((EntityBridge) (Object) nmsEntity).getBukkitEntity();
     }
 
     @Override

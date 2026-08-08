@@ -30,7 +30,7 @@ public class CraftEvoker extends CraftSpellcaster implements Evoker {
     @Override
     public org.bukkit.entity.Sheep getWololoTarget() {
         Sheep sheep = this.getHandle().getWololoTarget();
-        return sheep == null ? null : (org.bukkit.entity.Sheep) ((EntityBridge)sheep).getBukkitEntity();
+        return sheep == null ? null : (org.bukkit.entity.Sheep) ((EntityBridge) (Object) sheep).getBukkitEntity();
     }
 
     @Override

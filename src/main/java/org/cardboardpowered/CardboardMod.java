@@ -140,7 +140,7 @@ public class CardboardMod {
 
     @EventHandler
     public void on_leaves_decay(LeavesDecayEvent ev) {
-        CraftWorld w = (CraftWorld) ((LevelBridge)ev.world).cardboard$getWorld();
+        CraftWorld w = (CraftWorld) ((LevelBridge) (Object) ev.world).cardboard$getWorld();
         org.bukkit.event.block.LeavesDecayEvent event =
                 new org.bukkit.event.block.LeavesDecayEvent(w.getBlockAt(ev.pos.getX(), ev.pos.getY(), ev.pos.getZ()));
         Bukkit.getPluginManager().callEvent(event);
@@ -236,18 +236,18 @@ public class CardboardMod {
             }
 
 
-            ((LevelBridge)nms).set_bukkit_world( new CraftWorld(name, nms) );
-            CraftServer.INSTANCE.getPluginManager().callEvent(new org.bukkit.event.world.WorldInitEvent(((LevelBridge)nms).cardboard$getWorld()));
+            ((LevelBridge) (Object) nms).set_bukkit_world( new CraftWorld(name, nms) );
+            CraftServer.INSTANCE.getPluginManager().callEvent(new org.bukkit.event.world.WorldInitEvent(((LevelBridge) (Object) nms).cardboard$getWorld()));
         } else {
-            ((LevelBridge)nms).set_bukkit_world( new CraftWorld(name, nms) );
+            ((LevelBridge) (Object) nms).set_bukkit_world( new CraftWorld(name, nms) );
         }
 
         // Object o = nms.convertable;
 
         // this.uuid = WorldUUID.getUUID(levelStorageAccess.getDimensionPath(nms.getDimension()).toFile());
-        // nms.cardboard$set_uuid(Utils.getWorldUUID(((IMixinWorld)nms).getCraftWorld().getWorldFolder())); 
+        // nms.cardboard$set_uuid(Utils.getWorldUUID(((IMixinWorld) (Object) nms).getCraftWorld().getWorldFolder())); 
 
-        ((CraftServer)Bukkit.getServer()).addWorldToMap( ((LevelBridge)nms).cardboard$getWorld() );
+        ((CraftServer)Bukkit.getServer()).addWorldToMap( ((LevelBridge) (Object) nms).cardboard$getWorld() );
     }
 
     // TODO
@@ -328,7 +328,7 @@ public class CardboardMod {
         Level world = ev.getEntity().level(); // TODO: should we add EntityPortalCollideEvent.getWorld() ?
 
         if (!entity.isPassenger() && !entity.isVehicle() && entity.canUsePortal(true)) {
-            EntityPortalEnterEvent event = new EntityPortalEnterEvent(((EntityBridge)entity).getBukkitEntity(), new org.bukkit.Location(((LevelBridge)world).cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ()));
+            EntityPortalEnterEvent event = new EntityPortalEnterEvent(((EntityBridge) (Object) entity).getBukkitEntity(), new org.bukkit.Location(((LevelBridge) (Object) world).cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ()));
             Bukkit.getPluginManager().callEvent(event);
         }
     }

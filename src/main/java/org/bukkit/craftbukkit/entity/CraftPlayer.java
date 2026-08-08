@@ -977,7 +977,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
             ChunkSectionChanges chunkChanges = entry.getValue();
             ClientboundSectionBlocksUpdatePacket packet = new ClientboundSectionBlocksUpdatePacket(entry.getKey(), chunkChanges.positions(), null);
             net.minecraft.world.level.block.state.BlockState[] states = chunkChanges.blockData().toArray(net.minecraft.world.level.block.state.BlockState[]::new);
-            ((ClientboundSectionBlocksUpdatePacketBridge)packet).cardboard$set_block_states(states);
+            ((ClientboundSectionBlocksUpdatePacketBridge) (Object) packet).cardboard$set_block_states(states);
             this.getHandle().connection.send(packet);
         }
     }
@@ -1413,7 +1413,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public Collection<EnderPearl> getEnderPearls() {
-        return this.getHandle().getEnderPearls().stream().map((e) -> (EnderPearl) ((EntityBridge)e).getBukkitEntity()).collect(Collectors.toList());
+        return this.getHandle().getEnderPearls().stream().map((e) -> (EnderPearl) ((EntityBridge) (Object) e).getBukkitEntity()).collect(Collectors.toList());
     }
 
     @Override
@@ -2045,7 +2045,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
         ServerLevel level = handle.level();
         connection.send(new net.minecraft.network.protocol.game.ClientboundRespawnPacket(handle.createCommonSpawnInfo(level), net.minecraft.network.protocol.game.ClientboundRespawnPacket.KEEP_ALL_DATA));
         handle.onUpdateAbilities();
-        ((ServerGamePacketListenerImplBridge)connection).cardboard$internalTeleport(net.minecraft.world.entity.PositionMoveRotation.of(this.getHandle()), java.util.Collections.emptySet());
+        ((ServerGamePacketListenerImplBridge) (Object) connection).cardboard$internalTeleport(net.minecraft.world.entity.PositionMoveRotation.of(this.getHandle()), java.util.Collections.emptySet());
         net.minecraft.server.players.PlayerList playerList = this.server.getServer().getPlayerList();
         playerList.sendPlayerPermissionLevel(handle);//, false); // TODO
         playerList.sendLevelInfo(handle, level);
@@ -2429,7 +2429,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     @Override
     public boolean setWindowProperty(Property prop, int value) {
         AbstractContainerMenu container = this.getHandle().containerMenu;
-        if (((AbstractContainerMenuBridge)container).getBukkitView().getType() != prop.getType()) {
+        if (((AbstractContainerMenuBridge) (Object) container).getBukkitView().getType() != prop.getType()) {
             return false;
         }
         container.setData(prop.getId(), value);
@@ -3308,7 +3308,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
             if (!dropIfFull) continue;
 
             final ItemEntity entity = handle.drop(nmsStack, false, true);
-            if (entity != null) drops.add((Item) ((EntityBridge)entity).getBukkitEntity());
+            if (entity != null) drops.add((Item) ((EntityBridge) (Object) entity).getBukkitEntity());
         }
 
         handle.containerMenu.broadcastChanges();

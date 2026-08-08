@@ -39,7 +39,7 @@ public class PistonBaseBlockMixin {
     public void cardboard_doPistonEvents(Level world, BlockPos pos, Direction dir, boolean retract, CallbackInfoReturnable<Boolean> ci,
     		BlockPos blockPos, PistonStructureResolver helper) {
 
-        final org.bukkit.block.Block bblock = ((LevelBridge)world).cardboard$getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ());
+        final org.bukkit.block.Block bblock = ((LevelBridge) (Object) world).cardboard$getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ());
 
 		// TODO: Fix null
 		//if (null == cardboard_ph) {

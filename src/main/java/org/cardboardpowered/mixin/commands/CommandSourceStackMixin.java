@@ -14,7 +14,7 @@ public class CommandSourceStackMixin implements CommandSourceStackBridge {
 
     // CraftBukkit start
     public org.bukkit.command.CommandSender getBukkitSender() {
-        return ((CommandSourceBridge)this.source).getBukkitSender((CommandSourceStack)(Object)this);
+        return ((CommandSourceBridge) (Object) this.source).getBukkitSender((CommandSourceStack)(Object)this);
     }
     // CraftBukkit end
 }

@@ -91,7 +91,7 @@ public abstract class CraftBlockEntityState<T extends BlockEntity> extends Craft
     }
 
     public Set<DataComponentType<?>> applyComponents(DataComponentMap datacomponentmap, DataComponentPatch datacomponentpatch) {
-        Set<DataComponentType<?>> result = ((BlockEntityBridge)this.snapshot).applyComponentsSet(datacomponentmap, datacomponentpatch);
+        Set<DataComponentType<?>> result = ((BlockEntityBridge) (Object) this.snapshot).applyComponentsSet(datacomponentmap, datacomponentpatch);
         this.load(this.snapshot);
         return result;
     }

@@ -66,7 +66,7 @@ public class CraftChunk implements Chunk {
 
     @Override
     public World getWorld() {
-        return ((LevelBridge)this.level).cardboard$getWorld();
+        return ((LevelBridge) (Object) this.level).cardboard$getWorld();
     }
 
     public CraftWorld getCraftWorld() {

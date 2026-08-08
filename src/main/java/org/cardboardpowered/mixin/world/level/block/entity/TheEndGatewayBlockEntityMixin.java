@@ -44,7 +44,7 @@ public class TheEndGatewayBlockEntityMixin {
 		}
 
 		target.resetPortalCooldown();
-		((IMixinPlayNetworkHandler) player.networkHandler).teleport(loc);
+		((IMixinPlayNetworkHandler) (Object) player.networkHandler).teleport(loc);
 	}
 
 	@Unique

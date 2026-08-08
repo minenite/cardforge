@@ -23,7 +23,7 @@ public class BehaviorUtilsMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z"))
     private static void cardboard$targetutil_entityDropItem(LivingEntity entity, ItemStack stack, Vec3 targetLocation, Vec3 velocityFactor, float yOffset, CallbackInfo ci, double d, ItemEntity itemEntity, Vec3 vec3d) {
         // CraftBukkit start
-        EntityDropItemEvent event = new EntityDropItemEvent(((EntityBridge)entity).getBukkitEntity(), (Item) ((EntityBridge)itemEntity).getBukkitEntity());
+        EntityDropItemEvent event = new EntityDropItemEvent(((EntityBridge) (Object) entity).getBukkitEntity(), (Item) ((EntityBridge) (Object) itemEntity).getBukkitEntity());
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled()) {
             ci.cancel();

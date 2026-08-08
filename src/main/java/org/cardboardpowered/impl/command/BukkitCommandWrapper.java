@@ -59,12 +59,12 @@ public class BukkitCommandWrapper implements com.mojang.brigadier.Command<Comman
         try {
             ServerPlayer plr = source.getPlayer();
             if (null != plr)
-                return ((CommandSourceBridge)plr).getBukkitSender(source);
+                return ((CommandSourceBridge) (Object) plr).getBukkitSender(source);
         } catch (Exception ignored) {
             //ex.printStackTrace();
         }
         Entity e = source.getEntity();
-        return (null != e) ? ((CommandSourceBridge)e).getBukkitSender(source) : null;
+        return (null != e) ? ((CommandSourceBridge) (Object) e).getBukkitSender(source) : null;
     }
 
     @Override

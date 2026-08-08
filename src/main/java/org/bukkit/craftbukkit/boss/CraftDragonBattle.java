@@ -169,8 +169,8 @@ public class CraftDragonBattle extends CardboardDragonBattle implements DragonBa
 
         final List<EnderCrystal> enderCrystals = new ArrayList<>();
         for (final net.minecraft.world.entity.boss.enderdragon.EndCrystal endCrystal : this.handle.respawnCrystals) {
-            if (!endCrystal.isRemoved() && endCrystal.isAlive() && ((EntityBridge)endCrystal).isValidBF()) {
-                enderCrystals.add(((EnderCrystal) ((EntityBridge)endCrystal).getBukkitEntity()));
+            if (!endCrystal.isRemoved() && endCrystal.isAlive() && ((EntityBridge) (Object) endCrystal).isValidBF()) {
+                enderCrystals.add(((EnderCrystal) ((EntityBridge) (Object) endCrystal).getBukkitEntity()));
             }
         }
         return Collections.unmodifiableList(enderCrystals);
@@ -180,7 +180,7 @@ public class CraftDragonBattle extends CardboardDragonBattle implements DragonBa
     public List<EnderCrystal> getHealingCrystals() {
         final List<EnderCrystal> enderCrystals = new ArrayList<>();
         /*for (final net.minecraft.world.entity.boss.enderdragon.EndCrystal endCrystal : this.handle.getSpikeCrystals()) {
-            if (!endCrystal.isRemoved() && endCrystal.isAlive() && ((EntityBridge)endCrystal).isValidBF()) {
+            if (!endCrystal.isRemoved() && endCrystal.isAlive() && ((EntityBridge) (Object) endCrystal).isValidBF()) {
                 enderCrystals.add(((EnderCrystal) endCrystal.getBukkitEntity()));
             }
         }* // TODO

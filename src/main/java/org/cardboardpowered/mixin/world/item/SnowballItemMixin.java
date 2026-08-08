@@ -36,7 +36,7 @@ public class SnowballItemMixin extends Item {
             snowballEntity.shootFromRotation(user, user.getXRot(), user.getYRot(), 0.0F, 1.5F, 1.0F);
             if (!world.addFreshEntity(snowballEntity)) {
                 if (user instanceof ServerPlayerBridge) {
-                    ((CraftPlayer)((EntityBridge) user).getBukkitEntity()).updateInventory();
+                    ((CraftPlayer)((EntityBridge) (Object) user).getBukkitEntity()).updateInventory();
                 }
                 return InteractionResult.FAIL;
             }
@@ -65,12 +65,12 @@ public class SnowballItemMixin extends Item {
                 if (event.shouldConsume()) {
                     itemstack.decrementUnlessCreative(1, user);
                 } else if (user instanceof ServerPlayerEntity) {
-                	((IMixinServerEntityPlayer) user).getBukkit().updateInventory();
+                	((IMixinServerEntityPlayer) (Object) user).getBukkit().updateInventory();
                 }
                 world.playSound((PlayerEntity)null, user.getX(), user.getY(), user.getZ(), SoundEvents.ENTITY_SNOWBALL_THROW, SoundCategory.NEUTRAL, 0.5f, 0.4f / (world.getRandom().nextFloat() * 0.4f + 0.8f));
             } else {
                 if (user instanceof ServerPlayerEntity) {
-                	((IMixinServerEntityPlayer) user).getBukkit().updateInventory();
+                	((IMixinServerEntityPlayer) (Object) user).getBukkit().updateInventory();
                 }
                 return ActionResult.FAIL;
             }

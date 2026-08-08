@@ -103,8 +103,8 @@ public abstract class LivingEntityMixin extends EntityMixin implements LivingEnt
             this.dropCustomDeathLoot((ServerLevel) world, damagesource, flag);
         }
 
-        CraftEventFactory.callEntityDeathEvent(get(), damagesource, ((EntityBridge)this).cardboard_getDrops());
-        ((EntityBridge)this).cardboard_setDrops(new ArrayList<>());
+        CraftEventFactory.callEntityDeathEvent(get(), damagesource, ((EntityBridge) (Object) this).cardboard_getDrops());
+        ((EntityBridge) (Object) this).cardboard_setDrops(new ArrayList<>());
         this.dropExperience(world, damagesource.getEntity());
         ci.cancel();
         return;
@@ -220,9 +220,9 @@ public abstract class LivingEntityMixin extends EntityMixin implements LivingEnt
             ItemEntity itemEntity = this.createItemStackToDrop(stack, randomizeMotion, includeThrower);
             if (itemEntity != null) {
                 // CraftBukkit start - fire PlayerDropItemEvent
-                if (entityOperation != null) entityOperation.accept((org.bukkit.entity.Item)((EntityBridge)itemEntity).getBukkitEntity());
+                if (entityOperation != null) entityOperation.accept((org.bukkit.entity.Item)((EntityBridge) (Object) itemEntity).getBukkitEntity());
                 if (callEvent && this.getBukkitEntity() instanceof org.bukkit.entity.Player player) {
-                    org.bukkit.entity.Item drop = (org.bukkit.entity.Item)((EntityBridge)itemEntity).getBukkitEntity();
+                    org.bukkit.entity.Item drop = (org.bukkit.entity.Item)((EntityBridge) (Object) itemEntity).getBukkitEntity();
 
                     org.bukkit.event.player.PlayerDropItemEvent event = new org.bukkit.event.player.PlayerDropItemEvent(player, drop);
                     CraftServer.INSTANCE.getPluginManager().callEvent(event);

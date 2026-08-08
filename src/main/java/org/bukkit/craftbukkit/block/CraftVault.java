@@ -74,7 +74,7 @@ public class CraftVault extends CraftBlockEntityState<VaultBlockEntity> implemen
 
     @Override
     public ItemStack getKeyItem() {
-        return ((ItemStackBridge)this.getSnapshot().getConfig().keyItem()).cardboard$asBukkitCopy();
+        return ((ItemStackBridge) (Object) this.getSnapshot().getConfig().keyItem()).cardboard$asBukkitCopy();
     }
 
     @Override

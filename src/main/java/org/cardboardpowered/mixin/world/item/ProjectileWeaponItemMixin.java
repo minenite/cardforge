@@ -70,7 +70,7 @@ public class ProjectileWeaponItemMixin {
                 return;
             }
             stack.hurtAndBreak(this.getDurabilityUse(itemStack), shooter, hand.asEquipmentSlot());
-            if (event.getProjectile() != ((EntityBridge)projectileEntity).getBukkitEntity() || world.addFreshEntity(projectileEntity)) continue;
+            if (event.getProjectile() != ((EntityBridge) (Object) projectileEntity).getBukkitEntity() || world.addFreshEntity(projectileEntity)) continue;
             if (shooter instanceof ServerPlayer) {
             	((Player) ((ServerPlayerBridge)  ((ServerPlayer)shooter) ).getBukkitEntity()).updateInventory();
             }

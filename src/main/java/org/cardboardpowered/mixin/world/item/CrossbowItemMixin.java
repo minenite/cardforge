@@ -22,7 +22,7 @@ public class CrossbowItemMixin {
             event.getProjectile().remove();
             ci.cancel();
         }
-        bukkitCapturedBoolean = event.getProjectile() == ((IMixinEntity) projectileEntity).getBukkitEntity();
+        bukkitCapturedBoolean = event.getProjectile() == ((IMixinEntity) (Object) projectileEntity).getBukkitEntity();
     }
 
     @Redirect(method = "shoot", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z"))
@@ -30,7 +30,7 @@ public class CrossbowItemMixin {
         if (bukkitCapturedBoolean) {
             if (!world.spawnEntity(entityIn)) {
                 if (shooter instanceof ServerPlayerEntity) {
-                    ((IMixinServerEntityPlayer) shooter).getBukkit().updateInventory();
+                    ((IMixinServerEntityPlayer) (Object) shooter).getBukkit().updateInventory();
                 }
                 bukkitCapturedBoolean = true;
             } else {

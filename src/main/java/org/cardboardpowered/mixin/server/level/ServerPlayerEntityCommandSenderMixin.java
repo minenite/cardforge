@@ -20,10 +20,10 @@ public class ServerPlayerEntityCommandSenderMixin implements CommandSourceBridge
 		
 		if (source.isPlayer()) {
 			ServerPlayer plr = source.getPlayer();
-			return ((ServerPlayerBridge) plr) .getBukkitEntity();
+			return ((ServerPlayerBridge) (Object) plr) .getBukkitEntity();
 		}
 		
-		return ((EntityBridge) source.entity).getBukkitEntity();
+		return ((EntityBridge) (Object) source.entity).getBukkitEntity();
 		
 		// return ( (IMixinEntity)  ((ServerPlayerEntity) (Object) this) ) .getBukkitEntity();
     }

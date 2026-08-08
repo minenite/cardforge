@@ -19,7 +19,7 @@ public interface CraftMerchant extends org.bukkit.inventory.Merchant {
 	default List<MerchantRecipe> getRecipes() {
 		return List.copyOf(Lists.transform(this.getMerchant().getOffers(), new Function<MerchantOffer, MerchantRecipe>() {
 			public MerchantRecipe apply(MerchantOffer recipe) {
-				return ((MerchantOfferBridge)recipe).asBukkit();
+				return ((MerchantOfferBridge) (Object) recipe).asBukkit();
 			}
 		}));
 	}
@@ -51,7 +51,7 @@ public interface CraftMerchant extends org.bukkit.inventory.Merchant {
 
 	default HumanEntity getTrader() {
 		net.minecraft.world.entity.player.Player eh = this.getMerchant().getTradingPlayer();
-		return eh == null ? null : (Player)((ServerPlayerBridge)eh).getBukkitEntity();
+		return eh == null ? null : (Player)((ServerPlayerBridge) (Object) eh).getBukkitEntity();
 	}
 
 	/*
@@ -70,7 +70,7 @@ public interface CraftMerchant extends org.bukkit.inventory.Merchant {
         return Collections.unmodifiableList(Lists.transform(merchant.getOffers(), new Function<net.minecraft.village.TradeOffer, MerchantRecipe>() {
             @Override
             public MerchantRecipe apply(net.minecraft.village.TradeOffer recipe) {
-                return ((IMixinTradeOffer)recipe).asBukkit();
+                return ((IMixinTradeOffer) (Object) recipe).asBukkit();
             }
         }));
     }
@@ -106,7 +106,7 @@ public interface CraftMerchant extends org.bukkit.inventory.Merchant {
     @Override
     public HumanEntity getTrader() {
         PlayerEntity eh = merchant.getCustomer();
-        return eh == null ? null : (Player)((IMixinServerEntityPlayer)eh).getBukkitEntity();
+        return eh == null ? null : (Player)((IMixinServerEntityPlayer) (Object) eh).getBukkitEntity();
     }
 
     @Override

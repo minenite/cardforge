@@ -34,7 +34,7 @@ public interface BeaconBlockEntityBridge {
     }
 
     public static List<Player> getHumansInRange(final Level level, final BlockPos pos, final int beaconLevel, final @Nullable BeaconBlockEntity blockEntity) {
-        final double d = blockEntity != null ? ((BeaconBlockEntityBridge)blockEntity).cardboard$getEffectRange() : computeBeaconRange(beaconLevel);
+        final double d = blockEntity != null ? ((BeaconBlockEntityBridge) (Object) blockEntity).cardboard$getEffectRange() : computeBeaconRange(beaconLevel);
         AABB aabb = new AABB(pos).inflate(d).expandTowards(0.0, level.getHeight(), 0.0); // Diff from applyEffects
         // Improve performance of human lookup by switching to a global player iteration when searching over 128 blocks
         List<Player> list;
@@ -63,7 +63,7 @@ public interface BeaconBlockEntityBridge {
         final org.bukkit.craftbukkit.block.CraftBlock apiBlock = org.bukkit.craftbukkit.block.CraftBlock.at(level, position);
         for (final Player player : players) {
             final com.destroystokyo.paper.event.block.BeaconEffectEvent event = new com.destroystokyo.paper.event.block.BeaconEffectEvent(
-                    apiBlock, apiEffect, (org.bukkit.entity.Player) ((EntityBridge)player).getBukkitEntity(), isPrimary
+                    apiBlock, apiEffect, (org.bukkit.entity.Player) ((EntityBridge) (Object) player).getBukkitEntity(), isPrimary
             );
             if (!event.callEvent()) continue;
             player.addEffect(org.bukkit.craftbukkit.potion.CraftPotionUtil.fromBukkit(event.getEffect()));

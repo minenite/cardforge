@@ -121,7 +121,7 @@ public class CardboardBossBar implements BossBar, KeyedBossBar {
     @Override
     public void setTitle(String title) {
         handle.name = CraftChatMessage.fromString(title, true)[0];
-     // TODO 1.17ify   ((IMixinServerBossBar)handle).sendPacketBF(BossBarS2CPacket.Type.UPDATE_NAME);
+     // TODO 1.17ify   ((IMixinServerBossBar) (Object) handle).sendPacketBF(BossBarS2CPacket.Type.UPDATE_NAME);
     }
 
     @Override
@@ -132,7 +132,7 @@ public class CardboardBossBar implements BossBar, KeyedBossBar {
     @Override
     public void setColor(BarColor color) {
         handle.color = convertColor(color);
-     // TODO 1.17ify   ((IMixinServerBossBar)handle).sendPacketBF(BossBarS2CPacket.Type.UPDATE_STYLE);
+     // TODO 1.17ify   ((IMixinServerBossBar) (Object) handle).sendPacketBF(BossBarS2CPacket.Type.UPDATE_STYLE);
     }
 
     @Override
@@ -143,7 +143,7 @@ public class CardboardBossBar implements BossBar, KeyedBossBar {
     @Override
     public void setStyle(BarStyle style) {
         handle.overlay = convertStyle(style);
-     // TODO 1.17ify ((IMixinServerBossBar)handle).sendPacketBF(BossBarS2CPacket.Type.UPDATE_STYLE);
+     // TODO 1.17ify ((IMixinServerBossBar) (Object) handle).sendPacketBF(BossBarS2CPacket.Type.UPDATE_STYLE);
     }
 
     @Override
@@ -192,7 +192,7 @@ public class CardboardBossBar implements BossBar, KeyedBossBar {
     public List<Player> getPlayers() {
         ImmutableList.Builder<Player> players = ImmutableList.builder();
         for (ServerPlayer p : handle.getPlayers())
-            players.add((Player)((EntityBridge)p).getBukkitEntity());
+            players.add((Player)((EntityBridge) (Object) p).getBukkitEntity());
         return players.build();
     }
 

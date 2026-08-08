@@ -159,7 +159,7 @@ public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
 
         entityitem.setDefaultPickUpDelay();
 
-        EntityDropItemEvent event = new EntityDropItemEvent(this.getBukkitEntity(), (org.bukkit.entity.Item) ((EntityBridge)entityitem).getBukkitEntity());
+        EntityDropItemEvent event = new EntityDropItemEvent(this.getBukkitEntity(), (org.bukkit.entity.Item) ((EntityBridge) (Object) entityitem).getBukkitEntity());
         Bukkit.getPluginManager().callEvent(event);
         if (event.isCancelled())
             return false;
@@ -194,7 +194,7 @@ public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
     @Inject(at = @At("HEAD"), method = "restoreFrom(Lnet/minecraft/world/entity/Entity;)V")
     public void cardboard$setBukkitHandleForCopy(Entity entity, CallbackInfo ci) {
         // Paper start - Forward CraftEntity in teleport command
-        org.bukkit.craftbukkit.entity.CraftEntity bukkitEntity = ((EntityBridge)entity).getBukkitEntityRaw();
+        org.bukkit.craftbukkit.entity.CraftEntity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntityRaw();
         if (bukkitEntity != null) {
             bukkitEntity.setHandle((Entity)(Object)this);
             this.bukkitEntity = bukkitEntity;

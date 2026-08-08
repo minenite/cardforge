@@ -38,7 +38,7 @@ public class EnchantmentMenuMixin extends AbstractContainerMenuMixin {
 
     @Inject(method = "<init>(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/inventory/ContainerLevelAccess;)V", at = @At("TAIL"))
     public void setPlayerInv(int i, Inventory playerinventory, ContainerLevelAccess containeraccesss, CallbackInfo ci) {
-        this.player = (org.bukkit.entity.Player)((EntityBridge)playerinventory.player).getBukkitEntity();
+        this.player = (org.bukkit.entity.Player)((EntityBridge) (Object) playerinventory.player).getBukkitEntity();
     }
 
     // TODO: Fix this!
@@ -97,7 +97,7 @@ public class EnchantmentMenuMixin extends AbstractContainerMenuMixin {
                         offers[j] = (enchantment != null) ? new EnchantmentOffer(enchantment, this.enchantmentLevel[j], this.enchantmentPower[j]) : null;
                     }
 
-                    PrepareItemEnchantEvent event = new PrepareItemEnchantEvent(player, this.getBukkitView(), ((IMixinScreenHandlerContext)context).getLocation().getBlock(), item, offers, i);
+                    PrepareItemEnchantEvent event = new PrepareItemEnchantEvent(player, this.getBukkitView(), ((IMixinScreenHandlerContext) (Object) context).getLocation().getBlock(), item, offers, i);
                     event.setCancelled(!itemstack.isEnchantable());
                     Bukkit.getPluginManager().callEvent(event);
 
@@ -160,7 +160,7 @@ public class EnchantmentMenuMixin extends AbstractContainerMenuMixin {
                 }
                 CraftItemStack item = CraftItemStack.asCraftMirror(itemstack2);
 
-                EnchantItemEvent event = new EnchantItemEvent((Player) ((IMixinEntity)entityhuman).getBukkitEntity(), this.getBukkitView(), ((IMixinScreenHandlerContext)context).getLocation().getBlock(), item, this.enchantmentPower[i], enchants, i);
+                EnchantItemEvent event = new EnchantItemEvent((Player) ((IMixinEntity) (Object) entityhuman).getBukkitEntity(), this.getBukkitView(), ((IMixinScreenHandlerContext) (Object) context).getLocation().getBlock(), item, this.enchantmentPower[i], enchants, i);
                 Bukkit.getPluginManager().callEvent(event);
 
                 int level = event.getExpLevelCost();

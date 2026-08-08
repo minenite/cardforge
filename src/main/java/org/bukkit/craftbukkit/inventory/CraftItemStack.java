@@ -227,7 +227,7 @@ public final class CraftItemStack extends ItemStack {
             this.handle = new net.minecraft.world.item.ItemStack(CraftItemType.bukkitToMinecraft(type), 1);
         } else {
             final Material oldType = CraftMagicNumbers.getMaterial(this.handle.getItem()); // Paper
-            ((ItemStackBridge)this.handle).cardboard$setItem(CraftItemType.bukkitToMinecraft(type));
+            ((ItemStackBridge) (Object) this.handle).cardboard$setItem(CraftItemType.bukkitToMinecraft(type));
             if (this.hasItemMeta()) {
                 // This will create the appropriate item meta, which will contain all the data we intend to keep
                 this.adjustTagForItemMeta(oldType); // Paper
@@ -422,7 +422,7 @@ public final class CraftItemStack extends ItemStack {
             return false;
         }
         if (CraftItemFactory.instance().equals(itemMeta, null)) {
-            ((ItemStackBridge)item).cardboard$restore_patch(DataComponentPatch.EMPTY);
+            ((ItemStackBridge) (Object) item).cardboard$restore_patch(DataComponentPatch.EMPTY);
             return true;
         }
         if (!CraftItemFactory.instance().isApplicable(itemMeta, CraftItemStack.getType(item))) {
@@ -443,7 +443,7 @@ public final class CraftItemStack extends ItemStack {
             // Paper end - support updating profile after resolving it
 
             ((CraftMetaItem) itemMeta).applyToItem(tag);
-            ((ItemStackBridge)item).cardboard$restore_patch(DataComponentPatch.EMPTY); // Paper - properly apply the new patch from itemmeta
+            ((ItemStackBridge) (Object) item).cardboard$restore_patch(DataComponentPatch.EMPTY); // Paper - properly apply the new patch from itemmeta
             item.applyComponents(tag.build()); // Paper - properly apply the new patch from itemmeta
         }
         // Paper - this is no longer needed

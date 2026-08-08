@@ -158,7 +158,7 @@ public class CraftVillager extends CraftAbstractVillager implements Villager {
     @Override
     public ZombieVillager zombify() {
         net.minecraft.world.entity.monster.zombie.ZombieVillager entityzombievillager = ZombieBridge.convertVillagerToZombieVillager((ServerLevel) this.getHandle().level(), this.getHandle(), this.getHandle().blockPosition(), this.isSilent(), EntityTransformEvent.TransformReason.INFECTION, CreatureSpawnEvent.SpawnReason.CUSTOM);
-        return (entityzombievillager != null) ? (ZombieVillager) ((EntityBridge)entityzombievillager).getBukkitEntity() : null;
+        return (entityzombievillager != null) ? (ZombieVillager) ((EntityBridge) (Object) entityzombievillager).getBukkitEntity() : null;
     }
 
     public static class CraftType extends OldEnumHolderable<Type, VillagerType> implements Type {

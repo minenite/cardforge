@@ -30,7 +30,7 @@ public abstract class AbstractMinecartContainerMixin implements Container, Conta
 
     @Override
     public InventoryHolder getOwner() {
-        org.bukkit.entity.Entity entity = ((EntityBridge)this).getBukkitEntity();
+        org.bukkit.entity.Entity entity = ((EntityBridge) (Object) this).getBukkitEntity();
         return (entity instanceof InventoryHolder) ? (InventoryHolder) entity : null;
     }
 

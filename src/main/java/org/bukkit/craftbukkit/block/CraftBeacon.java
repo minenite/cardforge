@@ -51,7 +51,7 @@ public class CraftBeacon extends CraftBlockEntityState<BeaconBlockEntity> implem
             Collection<LivingEntity> bukkit = new ArrayList<>(nms.size());
 
             for (Player human : nms) {
-                bukkit.add((LivingEntity) ((EntityBridge)human).getBukkitEntity());
+                bukkit.add((LivingEntity) ((EntityBridge) (Object) human).getBukkitEntity());
             }
 
             return bukkit;

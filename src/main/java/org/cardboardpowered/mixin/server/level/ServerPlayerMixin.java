@@ -253,14 +253,14 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
 			return;
 		}
 
-		PlayerChangedWorldEvent changeEvent = new PlayerChangedWorldEvent((Player)this.getBukkitEntity(), ((LevelBridge)cb$from).cardboard$getWorld());
+		PlayerChangedWorldEvent changeEvent = new PlayerChangedWorldEvent((Player)this.getBukkitEntity(), ((LevelBridge) (Object) cb$from).cardboard$getWorld());
         CraftServer.INSTANCE.getPluginManager().callEvent(changeEvent);
     }
 
     /*
     @Inject(at = @At("HEAD"), method = "teleport(Lnet/minecraft/server/world/ServerWorld;DDDFF)V", cancellable = true)
     public void teleport1(ServerWorld worldserver, double x, double y, double z, float f, float f1, CallbackInfo ci) {
-        PlayerTeleportEvent event = new PlayerTeleportEvent(this.getBukkitEntity(), this.getBukkitEntity().getLocation(), new Location(((IMixinWorld)worldserver).getCraftWorld(), x,y,z,f,f1), PlayerTeleportEvent.TeleportCause.UNKNOWN);
+        PlayerTeleportEvent event = new PlayerTeleportEvent(this.getBukkitEntity(), this.getBukkitEntity().getLocation(), new Location(((IMixinWorld) (Object) worldserver).getCraftWorld(), x,y,z,f,f1), PlayerTeleportEvent.TeleportCause.UNKNOWN);
         Bukkit.getPluginManager().callEvent(event);
 
         if (event.isCancelled()) {
@@ -326,7 +326,7 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
             AbstractContainerMenu container = factory.createMenu(this.containerCounter, ((ServerPlayer)(Object)this).inventory, ((ServerPlayer)(Object)this));
 
             if (container != null) {
-                ((AbstractContainerMenuBridge)container).setTitle(factory.getDisplayName());
+                ((AbstractContainerMenuBridge) (Object) container).setTitle(factory.getDisplayName());
 
                 boolean cancelled = false;
                 final com.mojang.datafixers.util.Pair<net.kyori.adventure.text.Component, AbstractContainerMenu> result = org.bukkit.craftbukkit.event.CraftEventFactory.callInventoryOpenEventWithTitle(((ServerPlayer)(Object)this), container, cancelled);
@@ -387,8 +387,8 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
 
         // SPIGOT-5071: manually add player loot tables (SPIGOT-5195 - ignores keepInventory rule)
         this.dropLoot(damagesource, ((ServerPlayerEntity)(Object)this).playerHitTimer > 0);
-        for (org.bukkit.inventory.ItemStack item : ((IMixinEntity)this).cardboard_getDrops()) loot.add(item);
-        ((IMixinEntity)this).cardboard_getDrops().clear(); // SPIGOT-5188: make sure to clear
+        for (org.bukkit.inventory.ItemStack item : ((IMixinEntity) (Object) this).cardboard_getDrops()) loot.add(item);
+        ((IMixinEntity) (Object) this).cardboard_getDrops().clear(); // SPIGOT-5188: make sure to clear
 
         Text defaultMessage = ((ServerPlayerEntity)(Object)this).getDamageTracker().getDeathMessage();
 
@@ -583,7 +583,7 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
         // Paper end - respawn flags
         CraftServer.INSTANCE.getPluginManager().callEvent(respawnEvent);
         // Spigot start
-        if (((ServerGamePacketListenerImplBridge)this.connection).isDisconnected()) {
+        if (((ServerGamePacketListenerImplBridge) (Object) this.connection).isDisconnected()) {
             return null;
         }
         // Spigot end
@@ -654,8 +654,8 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
         if (stack.isEmpty()) {
             return;
         }
-        Player player = (Player)(((EntityBridge)this).getBukkitEntity());
-        Item drop = (Item) ((EntityBridge)itemEntity).getBukkitEntity();
+        Player player = (Player)(((EntityBridge) (Object) this).getBukkitEntity());
+        Item drop = (Item) ((EntityBridge) (Object) itemEntity).getBukkitEntity();
         PlayerDropItemEvent event = new PlayerDropItemEvent(player, drop);
         Bukkit.getServer().getPluginManager().callEvent(event);
 

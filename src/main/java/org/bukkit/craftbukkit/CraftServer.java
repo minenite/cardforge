@@ -341,7 +341,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         this.playerView = Collections.unmodifiableList(Lists.transform(server.playerList.players, new Function<ServerPlayer, CraftPlayer>() {
             @Override
             public CraftPlayer apply(ServerPlayer player) {
-                return (CraftPlayer) ((EntityBridge)player).getBukkitEntity();
+                return (CraftPlayer) ((EntityBridge) (Object) player).getBukkitEntity();
             }
         }));
 
@@ -467,7 +467,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     @SuppressWarnings("unchecked")
     private void syncCommands() {
         // Clear existing commands
-        Commands dispatcher = ((MinecraftServerBridge) server).setCommandManager(new Commands(Commands.CommandSelection.ALL, CommandBuildContext.simple(console.registryAccess(), FeatureFlagSet.of())));
+        Commands dispatcher = ((MinecraftServerBridge) (Object) server).setCommandManager(new Commands(Commands.CommandSelection.ALL, CommandBuildContext.simple(console.registryAccess(), FeatureFlagSet.of())));
 
         // Register all commands, vanilla ones will be using the old dispatcher references
         for (Map.Entry<String, Command> entry : commandMap.getKnownCommands().entrySet()) {
@@ -573,7 +573,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         toAdd.addToCraftingManager();
         // Paper start - API for updating recipes on clients
         if (true || resendRecipes) { // Always needs to be resent now... TODO
-            ((PlayerListBridge)this.playerList).cardboard$reloadRecipes();
+            ((PlayerListBridge) (Object) this.playerList).cardboard$reloadRecipes();
         }
         // Paper end - API for updating recipes on clients
         return true;
@@ -691,7 +691,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         return Iterators.unmodifiableIterator(Iterators.transform(getServer().getCustomBossEvents().getEvents().iterator(), new Function<CustomBossEvent, org.bukkit.boss.KeyedBossBar>() {
             @Override
             public org.bukkit.boss.KeyedBossBar apply(CustomBossEvent bossBattleCustom) {
-                return (KeyedBossBar) ((EntityBridge)bossBattleCustom).getBukkitEntity();
+                return (KeyedBossBar) ((EntityBridge) (Object) bossBattleCustom).getBukkitEntity();
             }
         }));
     }
@@ -700,7 +700,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     public KeyedBossBar getBossBar(NamespacedKey key) {
         Preconditions.checkArgument(key != null, "key");
         net.minecraft.server.bossevents.CustomBossEvent bossBattleCustom = getServer().getCustomBossEvents().get(CraftNamespacedKey.toMinecraft(key));
-        return (bossBattleCustom == null) ? null : (KeyedBossBar) ((EntityBridge)bossBattleCustom).getBukkitEntity();
+        return (bossBattleCustom == null) ? null : (KeyedBossBar) ((EntityBridge) (Object) bossBattleCustom).getBukkitEntity();
     }
 
     @Override
@@ -787,7 +787,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(Items.MAP, 1);
         // MapState worldmap = FilledMapItem.getOrCreateMapState(stack, ((CraftWorld) world).getHandle());
         MapItemSavedData worldmap = MapItem.getSavedData(stack, ((CraftWorld) world).getHandle());
-        return ((MapItemSavedDataBridge)worldmap).getMapViewBF();
+        return ((MapItemSavedDataBridge) (Object) worldmap).getMapViewBF();
     }
 
     @Override
@@ -878,7 +878,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
             worldSettings = new LevelInfo(name, net.minecraft.world.GameMode.byId(getDefaultGameMode().getValue()), hardcore, Difficulty.NORMAL, false, new GameRules(), method_29735(server.dataPackManager));
             worlddata = new LevelProperties(worldSettings, generatorsettings, Lifecycle.stable());
         }
-        ((IMixinLevelProperties)worlddata).checkName(name);
+        ((IMixinLevelProperties) (Object) worlddata).checkName(name);
         worlddata.addServerBrand(server.getServerModName(), true);
 
         long j = BiomeAccess.hashSeed(creator.seed());
@@ -908,17 +908,17 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         if (!(worlds.containsKey(name.toLowerCase(java.util.Locale.ENGLISH))))
             return null;
 
-        ((IMixinMinecraftServer)server).initWorld(internal, worlddata, worlddata, worlddata.getGeneratorOptions());
+        ((IMixinMinecraftServer) (Object) server).initWorld(internal, worlddata, worlddata, worlddata.getGeneratorOptions());
 
         internal.setMobSpawnOptions(true, true);
         server.worlds.put(internal.getRegistryKey(), internal);
 
-        pluginManager.callEvent(new WorldInitEvent(((IMixinWorld)internal).getCraftWorld()));
+        pluginManager.callEvent(new WorldInitEvent(((IMixinWorld) (Object) internal).getCraftWorld()));
 
         ((IMixinMinecraftServer)getServer()).loadSpawn(internal.getChunkManager().threadedAnvilChunkStorage.worldGenerationProgressListener, internal);
 
-        pluginManager.callEvent(new WorldLoadEvent(((IMixinWorld)internal).getCraftWorld()));
-        return ((IMixinWorld)internal).getCraftWorld();*/
+        pluginManager.callEvent(new WorldLoadEvent(((IMixinWorld) (Object) internal).getCraftWorld()));
+        return ((IMixinWorld) (Object) internal).getCraftWorld();*/
         return null;
     }
 
@@ -1158,7 +1158,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         for (ServerLevel world : getServer().getAllLevels()) {
             net.minecraft.world.entity.Entity entity = world.getEntity(uuid);
             if (entity != null)
-                return ((EntityBridge)entity).getBukkitEntity();
+                return ((EntityBridge) (Object) entity).getBukkitEntity();
         }
 
         return null;
@@ -1217,7 +1217,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         // MapState worldmap = server.getWorld(net.minecraft.world.World.OVERWORLD).getMapState("map_" + arg0);
         if (worldmap == null)
             return null;
-        return ((MapItemSavedDataBridge)worldmap).getMapViewBF();
+        return ((MapItemSavedDataBridge) (Object) worldmap).getMapViewBF();
     }
 
     @Override
@@ -1287,7 +1287,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public OfflinePlayer[] getOfflinePlayers() {
-        PlayerDataStorage storage = ((MinecraftServerBridge)server).getSaveHandler_BF();
+        PlayerDataStorage storage = ((MinecraftServerBridge) (Object) server).getSaveHandler_BF();
         String[] files = storage.playerDir.list(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -1318,7 +1318,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         this.playerView = Collections.unmodifiableList(Lists.transform(server.playerList.players, new Function<ServerPlayer, CraftPlayer>() {
             @Override
             public CraftPlayer apply(ServerPlayer player) {
-                return (CraftPlayer) ((EntityBridge)player).getBukkitEntity();
+                return (CraftPlayer) ((EntityBridge) (Object) player).getBukkitEntity();
             }
         }));
         return this.playerView;
@@ -1703,7 +1703,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         } catch (CommandSyntaxException ex) {
             throw new IllegalArgumentException("Could not parse selector: " + selector, ex);
         }
-        return new ArrayList<>(Lists.transform(nms, (entity) -> ((EntityBridge)entity).getBukkitEntity()));
+        return new ArrayList<>(Lists.transform(nms, (entity) -> ((EntityBridge) (Object) entity).getBukkitEntity()));
     }
 
     @Override
@@ -2140,7 +2140,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         for (ServerLevel world : server.levels.values()) {
             Identifier name = world.dimension().identifier();
             if (name.equals(id))
-                return ((LevelBridge)world).cardboard$getWorld();
+                return ((LevelBridge) (Object) world).cardboard$getWorld();
         }
 
         return null;
@@ -2543,7 +2543,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         if (worldServer == null) {
             return null;
         }
-        return ((LevelBridge)worldServer).cardboard$getWorld();
+        return ((LevelBridge) (Object) worldServer).cardboard$getWorld();
     }
 
     // 1.21.4 API:

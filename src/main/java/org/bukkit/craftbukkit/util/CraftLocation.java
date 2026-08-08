@@ -29,11 +29,11 @@ public final class CraftLocation {
     }
 
     public static Location toBukkit(Vec3 pos, Level level) {
-        return toBukkit(pos, ((LevelBridge)level).cardboard$getWorld());
+        return toBukkit(pos, ((LevelBridge) (Object) level).cardboard$getWorld());
     }
 
     public static Location toBukkit(Vec3 pos, Level level, float yaw, float pitch) {
-        return toBukkit(pos, ((LevelBridge)level).cardboard$getWorld(), yaw, pitch);
+        return toBukkit(pos, ((LevelBridge) (Object) level).cardboard$getWorld(), yaw, pitch);
     }
 
     public static Location toBukkit(Vec3i pos) {
@@ -49,15 +49,15 @@ public final class CraftLocation {
     }
 
     public static Location toBukkit(Vec3i pos, Level level) {
-        return toBukkit(pos, ((LevelBridge)level).cardboard$getWorld());
+        return toBukkit(pos, ((LevelBridge) (Object) level).cardboard$getWorld());
     }
 
     public static Location toBukkit(Vec3i pos, Level level, float yaw, float pitch) {
-        return toBukkit(pos, ((LevelBridge)level).cardboard$getWorld(), yaw, pitch);
+        return toBukkit(pos, ((LevelBridge) (Object) level).cardboard$getWorld(), yaw, pitch);
     }
 
     public static Location toBukkit(Node point, Level level) {
-        return new Location(((LevelBridge)level).cardboard$getWorld(), point.x, point.y, point.z);
+        return new Location(((LevelBridge) (Object) level).cardboard$getWorld(), point.x, point.y, point.z);
     }
 
     public static BlockPos toBlockPosition(Location loc) {

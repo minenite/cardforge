@@ -117,7 +117,7 @@ public class FabricServer implements IServer {
      */
 	@Override
 	public UUID get_uuid_from_profile(GameProfile profile) {
-		return ((IMixinMinecraftServer)mc).get_uuid_from_profile(profile);
+		return ((IMixinMinecraftServer) (Object) mc).get_uuid_from_profile(profile);
 	}
 	
 	/**
@@ -125,7 +125,7 @@ public class FabricServer implements IServer {
 	 */
 	@Override
 	public MerchantOffer create_trade_offer(ItemStack result, int uses, int maxUses, boolean experienceReward, int experience, float priceMultiplier, int demand, int specialPrice) {
-		return ((IMixinMinecraftServer)mc).create_new_trade_offer(result, uses, maxUses, experienceReward, experience, priceMultiplier, demand, specialPrice);
+		return ((IMixinMinecraftServer) (Object) mc).create_new_trade_offer(result, uses, maxUses, experienceReward, experience, priceMultiplier, demand, specialPrice);
 	}
 
 	@Override

@@ -32,7 +32,7 @@ public class FishingRodItemMixin {
             int j = EnchantmentHelper.getFishingLuckBonus((ServerLevel) world, itemstack, entityhuman);
             
             FishingHook entityfishinghook = new FishingHook(entityhuman, world, j, i);
-            PlayerFishEvent playerFishEvent = new PlayerFishEvent((org.bukkit.entity.Player) ((EntityBridge)entityhuman).getBukkitEntity(), null, (org.bukkit.entity.FishHook) ((EntityBridge)entityfishinghook).getBukkitEntity(), PlayerFishEvent.State.FISHING);
+            PlayerFishEvent playerFishEvent = new PlayerFishEvent((org.bukkit.entity.Player) ((EntityBridge) (Object) entityhuman).getBukkitEntity(), null, (org.bukkit.entity.FishHook) ((EntityBridge) (Object) entityfishinghook).getBukkitEntity(), PlayerFishEvent.State.FISHING);
             Bukkit.getPluginManager().callEvent(playerFishEvent);
     
             if (playerFishEvent.isCancelled()) {

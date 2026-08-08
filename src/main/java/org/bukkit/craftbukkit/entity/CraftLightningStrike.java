@@ -42,7 +42,7 @@ public class CraftLightningStrike extends CraftEntity implements LightningStrike
 
     public Player getCausingPlayer() {
         ServerPlayer player = this.getHandle().getCause();
-        return (player != null) ? (Player) ((EntityBridge)player).getBukkitEntity() : null;
+        return (player != null) ? (Player) ((EntityBridge) (Object) player).getBukkitEntity() : null;
     }
 
     public void setCausingPlayer(Player player) {
@@ -78,6 +78,6 @@ public class CraftLightningStrike extends CraftEntity implements LightningStrike
     @Override
     public @org.jetbrains.annotations.Nullable org.bukkit.entity.Entity getCausingEntity() {
         final var cause = this.getHandle().getCause();
-        return cause == null ? null : ((EntityBridge)cause).getBukkitEntity();
+        return cause == null ? null : ((EntityBridge) (Object) cause).getBukkitEntity();
     }
 }

@@ -444,8 +444,8 @@ public class CraftInventory implements Inventory {
     // Paper start
     @Override
     public int close() {
-        int count = ((ContainerBridge)this.inventory).getViewers().size();
-        com.google.common.collect.Lists.newArrayList(((ContainerBridge)this.inventory).getViewers()).forEach(HumanEntity::closeInventory);
+        int count = ((ContainerBridge) (Object) this.inventory).getViewers().size();
+        com.google.common.collect.Lists.newArrayList(((ContainerBridge) (Object) this.inventory).getViewers()).forEach(HumanEntity::closeInventory);
         return count;
     }
     // Paper end
@@ -465,7 +465,7 @@ public class CraftInventory implements Inventory {
 
     @Override
     public List<HumanEntity> getViewers() {
-        return ((ContainerBridge)this.inventory).getViewers();
+        return ((ContainerBridge) (Object) this.inventory).getViewers();
     }
 
     @Override
@@ -544,13 +544,13 @@ public class CraftInventory implements Inventory {
 
     @Override
     public InventoryHolder getHolder() {
-        return ((ContainerBridge)this.inventory).getOwner();
+        return ((ContainerBridge) (Object) this.inventory).getOwner();
     }
 
     // Paper start - getHolder without snapshot
     @Override
     public InventoryHolder getHolder(boolean useSnapshot) {
-        return this.inventory instanceof net.minecraft.world.level.block.entity.BlockEntity blockEntity ? ((BlockEntityBridge)blockEntity).cardboard$getOwner(useSnapshot) : getHolder();
+        return this.inventory instanceof net.minecraft.world.level.block.entity.BlockEntity blockEntity ? ((BlockEntityBridge) (Object) blockEntity).cardboard$getOwner(useSnapshot) : getHolder();
     }
     // Paper end
 
@@ -561,7 +561,7 @@ public class CraftInventory implements Inventory {
 
     @Override
     public void setMaxStackSize(int size) {
-       ((ContainerBridge)this.inventory).cardboard$setMaxStackSize(size);
+       ((ContainerBridge) (Object) this.inventory).cardboard$setMaxStackSize(size);
     }
 
     @Override
@@ -576,6 +576,6 @@ public class CraftInventory implements Inventory {
 
     @Override
     public Location getLocation() {
-        return ((ContainerBridge)this.inventory).getLocation();
+        return ((ContainerBridge) (Object) this.inventory).getLocation();
     }
 }

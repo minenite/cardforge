@@ -31,7 +31,7 @@ public class LevelStorageSourceMixin implements LevelStorageSourceBridge {
 	@Override
 	public LevelStorageSource.LevelStorageAccess validateAndCreateAccess(String saveName, ResourceKey<LevelStem> dimensionType) throws IOException, ContentValidationException {
 		LevelStorageSource.LevelStorageAccess vanilla = this.validateAndCreateAccess(saveName);
-		((LevelStorageSource_LevelStorageAccessBridge) vanilla).cardboard$set_dimensionType(dimensionType); // Paper-ize
+		((LevelStorageSource_LevelStorageAccessBridge) (Object) vanilla).cardboard$set_dimensionType(dimensionType); // Paper-ize
 		return vanilla;
 	}
 	

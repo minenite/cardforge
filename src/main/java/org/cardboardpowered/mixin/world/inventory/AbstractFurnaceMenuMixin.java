@@ -76,7 +76,7 @@ public class AbstractFurnaceMenuMixin extends AbstractContainerMenuMixin {
         if (bukkitEntity != null) return bukkitEntity;
 
         CraftInventoryFurnace inventory = new CraftInventoryFurnace((AbstractFurnaceBlockEntity) this.container);
-        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((EntityBridge)this.playerInv.player).getBukkitEntity(), inventory, (AbstractFurnaceMenu)(Object)this);
+        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((EntityBridge) (Object) this.playerInv.player).getBukkitEntity(), inventory, (AbstractFurnaceMenu)(Object)this);
         return bukkitEntity;
     }
 

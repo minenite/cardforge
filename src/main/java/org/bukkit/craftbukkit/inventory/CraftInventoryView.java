@@ -28,7 +28,7 @@ public class CraftInventoryView<T extends AbstractContainerMenu, I extends Inven
         this.player = (CraftHumanEntity) player;
         this.viewing = viewing;
         this.container = container;
-        this.originalTitle = CraftChatMessage.fromComponent(((AbstractContainerMenuBridge)container).getTitle());
+        this.originalTitle = CraftChatMessage.fromComponent(((AbstractContainerMenuBridge) (Object) container).getTitle());
         this.title = this.originalTitle;
     }
 
@@ -76,7 +76,7 @@ public class CraftInventoryView<T extends AbstractContainerMenu, I extends Inven
 
     @Override
     public net.kyori.adventure.text.Component title() {
-        return io.papermc.paper.adventure.PaperAdventure.asAdventure(((AbstractContainerMenuBridge)this.container).getTitle());
+        return io.papermc.paper.adventure.PaperAdventure.asAdventure(((AbstractContainerMenuBridge) (Object) this.container).getTitle());
     }
 
     @Override

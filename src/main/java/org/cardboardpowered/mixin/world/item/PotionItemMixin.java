@@ -15,7 +15,7 @@ public class PotionItemMixin {
     			)
     	)
     public void cardboard$potionitem_set_effect_event_cause(ItemStack stack, World world, LivingEntity user, CallbackInfoReturnable<ItemStack> cir) {
-        ((IMixinLivingEntity) user).pushEffectCause(EntityPotionEffectEvent.Cause.POTION_DRINK);
+        ((IMixinLivingEntity) (Object) user).pushEffectCause(EntityPotionEffectEvent.Cause.POTION_DRINK);
     }
     */
 

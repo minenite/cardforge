@@ -17,7 +17,7 @@ public class NetherPortalBlockMixin {
     @Inject(at = @At("HEAD"), method = "onEntityCollision")
     public void callBukkitEvent(BlockState state, World world, BlockPos pos, Entity entity, EntityCollisionHandler ech, CallbackInfo ci) {
         if (!entity.hasVehicle() && !entity.hasPassengers() && entity.canUsePortals(true)) {
-            EntityPortalEnterEvent event = new EntityPortalEnterEvent(((IMixinEntity)entity).getBukkitEntity(), new org.bukkit.Location(((IMixinWorld)world).getCraftWorld(), pos.getX(), pos.getY(), pos.getZ()));
+            EntityPortalEnterEvent event = new EntityPortalEnterEvent(((IMixinEntity) (Object) entity).getBukkitEntity(), new org.bukkit.Location(((IMixinWorld) (Object) world).getCraftWorld(), pos.getX(), pos.getY(), pos.getZ()));
             Bukkit.getPluginManager().callEvent(event);
         }
     }

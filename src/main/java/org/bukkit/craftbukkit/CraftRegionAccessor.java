@@ -322,7 +322,7 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
     public List<org.bukkit.entity.Entity> getEntities() {
         ArrayList<org.bukkit.entity.Entity> list = new ArrayList<org.bukkit.entity.Entity>();
         this.getNMSEntities().forEach(entity -> {
-            CraftEntity bukkitEntity = ((EntityBridge)entity).getBukkitEntity();
+            CraftEntity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntity();
             if (bukkitEntity != null && (!this.isNormalWorld() || bukkitEntity.isValid())) {
                 list.add(bukkitEntity);
             }
@@ -333,7 +333,7 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
     public List<LivingEntity> getLivingEntities() {
         ArrayList<LivingEntity> list = new ArrayList<LivingEntity>();
         this.getNMSEntities().forEach(entity -> {
-            CraftEntity bukkitEntity = ((EntityBridge)entity).getBukkitEntity();
+            CraftEntity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntity();
             if (bukkitEntity != null && bukkitEntity instanceof LivingEntity && (!this.isNormalWorld() || bukkitEntity.isValid())) {
                 list.add((LivingEntity)bukkitEntity);
             }
@@ -344,7 +344,7 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
     public <T extends org.bukkit.entity.Entity> Collection<T> getEntitiesByClass(Class<T> clazz) {
         ArrayList list = new ArrayList();
         this.getNMSEntities().forEach(entity -> {
-            CraftEntity bukkitEntity = ((EntityBridge)entity).getBukkitEntity();
+            CraftEntity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntity();
             if (bukkitEntity == null) {
                 return;
             }
@@ -359,7 +359,7 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
     public Collection<org.bukkit.entity.Entity> getEntitiesByClasses(Class<?> ... classes) {
         ArrayList<org.bukkit.entity.Entity> list = new ArrayList<org.bukkit.entity.Entity>();
         this.getNMSEntities().forEach(entity -> {
-            CraftEntity bukkitEntity = ((EntityBridge)entity).getBukkitEntity();
+            CraftEntity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntity();
             if (bukkitEntity == null) {
                 return;
             }
@@ -382,7 +382,7 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
             // TODO
         	// entity.generation = true;
         }
-        return (T)((EntityBridge)entity).getBukkitEntity();
+        return (T)((EntityBridge) (Object) entity).getBukkitEntity();
     }
 
     public <T extends org.bukkit.entity.Entity> T spawn(Location location, Class<T> clazz) throws IllegalArgumentException {
@@ -414,7 +414,7 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
         	// nmsEntity = nmsEntity.teleportTo(this.getHandle().toServerWorld());
         }
         this.addEntityWithPassengers(nmsEntity, CreatureSpawnEvent.SpawnReason.CUSTOM);
-        return (T)((EntityBridge)nmsEntity).getBukkitEntity();
+        return (T)((EntityBridge) (Object) nmsEntity).getBukkitEntity();
     }
 
     public <T extends org.bukkit.entity.Entity> T addEntity(Entity entity, CreatureSpawnEvent.SpawnReason reason) throws IllegalArgumentException {
@@ -430,10 +430,10 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
             // TODO entity.generation = true;
         }
         if (function != null) {
-            function.accept((T) ((EntityBridge)entity).getBukkitEntity());
+            function.accept((T) ((EntityBridge) (Object) entity).getBukkitEntity());
         }
         this.addEntityToWorld(entity, reason);
-        return (T)((EntityBridge)entity).getBukkitEntity();
+        return (T)((EntityBridge) (Object) entity).getBukkitEntity();
     }
 
     public abstract void addEntityToWorld(Entity var1, CreatureSpawnEvent.SpawnReason var2);
@@ -472,7 +472,7 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
             clazz = ThrownPotion.class;
         } else if (clazz == TippedArrow.class) {
             clazz = Arrow.class;
-            runOld = other -> ((Arrow)((EntityBridge)other).getBukkitEntity()).setBasePotionType(PotionType.WATER);
+            runOld = other -> ((Arrow)((EntityBridge) (Object) other).getBukkitEntity()).setBasePotionType(PotionType.WATER);
         }
         CraftEntityTypes.EntityTypeData entityTypeData = CraftEntityTypes.getEntityTypeData(clazz);
         if (entityTypeData == null || entityTypeData.spawnFunction() == null) {

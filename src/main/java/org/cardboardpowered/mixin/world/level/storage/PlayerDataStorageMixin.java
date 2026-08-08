@@ -76,7 +76,7 @@ public class PlayerDataStorageMixin implements PlayerDataStorageBridge {
         if (lv != null) {
         	// Cardboard Start
         	if (player instanceof ServerPlayerEntity) {
-                CraftPlayer craftPlayer = (CraftPlayer) ((IMixinServerEntityPlayer)player).getBukkitEntity();
+                CraftPlayer craftPlayer = (CraftPlayer) ((IMixinServerEntityPlayer) (Object) player).getBukkitEntity();
                 // Only update first played if it is older than the one we have
                 long modified = new File(this.playerDataDir, player.getUuid() + ".dat").lastModified();
                 if (modified < craftPlayer.getFirstPlayed()) {
@@ -122,7 +122,7 @@ public class PlayerDataStorageMixin implements PlayerDataStorageBridge {
         if (nbttagcompound != null) {
             // CraftBukkit start
             if (entityhuman instanceof ServerPlayerEntity) {
-                CraftPlayer player = (CraftPlayer) ((IMixinServerEntityPlayer)entityhuman).getBukkitEntity();
+                CraftPlayer player = (CraftPlayer) ((IMixinServerEntityPlayer) (Object) entityhuman).getBukkitEntity();
                 // Only update first played if it is older than the one we have
                 long modified = new File(this.playerDataDir, entityhuman.getUuid().toString() + ".dat").lastModified();
                 if (modified < player.getFirstPlayed()) {

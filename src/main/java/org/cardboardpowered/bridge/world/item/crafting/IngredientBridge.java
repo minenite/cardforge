@@ -20,7 +20,7 @@ public interface IngredientBridge {
 
 	static Ingredient cb$ofStacks(List<ItemStack> stacks) {
 		Ingredient recipe = Ingredient.of(stacks.stream().map(ItemStack::getItem));
-		((IngredientBridge)recipe).cardboard$set_itemStacks(stacks);
+		((IngredientBridge) (Object) recipe).cardboard$set_itemStacks(stacks);
 		return recipe;
 	}
 

@@ -182,7 +182,7 @@ public abstract class ItemStackMixin implements ItemStackBridge {
         int i = this.processDurabilityChange(damage, level, player, force); // Paper
         // CraftBukkit start
         if (i > 0 && player instanceof final ServerPlayer serverPlayer) { // Paper - Add EntityDamageItemEvent - limit to positive damage and run for player
-            org.bukkit.event.player.PlayerItemDamageEvent event = new org.bukkit.event.player.PlayerItemDamageEvent((Player) ((EntityBridge)serverPlayer).getBukkitEntity(), org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror((ItemStack)(Object)this), i, originalDamage); // Paper - Add EntityDamageItemEvent
+            org.bukkit.event.player.PlayerItemDamageEvent event = new org.bukkit.event.player.PlayerItemDamageEvent((Player) ((EntityBridge) (Object) serverPlayer).getBukkitEntity(), org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror((ItemStack)(Object)this), i, originalDamage); // Paper - Add EntityDamageItemEvent
             event.getPlayer().getServer().getPluginManager().callEvent(event);
             if (event.isCancelled()) {
                 return;
@@ -191,7 +191,7 @@ public abstract class ItemStackMixin implements ItemStackBridge {
             i = event.getDamage();
             // Paper start - Add EntityDamageItemEvent
         } else if (i > 0 && player != null) {
-            io.papermc.paper.event.entity.EntityDamageItemEvent event = new io.papermc.paper.event.entity.EntityDamageItemEvent(((EntityBridge)player).getBukkitEntity(), org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror((ItemStack)(Object)this), i);
+            io.papermc.paper.event.entity.EntityDamageItemEvent event = new io.papermc.paper.event.entity.EntityDamageItemEvent(((EntityBridge) (Object) player).getBukkitEntity(), org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror((ItemStack)(Object)this), i);
             if (!event.callEvent()) {
                 return;
             }
@@ -263,7 +263,7 @@ public abstract class ItemStackMixin implements ItemStackBridge {
             // Paper start - Expand PlayerItemDamageEvent
             if (min - this.getDamageValue() > 0) {
                 org.bukkit.event.player.PlayerItemDamageEvent event = new org.bukkit.event.player.PlayerItemDamageEvent(
-                        (Player) ((EntityBridge)serverPlayer).getBukkitEntity(),
+                        (Player) ((EntityBridge) (Object) serverPlayer).getBukkitEntity(),
                         org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror((ItemStack)(Object)this),
                         min - this.getDamageValue(),
                         damage

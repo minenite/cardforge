@@ -36,7 +36,7 @@ public class HangingEntityItemMixin {
         org.bukkit.block.Block blockClicked = CraftBlock.at((ServerLevel) world, blockPos);
         org.bukkit.block.BlockFace blockFace = CraftBlock.notchToBlockFace(direction);
 
-        HangingPlaceEvent event = new HangingPlaceEvent((Hanging) ((EntityBridge) abstractDecorationEntity).getBukkitEntity(), who, blockClicked, blockFace, EquipmentSlot.HAND, CraftItemStack.asBukkitCopy(itemStack));
+        HangingPlaceEvent event = new HangingPlaceEvent((Hanging) ((EntityBridge) (Object) abstractDecorationEntity).getBukkitEntity(), who, blockClicked, blockFace, EquipmentSlot.HAND, CraftItemStack.asBukkitCopy(itemStack));
         Bukkit.getPluginManager().callEvent(event);
 
         if (event.isCancelled()) {

@@ -56,10 +56,10 @@ public class MixinArmorItem {
             ItemStack itemstack1 = itemstack.split(1);
 
             World world = isourceblock.world();
-            org.bukkit.block.Block block = ((IMixinWorld)world).getCraftWorld().getBlockAt(isourceblock.pos().getX(), isourceblock.pos().getY(), isourceblock.pos().getZ());
+            org.bukkit.block.Block block = ((IMixinWorld) (Object) world).getCraftWorld().getBlockAt(isourceblock.pos().getX(), isourceblock.pos().getY(), isourceblock.pos().getZ());
             CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack1);
 
-            BlockDispenseArmorEvent event = new BlockDispenseArmorEvent(block, craftItem.clone(), (LivingEntityImpl) ((IMixinEntity)entityliving).getBukkitEntity());
+            BlockDispenseArmorEvent event = new BlockDispenseArmorEvent(block, craftItem.clone(), (LivingEntityImpl) ((IMixinEntity) (Object) entityliving).getBukkitEntity());
             if (!DispenserBlockHelper.eventFired)
                 Bukkit.getPluginManager().callEvent(event);
 

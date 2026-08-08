@@ -74,7 +74,7 @@ public class PrimaryLevelDataMixin implements PrimaryLevelDataBridge {
     @Override
     public void checkName(String name) {
     	if (!this.settings.levelName().equals(name)) {
-            this.settings = ((ILevelSettings) this.settings).cardboard$withLevelName(name);
+            this.settings = ((ILevelSettings) (Object) this.settings).cardboard$withLevelName(name);
         }
     }
 

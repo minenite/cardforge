@@ -59,7 +59,7 @@ public class CraftingMenuMixin extends AbstractContainerMenuMixin {
         CraftingMenu thiz = (CraftingMenu) (Object) this;
 
         CraftInventoryCrafting inventory = new CraftInventoryCrafting(thiz.craftSlots, thiz.resultSlots);
-        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((EntityBridge)this.playerInv.player).getBukkitEntity(), inventory, (CraftingMenu)(Object)this);
+        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((EntityBridge) (Object) this.playerInv.player).getBukkitEntity(), inventory, (CraftingMenu)(Object)this);
         return bukkitEntity;
     }
 
@@ -76,7 +76,7 @@ public class CraftingMenuMixin extends AbstractContainerMenuMixin {
                 if (inventorycraftresult.setRecipeUsed(entityplayer, recipecrafting))
                     itemstack = recipecrafting.value().assemble(craftinginput);
             }
-            itemstack = CraftEventFactory.callPreCraftEvent(inventorycrafting, inventorycraftresult, itemstack, ((AbstractContainerMenuBridge)container).getBukkitView(), false);
+            itemstack = CraftEventFactory.callPreCraftEvent(inventorycrafting, inventorycraftresult, itemstack, ((AbstractContainerMenuBridge) (Object) container).getBukkitView(), false);
             inventorycraftresult.setItem(0, itemstack);
             entityplayer.connection.send(new ClientboundContainerSetSlotPacket(i, container.incrementStateId(), 0, itemstack));
         }

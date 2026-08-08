@@ -38,7 +38,7 @@ public class BatMixin {
 
     // note: 1.21.4: awake is always == true.
     private static boolean handleBatToggleSleepEvent(Entity bat, boolean awake) {
-        BatToggleSleepEvent event = new BatToggleSleepEvent((Bat) ((EntityBridge)bat).getBukkitEntity(), awake);
+        BatToggleSleepEvent event = new BatToggleSleepEvent((Bat) ((EntityBridge) (Object) bat).getBukkitEntity(), awake);
         Bukkit.getPluginManager().callEvent(event);
         return !event.isCancelled();
     }

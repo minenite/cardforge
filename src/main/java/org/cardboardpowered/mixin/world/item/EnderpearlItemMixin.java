@@ -38,7 +38,7 @@ public class EnderpearlItemMixin extends Item {
             enderPearlEntity.shootFromRotation(user, user.getXRot(), user.getYRot(), 0.0F, 1.5F, 1.0F);
             if (!world.addFreshEntity(enderPearlEntity)) {
                 if (user instanceof ServerPlayerBridge) {
-                    ((CraftPlayer)((EntityBridge) user).getBukkitEntity()).updateInventory();
+                    ((CraftPlayer)((EntityBridge) (Object) user).getBukkitEntity()).updateInventory();
                 }
                 return InteractionResult.FAIL;
                 // return TypedActionResult.fail(itemStack);

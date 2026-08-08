@@ -53,7 +53,7 @@ public class BoatDispenseItemBehaviorMixin {
        // }
 
         ItemStack itemstack1 = itemstack.split(1);
-        org.bukkit.block.Block block = ((LevelBridge)worldserver).cardboard$getWorld().getBlockAt(isourceblock.pos().getX(), isourceblock.pos().getY(), isourceblock.pos().getZ());
+        org.bukkit.block.Block block = ((LevelBridge) (Object) worldserver).cardboard$getWorld().getBlockAt(isourceblock.pos().getX(), isourceblock.pos().getY(), isourceblock.pos().getZ());
         CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack1);
 
         BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(d0, d1 + d3, d2));

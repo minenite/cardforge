@@ -83,7 +83,7 @@ public class CraftBlock implements Block {
 
     @Override
     public World getWorld() {
-        return ((LevelBridge)this.world).cardboard$getWorld();
+        return ((LevelBridge) (Object) this.world).cardboard$getWorld();
     }
 
     public CraftWorld getCraftWorld() {
@@ -506,7 +506,7 @@ public class CraftBlock implements Block {
         if (block != Blocks.AIR && (item == null || !state.requiresCorrectToolForDrops() || nmsItem.isCorrectToolForDrops(state))) {
             net.minecraft.world.level.block.Block.dropResources(state, ((ServerLevel)this.world), this.position, this.world.getBlockEntity(this.position), null, nmsItem); // Paper - Properly handle xp dropping
             // Paper start - improve Block#breakNaturally // TODO
-            //if (dropExperience) block.popExperience(((ServerLevel)this.world), this.position, ((BlockBridge)block).getExpDrop(state, ((ServerLevel)this.world), this.position, nmsItem, true));
+            //if (dropExperience) block.popExperience(((ServerLevel)this.world), this.position, ((BlockBridge) (Object) block).getExpDrop(state, ((ServerLevel)this.world), this.position, nmsItem, true));
             // Paper end
             result = true;
         }

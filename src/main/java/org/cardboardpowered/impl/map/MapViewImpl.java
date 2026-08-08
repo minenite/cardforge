@@ -59,7 +59,7 @@ public final class MapViewImpl implements MapView {
     public World getWorld() {
         ResourceKey<net.minecraft.world.level.Level> dimension = worldMap.dimension;
         ServerLevel world = CraftServer.server.getLevel(dimension);
-        return (world == null) ? null : ((LevelBridge)world).cardboard$getWorld();
+        return (world == null) ? null : ((LevelBridge) (Object) world).cardboard$getWorld();
     }
 
     @Override

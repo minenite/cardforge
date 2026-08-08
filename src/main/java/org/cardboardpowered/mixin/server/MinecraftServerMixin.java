@@ -193,7 +193,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         Collection<ServerWorld> worldz = this.worlds.values();
 
         for (ServerWorld world : worldz) {
-            CraftServer.INSTANCE.getPluginManager().callEvent(new org.bukkit.event.world.WorldInitEvent(((IMixinWorld)world).getCraftWorld()));
+            CraftServer.INSTANCE.getPluginManager().callEvent(new org.bukkit.event.world.WorldInitEvent(((IMixinWorld) (Object) world).getCraftWorld()));
         }
     }
     */
@@ -212,10 +212,10 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 // TODO IMPORTANT
             	
             	// ServerWorld world, ServerWorldProperties worldProperties, boolean bonusChest, boolean debugWorld, ChunkLoadProgress loadProgress
-            	//setInitialSpawn(worldserver, worldserver.serverLevelData, false, false, ((ServerLevelBridge) worldserver).cardboard$levelLoadListener()); // This breaks initial world spawn.
+            	//setInitialSpawn(worldserver, worldserver.serverLevelData, false, false, ((ServerLevelBridge) (Object) worldserver).cardboard$levelLoadListener()); // This breaks initial world spawn.
             	
             	// this.loadSpawn(worldserver.getChunkManager().chunkLoadingManager.worldGenerationProgressListener, worldserver);
-                CraftServer.INSTANCE.getPluginManager().callEvent(new org.bukkit.event.world.WorldLoadEvent(((LevelBridge)worldserver).cardboard$getWorld()));
+                CraftServer.INSTANCE.getPluginManager().callEvent(new org.bukkit.event.world.WorldLoadEvent(((LevelBridge) (Object) worldserver).cardboard$getWorld()));
             }
         }
 
@@ -414,7 +414,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     	serverLevel.setSpawnSettings(serverLevel.serverLevelData.getDifficulty() != Difficulty.PEACEFUL && serverLevel.getGameRules().get(GameRules.SPAWN_MONSTERS));
     	this.updateEffectiveRespawnData();
     	this.forceTicks = false;
-    	new WorldLoadEvent(((LevelBridge)serverLevel).cardboard$getWorld()).callEvent();
+    	new WorldLoadEvent(((LevelBridge) (Object) serverLevel).cardboard$getWorld()).callEvent();
     }
 
     @Shadow
@@ -524,7 +524,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         if (((CraftServer) Bukkit.getServer()).scoreboardManager == null) {
             ((CraftServer) Bukkit.getServer()).scoreboardManager = new CraftScoreboardManager((MinecraftServer) (Object) this, serverWorld.getScoreboard());
         }
-        // Bukkit.getPluginManager().callEvent(new WorldInitEvent(((IMixinWorld) serverWorld).getCraftWorld()));
+        // Bukkit.getPluginManager().callEvent(new WorldInitEvent(((IMixinWorld) (Object) serverWorld).getCraftWorld()));
     }
 
     private void cardboard$initializedLevel(ServerLevel overworld, WorldDataAndGenSettings worldDataAndGenSettings, WorldOptions generatorsettings) {
@@ -541,12 +541,12 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
         this.paper$initWorldBorder(levelData, overworld);
         
-        Bukkit.getPluginManager().callEvent(new WorldInitEvent(((LevelBridge) overworld).cardboard$getWorld()));
+        Bukkit.getPluginManager().callEvent(new WorldInitEvent(((LevelBridge) (Object) overworld).cardboard$getWorld()));
         
         if (!levelData.isInitialized()) {
             try {
             	// TODO IMPORTANT
-                setInitialSpawn(overworld, levelData, generatorsettings.generateBonusChest(), flag, ((ServerLevelBridge) overworld).cardboard$levelLoadListener());
+                setInitialSpawn(overworld, levelData, generatorsettings.generateBonusChest(), flag, ((ServerLevelBridge) (Object) overworld).cardboard$levelLoadListener());
                 levelData.setInitialized(true);
             } catch (Throwable throwable) {
                 CrashReport crashreport = CrashReport.forThrowable(throwable, "Exception initializing level");
@@ -557,7 +557,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         }
         
         GlobalPos globalPos = ((MinecraftServer) (Object) this).selectLevelLoadFocusPos();
-        ((ServerLevelBridge) overworld).cardboard$levelLoadListener().updateFocus(globalPos.dimension(), ChunkPos.containing(globalPos.pos()));
+        ((ServerLevelBridge) (Object) overworld).cardboard$levelLoadListener().updateFocus(globalPos.dimension(), ChunkPos.containing(globalPos.pos()));
         /*
         if (worldProperties.getCustomBossEvents() != null) {
            this.getBossBarManager().readNbt(serverLevelData.getCustomBossEvents(), this.getRegistryManager());

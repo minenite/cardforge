@@ -32,7 +32,7 @@ public abstract class ServerScoreboardMixin extends Scoreboard implements Server
 
         while (iterator.hasNext()) {
             ServerPlayerEntity entityplayer = (ServerPlayerEntity) iterator.next();
-            if (((CraftPlayer)((IMixinServerEntityPlayer)entityplayer).getBukkitEntity()).getScoreboard().getHandle() != (ServerScoreboard)(Object)this) continue; // Bukkit - Only players on this board
+            if (((CraftPlayer)((IMixinServerEntityPlayer) (Object) entityplayer).getBukkitEntity()).getScoreboard().getHandle() != (ServerScoreboard)(Object)this) continue; // Bukkit - Only players on this board
             Iterator iterator1 = list.iterator();
 
             while (iterator1.hasNext()) {
@@ -50,7 +50,7 @@ public abstract class ServerScoreboardMixin extends Scoreboard implements Server
 
         while (iterator.hasNext()) {
             ServerPlayerEntity entityplayer = (ServerPlayerEntity) iterator.next();
-            if (((CraftPlayer)((IMixinServerEntityPlayer)entityplayer).getBukkitEntity()).getScoreboard().getHandle() != (ServerScoreboard)(Object)this) continue; // Bukkit - Only players on this board
+            if (((CraftPlayer)((IMixinServerEntityPlayer) (Object) entityplayer).getBukkitEntity()).getScoreboard().getHandle() != (ServerScoreboard)(Object)this) continue; // Bukkit - Only players on this board
             Iterator iterator1 = list.iterator();
 
             while (iterator1.hasNext()) {
@@ -64,7 +64,7 @@ public abstract class ServerScoreboardMixin extends Scoreboard implements Server
 
     private void sendAll(Packet packet) {
         for (ServerPlayerEntity entityplayer : CraftServer.server.getPlayerManager().players)
-            if (((CraftPlayer)((IMixinServerEntityPlayer)entityplayer).getBukkitEntity()).getScoreboard().getHandle() == (ServerScoreboard)(Object)this)
+            if (((CraftPlayer)((IMixinServerEntityPlayer) (Object) entityplayer).getBukkitEntity()).getScoreboard().getHandle() == (ServerScoreboard)(Object)this)
                 entityplayer.networkHandler.sendPacket(packet);
     }
     */
@@ -84,7 +84,7 @@ public abstract class ServerScoreboardMixin extends Scoreboard implements Server
     public void startTrackingObjective(Objective objective) {
         List<Packet<?>> list = ((ServerScoreboard)(Object)this).getStartTrackingPackets(objective);
         for (ServerPlayer entityplayer : CraftServer.INSTANCE.getHandle().getPlayers()) {
-            if (((CraftPlayer)((ServerPlayerBridge)entityplayer).getBukkitEntity()).getScoreboard().getHandle() != (ServerScoreboard)(Object)this) continue;
+            if (((CraftPlayer)((ServerPlayerBridge) (Object) entityplayer).getBukkitEntity()).getScoreboard().getHandle() != (ServerScoreboard)(Object)this) continue;
             for (Packet<?> packet : list) {
                 entityplayer.connection.send(packet);
             }
@@ -100,7 +100,7 @@ public abstract class ServerScoreboardMixin extends Scoreboard implements Server
     public void stopTrackingObjective(Objective objective) {
         List<Packet<?>> list = ((ServerScoreboard)(Object)this).getStopTrackingPackets(objective);
         for (ServerPlayer entityplayer : CraftServer.INSTANCE.getHandle().getPlayers()) {
-            if (((CraftPlayer)((ServerPlayerBridge)entityplayer).getBukkitEntity()).getScoreboard().getHandle() != (ServerScoreboard)(Object)this) continue;
+            if (((CraftPlayer)((ServerPlayerBridge) (Object) entityplayer).getBukkitEntity()).getScoreboard().getHandle() != (ServerScoreboard)(Object)this) continue;
             for (Packet<?> packet : list) {
                 entityplayer.connection.send(packet);
             }
@@ -144,7 +144,7 @@ public abstract class ServerScoreboardMixin extends Scoreboard implements Server
     @Unique
     private void broadcastAll(Packet<?> packet) {
         for (ServerPlayer serverPlayer : this.server.getPlayerList().players) {
-            if (((CraftPlayer)((EntityBridge)serverPlayer).getBukkitEntity()).getScoreboard().getHandle() == this) {
+            if (((CraftPlayer)((EntityBridge) (Object) serverPlayer).getBukkitEntity()).getScoreboard().getHandle() == this) {
                 serverPlayer.connection.send(packet);
             }
         }

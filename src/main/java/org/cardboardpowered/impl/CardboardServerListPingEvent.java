@@ -62,7 +62,7 @@ public class CardboardServerListPingEvent extends ServerListPingEvent {
                 final ServerPlayer player = this.player;
                 this.player = null;
                 this.ret = this.i - 1;
-                return (Player) ((ServerPlayerBridge)player).getBukkitEntity();
+                return (Player) ((ServerPlayerBridge) (Object) player).getBukkitEntity();
             }
 
             @Override

@@ -77,7 +77,7 @@ public final class BossBarImplementationImpl implements BossBar.Listener, BossBa
     @Override
     public @NotNull Iterable<? extends BossBarViewer> viewers() {
         return this.vanilla == null ? Set.of() : Collections2.transform(this.vanilla.getPlayers(), (serverPlayer) -> {
-            return ((CraftPlayer)((EntityBridge)serverPlayer).getBukkitEntity());
+            return ((CraftPlayer)((EntityBridge) (Object) serverPlayer).getBukkitEntity());
         });
     }
 

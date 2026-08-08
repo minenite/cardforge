@@ -385,7 +385,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     private static void openCustomInventory(Inventory inventory, ServerPlayer player, MenuType<?> windowType) {
         if (player.connection == null) return;
         Preconditions.checkArgument(windowType != null, "Unknown windowType");
-        AbstractContainerMenu container = new CraftContainer(inventory, player, ((ServerPlayerBridge)player).cardboard$nextContainerCounter());
+        AbstractContainerMenu container = new CraftContainer(inventory, player, ((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter());
 
         // Paper start - Add titleOverride to InventoryOpenEvent
         final com.mojang.datafixers.util.Pair<net.kyori.adventure.text.Component, AbstractContainerMenu> result = CraftEventFactory.callInventoryOpenEventWithTitle(player, container);
@@ -394,8 +394,8 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         if (container == null) return;
 
         //String title = container.getBukkitView().getTitle(); // Paper - comment
-        net.kyori.adventure.text.Component adventure$title = ((AbstractContainerMenuBridge)container).getBukkitView().title(); // Paper
-        if (adventure$title == null) adventure$title = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(((AbstractContainerMenuBridge)container).getBukkitView().getTitle()); // Paper
+        net.kyori.adventure.text.Component adventure$title = ((AbstractContainerMenuBridge) (Object) container).getBukkitView().title(); // Paper
+        if (adventure$title == null) adventure$title = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(((AbstractContainerMenuBridge) (Object) container).getBukkitView().getTitle()); // Paper
         if (result.getFirst() != null) adventure$title = result.getFirst(); // Paper - Add titleOverride to InventoryOpenEvent
 
         //player.connection.send(new ClientboundOpenScreenPacket(container.containerId, windowType, CraftChatMessage.fromString(title)[0])); // Paper - comment
@@ -470,7 +470,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
             container = ((CraftInventoryView) inventory).getHandle();
             Preconditions.checkArgument(!(container instanceof InventoryMenu), "Can not open player's InventoryView");
         } else {
-            container = new CraftContainer(inventory, this.getHandle(), ((ServerPlayerBridge)player).cardboard$nextContainerCounter());
+            container = new CraftContainer(inventory, this.getHandle(), ((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter());
         }
 
         // Trigger an INVENTORY_OPEN event
@@ -788,7 +788,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     @Override
     public boolean dropItem(boolean dropAll) {
         if (!(this.getHandle() instanceof ServerPlayer player)) return false;
-        boolean success = ((ServerPlayerBridge)player).cardboard$drop(dropAll);
+        boolean success = ((ServerPlayerBridge) (Object) player).cardboard$drop(dropAll);
         if (!success) {
             return false;
         }
@@ -822,7 +822,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
 
         // This will return the itemstack back to its original amount in case events fail
         final ItemEntity droppedEntity = ((LivingEntityBridge)this.getHandle()).cardboard$drop(dropContent, throwRandomly, true, true, entityOperation);
-        return droppedEntity == null ? null : (Item) ((EntityBridge)droppedEntity).getBukkitEntity();
+        return droppedEntity == null ? null : (Item) ((EntityBridge) (Object) droppedEntity).getBukkitEntity();
     }
 
     @Override
@@ -837,7 +837,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
 
         // Do *not* call the event here, the item is not in the player inventory, they are not dropping it / do not need recovering logic (which would be a dupe).
         final ItemEntity droppedEntity = ((LivingEntityBridge)this.getHandle()).cardboard$drop(nmsItemStack, throwRandomly, true, false, entityOperation);
-        return droppedEntity == null ? null : (Item) ((EntityBridge)droppedEntity).getBukkitEntity();
+        return droppedEntity == null ? null : (Item) ((EntityBridge) (Object) droppedEntity).getBukkitEntity();
     }
 
     @Override
@@ -926,7 +926,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
 
         FireworkRocketEntity fireworks = new FireworkRocketEntity(this.getHandle().level(), CraftItemStack.asNMSCopy(fireworkItemStack), this.getHandle());
         boolean success = this.getHandle().level().addFreshEntity(fireworks);
-        return success ? (Firework) ((EntityBridge)fireworks).getBukkitEntity() : null;
+        return success ? (Firework) ((EntityBridge) (Object) fireworks).getBukkitEntity() : null;
     }
 
     @Override

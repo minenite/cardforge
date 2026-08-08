@@ -33,7 +33,7 @@ public class ServerGamePacketListenerImplMixin_SignUpdateEvent {
         try {
             String[] astring = packet.getLines();
     
-            Player player = (Player) ((ServerPlayerBridge)this.player).getBukkitEntity();
+            Player player = (Player) ((ServerPlayerBridge) (Object) this.player).getBukkitEntity();
             int x = packet.getPos().getX();
             int y = packet.getPos().getY();
             int z = packet.getPos().getZ();
@@ -41,7 +41,7 @@ public class ServerGamePacketListenerImplMixin_SignUpdateEvent {
     
             for (int i = 0; i < astring.length; ++i)
                 lines[i] = ChatFormatting.stripFormatting(ChatFormatting.stripFormatting(astring[i]));
-            ((MinecraftServerBridge)CraftServer.server).cardboard_runOnMainThread(() -> {
+            ((MinecraftServerBridge) (Object) CraftServer.server).cardboard_runOnMainThread(() -> {
                 try {
                     SignChangeEvent event = new SignChangeEvent((org.bukkit.craftbukkit.block.CraftBlock) player.getWorld().getBlockAt(x, y, z), player, lines);
                     CraftServer.INSTANCE.getPluginManager().callEvent(event);
@@ -49,7 +49,7 @@ public class ServerGamePacketListenerImplMixin_SignUpdateEvent {
                     if (!event.isCancelled()) {
                         BlockEntity tileentity = this.player.level().getBlockEntity(packet.getPos());
                         SignBlockEntity tileentitysign = (SignBlockEntity) tileentity;
-                        System.arraycopy(CraftSign.sanitizeLines(event.getLines()), 0, ((SignBlockEntityBridge)tileentitysign).getTextBF(), 0, 4);
+                        System.arraycopy(CraftSign.sanitizeLines(event.getLines()), 0, ((SignBlockEntityBridge) (Object) tileentitysign).getTextBF(), 0, 4);
                         //tileentitysign.editable = false;
                      }
                 } catch (NullPointerException serverNoLikeSigns) {}

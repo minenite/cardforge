@@ -172,14 +172,14 @@ public record PaperWorldLoader(MinecraftServer server, String levelId) {
             ? this.server.getWorldGenSettings()
             : loadWorldGenSettings(
             this.server.storageSource,
-            ((MinecraftServerBridge)this.server).cardboard$worldLoaderContext().datapackWorldgen(),
+            ((MinecraftServerBridge) (Object) this.server).cardboard$worldLoaderContext().datapackWorldgen(),
             loading.info().dimensionKey()
         );
         final var worldDataAndGenSettings = new LevelDataAndDimensions.WorldDataAndGenSettings(this.server.getWorldData(), worldGenSettings);
 
         if (loading.info().dimensionKey() == Level.OVERWORLD) {
             final var primaryLevelData = ((PrimaryLevelData) this.server.getWorldData());
-            ((PrimaryLevelDataBridge)primaryLevelData).checkName(loading.data().bukkitName());
+            ((PrimaryLevelDataBridge) (Object) primaryLevelData).checkName(loading.data().bukkitName());
             primaryLevelData.setModdedInfo(this.server.getServerModName(), this.server.getModdedStatus().shouldReportAsModified());
         }
 

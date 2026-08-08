@@ -49,7 +49,7 @@ public class ExperienceOrbMixin extends EntityMixin {
 		if (player instanceof ServerPlayer serverPlayer
 				&& player.takeXpDelay == 0
 				&& new PlayerPickupExperienceEvent(
-						(Player) ((ServerPlayerBridge)serverPlayer).getBukkitEntity(),
+						(Player) ((ServerPlayerBridge) (Object) serverPlayer).getBukkitEntity(),
 						(ExperienceOrb) ((EntityBridge) ((net.minecraft.world.entity.ExperienceOrb) (Object) this)).getBukkitEntity()
 					).callEvent()) {
 			// Continue

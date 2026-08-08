@@ -109,7 +109,7 @@ public class CraftMetaCompass extends CraftMetaItem implements CompassMeta {
             return null;
         }
         ServerLevel level = CraftServer.INSTANCE.getServer().getLevel(this.tracker.target().get().dimension());
-        World world = level != null ? ((LevelBridge)level).cardboard$getWorld() : null;
+        World world = level != null ? ((LevelBridge) (Object) level).cardboard$getWorld() : null;
         return CraftLocation.toBukkit(this.tracker.target().get().pos(), world); // world may be null here, if the referenced world is not loaded
     }
 

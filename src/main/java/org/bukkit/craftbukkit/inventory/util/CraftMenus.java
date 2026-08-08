@@ -52,7 +52,7 @@ public final class CraftMenus {
 
     // This is a temporary measure that will likely be removed with the rewrite of HumanEntity#open[] methods
     public static void openMerchantMenu(final ServerPlayer player, final MerchantMenu merchant) {
-        final Merchant minecraftMerchant = ((CraftMerchant) ((CraftMerchant)((AbstractContainerMenuBridge)merchant).getBukkitView()).getMerchant()).getMerchant();
+        final Merchant minecraftMerchant = ((CraftMerchant) ((CraftMerchant)((AbstractContainerMenuBridge) (Object) merchant).getBukkitView()).getMerchant()).getMerchant();
         int level = 1;
         if (minecraftMerchant instanceof final Villager villager) {
             level = villager.getVillagerData().level();
@@ -64,7 +64,7 @@ public final class CraftMenus {
 
         minecraftMerchant.setTradingPlayer(player);
 
-        player.connection.send(new ClientboundOpenScreenPacket(merchant.containerId, net.minecraft.world.inventory.MenuType.MERCHANT, ((AbstractContainerMenuBridge)merchant).getTitle()));
+        player.connection.send(new ClientboundOpenScreenPacket(merchant.containerId, net.minecraft.world.inventory.MenuType.MERCHANT, ((AbstractContainerMenuBridge) (Object) merchant).getTitle()));
         player.containerMenu = merchant;
         player.initMenu(merchant);
 

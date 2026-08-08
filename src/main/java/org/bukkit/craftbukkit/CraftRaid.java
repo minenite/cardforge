@@ -104,7 +104,7 @@ public final class CraftRaid implements Raid {
 
     @Override
     public List<Raider> getRaiders() {
-        return ((RaidBridge)this.handle).getRaiders().stream().map(entityRaider -> (Raider) ((EntityBridge)entityRaider).getBukkitEntity()).collect(ImmutableList.toImmutableList());
+        return ((RaidBridge) (Object) this.handle).getRaiders().stream().map(entityRaider -> (Raider) ((EntityBridge) (Object) entityRaider).getBukkitEntity()).collect(ImmutableList.toImmutableList());
     }
 
     public net.minecraft.world.entity.raid.Raid getHandle() {

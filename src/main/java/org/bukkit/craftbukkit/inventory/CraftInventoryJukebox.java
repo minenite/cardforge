@@ -28,6 +28,6 @@ public class CraftInventoryJukebox extends CraftInventory implements JukeboxInve
 
     @Override
     public Jukebox getHolder() {
-        return (Jukebox) ((ContainerBridge)this.inventory).getOwner();
+        return (Jukebox) ((ContainerBridge) (Object) this.inventory).getOwner();
     }
 }

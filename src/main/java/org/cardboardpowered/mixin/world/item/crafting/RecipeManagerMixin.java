@@ -41,7 +41,7 @@ public abstract class RecipeManagerMixin implements RecipeManagerBridge {
     @Override
     public void cardboard$addRecipe(RecipeHolder<?> holder) {
         org.spigotmc.AsyncCatcher.catchOp("Recipe Add"); // Spigot
-        ((RecipeMapBridge)this.recipes).cardboard$addRecipe(holder);
+        ((RecipeMapBridge) (Object) this.recipes).cardboard$addRecipe(holder);
         this.cardboard$finalizeRecipeLoading();
     }
 
@@ -71,7 +71,7 @@ public abstract class RecipeManagerMixin implements RecipeManagerBridge {
     // CraftBukkit start
     @Override
     public boolean cardboard$removeRecipe(ResourceKey<Recipe<?>> mcKey) {
-        boolean removed = ((RecipeMapBridge)this.recipes).cardboard$removeRecipe((ResourceKey<Recipe<RecipeInput>>) (ResourceKey) mcKey); // Paper - generic fix
+        boolean removed = ((RecipeMapBridge) (Object) this.recipes).cardboard$removeRecipe((ResourceKey<Recipe<RecipeInput>>) (ResourceKey) mcKey); // Paper - generic fix
         if (removed) {
             this.cardboard$finalizeRecipeLoading();
         }

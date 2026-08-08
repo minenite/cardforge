@@ -45,7 +45,7 @@ public class ChestMenuMixin extends AbstractContainerMenuMixin {
             inventory = new CraftInventoryDoubleChest((CompoundContainer) this.container);
         } else inventory = new CraftInventory(this.container);
 
-        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((ServerPlayerBridge)this.inventory.player).getBukkitEntity(), inventory, (ChestMenu)(Object)this);
+        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((ServerPlayerBridge) (Object) this.inventory.player).getBukkitEntity(), inventory, (ChestMenu)(Object)this);
         return bukkitEntity;
     }
 

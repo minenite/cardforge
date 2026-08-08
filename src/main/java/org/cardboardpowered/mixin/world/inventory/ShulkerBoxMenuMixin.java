@@ -34,7 +34,7 @@ public class ShulkerBoxMenuMixin extends AbstractContainerMenuMixin {
         if (bukkitEntity != null)
             return bukkitEntity;
 
-        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((ServerPlayerBridge)this.inventory.player).getBukkitEntity(), new CraftInventory(this.container), (ShulkerBoxMenu)(Object)this);
+        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((ServerPlayerBridge) (Object) this.inventory.player).getBukkitEntity(), new CraftInventory(this.container), (ShulkerBoxMenu)(Object)this);
         return bukkitEntity;
     }
 

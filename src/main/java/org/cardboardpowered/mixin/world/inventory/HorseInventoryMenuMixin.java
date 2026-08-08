@@ -32,7 +32,7 @@ public class HorseInventoryMenuMixin extends AbstractContainerMenuMixin {
     public CraftInventoryView getBukkitView() {
         if (bukkitEntity != null)
             return bukkitEntity;
-        return bukkitEntity = new CraftInventoryView((Player)((EntityBridge)this.playerInv.player).getBukkitEntity(), ((ContainerBridge)playerInv).getOwner().getInventory(), (HorseInventoryMenu)(Object)this);
+        return bukkitEntity = new CraftInventoryView((Player)((EntityBridge) (Object) this.playerInv.player).getBukkitEntity(), ((ContainerBridge) (Object) playerInv).getOwner().getInventory(), (HorseInventoryMenu)(Object)this);
     }
 
 

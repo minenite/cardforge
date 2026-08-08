@@ -27,7 +27,7 @@ public class EndPortalBlockMixin {
     @Inject(at = @At("HEAD"), method = "entityInside")
     public void callBukkitEvent_EntityPortalEnterEvent(BlockState state, Level world, BlockPos pos, Entity entity, InsideBlockEffectApplier ech, boolean b, CallbackInfo ci) {
         if (world instanceof ServerLevel && !entity.isPassenger() && !entity.isVehicle() && entity.canUsePortal(true) && Shapes.joinIsNotEmpty(Shapes.create(entity.getBoundingBox().move(-pos.getX(), -pos.getY(), -pos.getZ())), state.getShape(world, pos), BooleanOp.AND)) {
-            EntityPortalEnterEvent event = new EntityPortalEnterEvent(((EntityBridge)entity).getBukkitEntity(), new org.bukkit.Location(((LevelBridge)world).cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ()));
+            EntityPortalEnterEvent event = new EntityPortalEnterEvent(((EntityBridge) (Object) entity).getBukkitEntity(), new org.bukkit.Location(((LevelBridge) (Object) world).cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ()));
             Bukkit.getPluginManager().callEvent(event);
         }
     }

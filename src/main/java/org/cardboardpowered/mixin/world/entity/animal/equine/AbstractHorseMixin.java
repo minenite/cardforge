@@ -92,7 +92,7 @@ public abstract class AbstractHorseMixin extends Animal implements AbstractHorse
     
     @Inject(method = "createInventory", at = @At("TAIL"))
     public void cardboard$setInvOwner(CallbackInfo ci) {
-        ((ContainerBridge)inventory).cardboard$setOwner((org.bukkit.entity.AbstractHorse)this.getBukkitEntity());
+        ((ContainerBridge) (Object) inventory).cardboard$setOwner((org.bukkit.entity.AbstractHorse)this.getBukkitEntity());
     }
 
     @Override

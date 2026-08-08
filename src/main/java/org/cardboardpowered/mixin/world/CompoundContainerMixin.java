@@ -61,13 +61,13 @@ public abstract class CompoundContainerMixin implements Container, ContainerBrid
 
     @Override
     public void cardboard$setMaxStackSize(int size) {
-        ((ContainerBridge)this.container1).cardboard$setMaxStackSize(size);
-        ((ContainerBridge)this.container2).cardboard$setMaxStackSize(size);
+        ((ContainerBridge) (Object) this.container1).cardboard$setMaxStackSize(size);
+        ((ContainerBridge) (Object) this.container2).cardboard$setMaxStackSize(size);
     }
 
     @Override
     public Location getLocation() {
-        return ((ContainerBridge)this.container1).getLocation();
+        return ((ContainerBridge) (Object) this.container1).getLocation();
     }
 
     @Override

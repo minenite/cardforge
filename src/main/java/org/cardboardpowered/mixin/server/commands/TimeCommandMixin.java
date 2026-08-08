@@ -30,7 +30,7 @@ public class TimeCommandMixin {
 
         while (iterator.hasNext()) {
             ServerWorld world = (ServerWorld) iterator.next();
-            TimeSkipEvent event = new TimeSkipEvent(((IMixinWorld)world).getCraftWorld(), TimeSkipEvent.SkipReason.COMMAND, i - world.getTimeOfDay());
+            TimeSkipEvent event = new TimeSkipEvent(((IMixinWorld) (Object) world).getCraftWorld(), TimeSkipEvent.SkipReason.COMMAND, i - world.getTimeOfDay());
             Bukkit.getPluginManager().callEvent(event);
             if (!event.isCancelled()) world.setTimeOfDay((long) world.getTimeOfDay() + event.getSkipAmount());
         }
@@ -45,7 +45,7 @@ public class TimeCommandMixin {
 
         while (iterator.hasNext()) {
             ServerWorld world = (ServerWorld) iterator.next();
-            TimeSkipEvent event = new TimeSkipEvent(((IMixinWorld)world).getCraftWorld(), TimeSkipEvent.SkipReason.COMMAND, i);
+            TimeSkipEvent event = new TimeSkipEvent(((IMixinWorld) (Object) world).getCraftWorld(), TimeSkipEvent.SkipReason.COMMAND, i);
             Bukkit.getPluginManager().callEvent(event);
             if (!event.isCancelled()) world.setTimeOfDay(world.getTimeOfDay() + event.getSkipAmount());
         }

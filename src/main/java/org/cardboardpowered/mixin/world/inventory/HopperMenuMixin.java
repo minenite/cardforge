@@ -35,7 +35,7 @@ public class HopperMenuMixin extends AbstractContainerMenuMixin {
             return bukkitEntity;
 
         CraftInventory inventory = new CraftInventory(this.hopper);
-        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((EntityBridge)this.playerInv.player).getBukkitEntity(), inventory, (HopperMenu)(Object)this);
+        bukkitEntity = new CraftInventoryView((org.bukkit.entity.Player)((EntityBridge) (Object) this.playerInv.player).getBukkitEntity(), inventory, (HopperMenu)(Object)this);
         return bukkitEntity;
     }
 

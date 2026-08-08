@@ -82,8 +82,8 @@ public class ArmorStandMixin extends EntityMixin implements ArmorStandBridge {
         org.bukkit.inventory.ItemStack armorStandItem = CraftItemStack.asCraftMirror(itemStack1);
         org.bukkit.inventory.ItemStack playerHeldItem = CraftItemStack.asCraftMirror(itemStack);
 
-        Player player = (Player) ((EntityBridge) playerEntity).getBukkitEntity();
-        ArmorStand self = (ArmorStand) ((EntityBridge) this).getBukkitEntity();
+        Player player = (Player) ((EntityBridge) (Object) playerEntity).getBukkitEntity();
+        ArmorStand self = (ArmorStand) ((EntityBridge) (Object) this).getBukkitEntity();
 
         EquipmentSlot slot = CraftEquipmentSlot.getSlot(slotType);
         
@@ -116,8 +116,8 @@ public class ArmorStandMixin extends EntityMixin implements ArmorStandBridge {
         org.bukkit.inventory.ItemStack armorStandItem = CraftItemStack.asCraftMirror(itemStack1);
         org.bukkit.inventory.ItemStack playerHeldItem = CraftItemStack.asCraftMirror(itemStack);
 
-        Player player = (Player) ((IMixinEntity) playerEntity).getBukkitEntity();
-        ArmorStand self = (ArmorStand) ((IMixinEntity) this).getBukkitEntity();
+        Player player = (Player) ((IMixinEntity) (Object) playerEntity).getBukkitEntity();
+        ArmorStand self = (ArmorStand) ((IMixinEntity) (Object) this).getBukkitEntity();
 
         EquipmentSlot slot = com.javazilla.bukkitfabric.Utils.getSlot(slotType);
         PlayerArmorStandManipulateEvent event = new PlayerArmorStandManipulateEvent(player, self, playerHeldItem, armorStandItem, slot);

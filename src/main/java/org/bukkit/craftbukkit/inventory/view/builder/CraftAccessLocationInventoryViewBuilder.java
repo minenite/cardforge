@@ -38,7 +38,7 @@ public class CraftAccessLocationInventoryViewBuilder<V extends InventoryView> ex
 
         final MenuProvider provider = ((org.minenite.cardforge.mixin.invoker.BlockBehaviourInvoker) (Object) block).cardforge$getMenuProvider(effectiveBlockState, effectiveLevel, effectiveBlockPos);
         super.defaultTitle = provider.getDisplayName();
-        return provider.createMenu(((ServerPlayerBridge)player).cardboard$nextContainerCounter(), player.getInventory(), player);
+        return provider.createMenu(((ServerPlayerBridge) (Object) player).cardboard$nextContainerCounter(), player.getInventory(), player);
     }
 
     @Override

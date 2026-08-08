@@ -26,6 +26,6 @@ public class CraftInventoryChiseledBookshelf extends CraftInventory implements C
 
     @Override
     public ChiseledBookshelf getHolder() {
-        return (ChiseledBookshelf) ((ContainerBridge)this.inventory).getOwner();
+        return (ChiseledBookshelf) ((ContainerBridge) (Object) this.inventory).getOwner();
     }
 }

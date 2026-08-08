@@ -39,7 +39,7 @@ public class ProjectileMixin extends EntityMixin {
         if (fillCache) {
             this.getOwner();
         }
-        if ((owner = this.getOwner()) != null && this.projectileSource == null && (craftEntity = ((EntityBridge)owner).getBukkitEntity()) instanceof ProjectileSource) {
+        if ((owner = this.getOwner()) != null && this.projectileSource == null && (craftEntity = ((EntityBridge) (Object) owner).getBukkitEntity()) instanceof ProjectileSource) {
             ProjectileSource source = (ProjectileSource)craftEntity;
             this.projectileSource = source;
         }
