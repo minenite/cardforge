@@ -603,7 +603,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         } else {
             throw new IllegalArgumentException("Unsupported inventory type: " + material);
         }
-        this.getHandle().openMenu(block.getMenuProvider(null, this.getHandle().level(), new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ())));
+        this.getHandle().openMenu(((org.minenite.cardforge.mixin.invoker.BlockBehaviourInvoker) (Object) block).cardforge$getMenuProvider(null, this.getHandle().level(), new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ())));
         ((AbstractContainerMenuBridge)this.getHandle().containerMenu).cardboard$setCheckReachable(!force);
         return ((AbstractContainerMenuBridge)this.getHandle().containerMenu).getBukkitView();
     }

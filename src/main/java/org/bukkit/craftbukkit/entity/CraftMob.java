@@ -87,7 +87,7 @@ public abstract class CraftMob extends CraftLivingEntity implements Mob, io.pape
 
     @Override
     public Sound getAmbientSound() {
-        SoundEvent sound = this.getHandle().getAmbientSound();
+        SoundEvent sound = ((org.minenite.cardforge.mixin.invoker.MobInvoker) (Object) this.getHandle()).cardforge$getAmbientSound();
         return (sound != null) ? CraftSound.minecraftToBukkit(sound) : null;
     }
 

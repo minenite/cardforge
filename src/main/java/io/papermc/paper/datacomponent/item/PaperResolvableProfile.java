@@ -54,18 +54,18 @@ public record PaperResolvableProfile(
 
     @Override
     public @Nullable UUID uuid() {
-    	return this.impl.unpack().map(GameProfile::id, p -> p.id().orElse(null));
+    	return ((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) this.impl).cardforge$unpack().map(GameProfile::id, p -> p.id().orElse(null));
     }
 
     @Override
     public @Nullable String name() {
-    	return this.impl.unpack().map(GameProfile::name, p -> p.name().orElse(null));
+    	return ((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) this.impl).cardforge$unpack().map(GameProfile::name, p -> p.name().orElse(null));
     }
 
     @Unmodifiable
     public Collection<ProfileProperty> properties() {
        return MCUtil.transformUnmodifiable(
-          this.impl.unpack().map(GameProfile::properties, net.minecraft.world.item.component.ResolvableProfile.Partial::properties).values(),
+          ((org.minenite.cardforge.mixin.invoker.ResolvableProfileInvoker) (Object) this.impl).cardforge$unpack().map(GameProfile::properties, net.minecraft.world.item.component.ResolvableProfile.Partial::properties).values(),
           input -> new ProfileProperty(input.name(), input.value(), input.signature())
        );
     }

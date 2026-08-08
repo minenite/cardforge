@@ -405,7 +405,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     @Override
     public int getMaxFireTicks() {
-        return this.getHandle().getFireImmuneTicks();
+        return ((org.minenite.cardforge.mixin.invoker.EntityInvoker) (Object) this.getHandle()).cardforge$getFireImmuneTicks();
     }
 
     @Override
@@ -613,17 +613,17 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     @Override
     public Sound getSwimSound() {
-        return CraftSound.minecraftToBukkit(this.getHandle().getSwimSound());
+        return CraftSound.minecraftToBukkit(((org.minenite.cardforge.mixin.invoker.EntityInvoker) (Object) this.getHandle()).cardforge$getSwimSound());
     }
 
     @Override
     public Sound getSwimSplashSound() {
-        return CraftSound.minecraftToBukkit(this.getHandle().getSwimSplashSound());
+        return CraftSound.minecraftToBukkit(((org.minenite.cardforge.mixin.invoker.EntityInvoker) (Object) this.getHandle()).cardforge$getSwimSplashSound());
     }
 
     @Override
     public Sound getSwimHighSpeedSplashSound() {
-        return CraftSound.minecraftToBukkit(this.getHandle().getSwimHighSpeedSplashSound());
+        return CraftSound.minecraftToBukkit(((org.minenite.cardforge.mixin.invoker.EntityInvoker) (Object) this.getHandle()).cardforge$getSwimHighSpeedSplashSound());
     }
 
     @Override

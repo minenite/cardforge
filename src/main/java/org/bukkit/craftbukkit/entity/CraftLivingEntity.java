@@ -225,7 +225,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public void attack(Entity arg0) {
-        this.getHandle().doAutoAttackOnTouch(((CraftLivingEntity)arg0).getHandle());
+        ((org.minenite.cardforge.mixin.invoker.LivingEntityInvoker) (Object) this.getHandle()).cardforge$doAutoAttackOnTouch(((CraftLivingEntity)arg0).getHandle());
     }
 
     @Override
@@ -994,13 +994,13 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 	public @Nullable Sound getHurtSound(org.bukkit.damage.DamageSource damageSource) {
 		final DamageSource nms = damageSource instanceof CraftDamageSource craft
 				? craft.getHandle() : this.getHandle().damageSources().generic();
-		final net.minecraft.sounds.SoundEvent sound = this.getHandle().getHurtSound(nms);
+		final net.minecraft.sounds.SoundEvent sound = ((org.minenite.cardforge.mixin.invoker.LivingEntityInvoker) (Object) this.getHandle()).cardforge$getHurtSound(nms);
 		return sound == null ? null : org.bukkit.craftbukkit.CraftSound.minecraftToBukkit(sound);
 	}
 
 	@Override
 	public float getSoundVolume() {
-		return this.getHandle().getSoundVolume();
+		return ((org.minenite.cardforge.mixin.invoker.LivingEntityInvoker) (Object) this.getHandle()).cardforge$getSoundVolume();
 	}
 
 	@Override

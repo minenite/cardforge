@@ -152,7 +152,7 @@ public abstract class CraftAbstractArrow extends AbstractProjectile implements A
     @Override
     public void setItemStack(final ItemStack stack) {
         Preconditions.checkArgument(stack != null, "ItemStack cannot be null");
-        this.getHandle().setPickupItemStack(CraftItemStack.asNMSCopy(stack));
+        ((org.minenite.cardforge.mixin.invoker.AbstractArrowInvoker) (Object) this.getHandle()).cardforge$setPickupItemStack(CraftItemStack.asNMSCopy(stack));
     }
 
     @Override

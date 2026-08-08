@@ -83,7 +83,7 @@ public abstract class CraftMinecart extends CraftVehicle implements Minecart {
     // Paper start
     @Override
     public Material getMinecartMaterial() {
-        return CraftMagicNumbers.getMaterial(this.getHandle().getDropItem());
+        return CraftMagicNumbers.getMaterial(((org.minenite.cardforge.mixin.invoker.VehicleEntityInvoker) (Object) this.getHandle()).cardforge$getDropItem());
     }
     // Paper end
 

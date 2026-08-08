@@ -100,7 +100,7 @@ public class CraftZombie extends CraftMonster implements Zombie {
 
     @Override
     public boolean shouldBurnInDay() {
-        return getHandle().isSunSensitive();
+        return ((org.minenite.cardforge.mixin.invoker.ZombieInvoker) (Object) getHandle()).cardforge$isSunSensitive();
     }
 
     @Override
