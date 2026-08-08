@@ -172,8 +172,35 @@ from the provider after CardForge's hook.
 
 ## UNSUPPORTED
 
-Nothing is currently known-broken and unfixed. Every failure found so far has
-either been fixed or moved to PARTIAL with a stated limit.
+### Permission checks always return true
+
+`Player#hasPermission` returns **true for any node**, including nodes nobody
+registered. Verified with a deopped player:
+
+```
+/lp user <player> permission check some.nonexistent.node.xyz
+  Result: true
+```
+
+**Consequence: no permission plugin can deny anything.** LuckPerms installs,
+stores and reports nodes correctly, but the value is never honoured. WorldGuard
+is the visible symptom - with `__global__` set to `build: DENY` and
+`interact: DENY` against a deopped player, every action still succeeded, because
+WorldGuard asks whether the player has `worldguard.region.bypass.world`, gets
+`true`, and steps aside. Any plugin gating on permissions - protection, claims,
+staff commands, economy - is affected the same way.
+
+This is severe for a public server: permissions are the mechanism by which
+untrusted players are restricted, and here they grant everything.
+
+**Root cause not yet identified.** Ruled out so far: `CraftPlayer#isOp` is
+correct and delegates to the NMS op list; `CraftHumanEntity#perm` is a stock
+paper-api `PermissibleBase`; there is no Mixin on `PermissibleBase`;
+`calculatePermissionDefault` is commented out rather than overridden; the
+`PermissionDefault.TRUE` registrations are ordinary Bukkit command permissions.
+The next step is a probe calling `player.hasPermission(...)` directly, to
+confirm the fault is in Bukkit's own path rather than in how LuckPerms reports
+it.
 
 ## UNTESTED
 
