@@ -14,6 +14,9 @@ import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(RecipeHolder.class)
 public class RecipeHolderMixin implements RecipeHolderBridge {
+
+    java.util.Set<String> cardforge$unknownRecipeTypes =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
 	// Campfire
     public org.bukkit.inventory.Recipe toBukkitRecipe(CampfireCookingRecipe thiz, NamespacedKey id) {
         CraftItemStack result = CraftItemStack.asCraftMirror(thiz.result().create());
@@ -222,8 +225,24 @@ public class RecipeHolderMixin implements RecipeHolderBridge {
 			return toBukkitRecipe(nms, CraftNamespacedKey.fromMinecraft(id.identifier()));
 		} else if(nmsRecipe instanceof TransmuteRecipe nms) {
 			return toBukkitRecipe(nms, CraftNamespacedKey.fromMinecraft(id.identifier()));
+		} else if(nmsRecipe instanceof NormalCraftingRecipe nms) {
+			// 26.2 added crafting recipes whose ingredients are computed rather than
+			// fixed - DyeRecipe is the first - and they are neither shaped, shapeless
+			// nor CustomRecipe. Bukkit's model for a recipe that cannot be described
+			// as a fixed shape is a complex recipe, so that is what they become.
+			return new CraftComplexRecipe(CraftNamespacedKey.fromMinecraft(id.identifier()),
+					CraftItemStack.asCraftMirror(ItemStack.EMPTY), nms);
 		} else {
-			throw new IllegalArgumentException("Invalid recipe type: " + nmsRecipe.getClass());
+			// Never throw. A single recipe type this layer cannot describe used to
+			// take out Bukkit.recipeIterator() for every plugin on the server, which
+			// is wildly out of proportion to one exotic recipe. Skipping it costs
+			// that one recipe; throwing costs the whole API.
+			if (cardforge$unknownRecipeTypes.add(nmsRecipe.getClass().getName())) {
+				org.cardboardpowered.CardboardMod.LOGGER.warning(
+						"No Bukkit representation for recipe type " + nmsRecipe.getClass().getName()
+						+ "; it will be omitted from the recipe API");
+			}
+			return null;
 		}
 
 	}

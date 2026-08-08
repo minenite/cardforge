@@ -38,7 +38,11 @@ public final class BukkitDamageBridge {
     }
 
     public static void register(IEventBus gameBus) {
-        gameBus.addListener(BukkitDamageBridge::onIncomingDamage);
+        // Explicit event class rather than relying on inference from a method
+        // reference, which is the sort of thing that silently registers nothing.
+        gameBus.addListener(LivingIncomingDamageEvent.class, BukkitDamageBridge::onIncomingDamage);
+        org.cardboardpowered.CardboardMod.LOGGER.info(
+                "EntityDamageEvent bridged to NeoForge's damage pipeline");
     }
 
     private static void onIncomingDamage(LivingIncomingDamageEvent event) {

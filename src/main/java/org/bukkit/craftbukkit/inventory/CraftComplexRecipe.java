@@ -11,9 +11,12 @@ import org.cardboardpowered.bridge.world.item.crafting.RecipeManagerBridge;
 
 public class CraftComplexRecipe extends CraftingRecipe implements CraftRecipe, ComplexRecipe {
 
-    private final CustomRecipe recipe;
+    // Widened from CustomRecipe: 26.2 has dynamic crafting recipes such as
+    // DyeRecipe that are not CustomRecipe but are equally unrepresentable as a
+    // fixed shape, and Bukkit models exactly those as complex recipes.
+    private final net.minecraft.world.item.crafting.Recipe<?> recipe;
 
-    public CraftComplexRecipe(NamespacedKey key, ItemStack result, CustomRecipe recipe) {
+    public CraftComplexRecipe(NamespacedKey key, ItemStack result, net.minecraft.world.item.crafting.Recipe<?> recipe) {
         super(key, result);
         this.recipe = recipe;
     }

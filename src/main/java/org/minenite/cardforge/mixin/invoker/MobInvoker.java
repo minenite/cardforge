@@ -13,4 +13,9 @@ public interface MobInvoker {
 
     @Invoker("getAmbientSound")
     net.minecraft.sounds.SoundEvent cardforge$getAmbientSound();
+
+    // Mob only exposes setPersistenceRequired(), which can set the flag but never
+    // clear it, so Bukkit's setRemoveWhenFarAway(true) needs the field directly.
+    @org.spongepowered.asm.mixin.gen.Accessor("persistenceRequired")
+    void cardforge$setPersistenceRequired(boolean value);
 }

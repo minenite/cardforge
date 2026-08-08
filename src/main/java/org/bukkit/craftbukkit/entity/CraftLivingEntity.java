@@ -546,8 +546,14 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public void setRemoveWhenFarAway(boolean arg0) {
-        // TODO Auto-generated method stub
+    public void setRemoveWhenFarAway(boolean remove) {
+        // Was a no-op, so a plugin could not stop a mob despawning - quest NPCs,
+        // shop mobs and arena mobs would simply vanish once no player was near.
+        // Bukkit's "remove when far away" is the inverse of NMS persistenceRequired.
+        if (this.getHandle() instanceof net.minecraft.world.entity.Mob mob) {
+            ((org.minenite.cardforge.mixin.invoker.MobInvoker) mob)
+                    .cardforge$setPersistenceRequired(!remove);
+        }
     }
 
     @Override
