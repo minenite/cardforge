@@ -72,6 +72,17 @@ public class MixinPluginClassLoader extends URLClassLoader {
         if (name.startsWith("org.bukkit.") || name.startsWith("net.minecraft.")) {
             throw new ClassNotFoundException(name);
         }
+        // CardForge - let a plugin opt in to the NeoForge integration.
+        // The plugin loader's parent does not reach CardForge's own module, so
+        // without this a CardForge-native plugin gets NoClassDefFoundError for the
+        // API it compiled against. Scoped to the published API and to NeoForge
+        // itself; nothing else about plugin isolation changes, and a plugin that
+        // never touches these packages is unaffected.
+        if (name.startsWith("org.minenite.cardforge.api.")
+                || name.startsWith("net.neoforged.")) {
+            return Class.forName(name, false,
+                    org.minenite.cardforge.api.CardForge.class.getClassLoader());
+        }
         Class<?> result = classes.get(name);
 
         if (result == null) {

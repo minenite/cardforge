@@ -131,3 +131,20 @@ tasks.withType(JavaCompile).configureEach {
     options.failOnError = true
     options.encoding = 'UTF-8'
 }
+
+// A slim artifact carrying only the integration API, for CardForge-native plugins
+// to compile against. The full mod jar cannot serve that purpose: it bundles
+// Cardboard's own implementations of Bukkit types, including JavaPlugin, which
+// shadow paper-api's on a plugin's compile classpath and fail to compile against
+// the current Plugin interface. Plugin authors want the interfaces and nothing else.
+tasks.register('apiJar', Jar) {
+    archiveBaseName = 'Cardforge-API'
+    from(sourceSets.main.output) {
+        include 'org/minenite/cardforge/api/**'
+    }
+    // The impl package is deliberately excluded: it is reachable at runtime through
+    // CardForge.get(), and nothing should be compiling against it.
+    exclude 'org/minenite/cardforge/api/impl/**'
+}
+
+tasks.named('build') { dependsOn 'apiJar' }
