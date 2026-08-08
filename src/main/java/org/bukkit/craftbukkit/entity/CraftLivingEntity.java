@@ -22,6 +22,7 @@ import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.craftbukkit.CraftEquipmentSlot;
+import com.google.common.base.Preconditions;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.damage.CraftDamageSource;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
@@ -174,13 +175,32 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public void setHealth(double arg0) {
-        this.getHandle().setHealth((float) arg0);
+        float health = (float) arg0;
+        // Setting health to zero has to run the death sequence, not just write the
+        // attribute. Cardboard only wrote it, so the entity read as dead while
+        // nothing that death normally triggers happened - no EntityDeathEvent, no
+        // drops, no experience. Plugins that kill entities this way are common.
+        if (health <= 0.0F) {
+            this.getHandle().die(this.getHandle().damageSources().generic());
+            this.getHandle().setHealth(0.0F);
+            return;
+        }
+        this.getHandle().setHealth(health);
     }
 
     @Override
     public void setMaxHealth(double arg0) {
-        // TODO Max health
-        this.getHandle().setHealth((float) arg0);
+        // This used to call setHealth, which is a different attribute entirely:
+        // asking for a bigger maximum silently healed the entity instead, and
+        // asking for a smaller one damaged it.
+        Preconditions.checkArgument(arg0 > 0, "Max health must be greater than 0");
+        net.minecraft.world.entity.ai.attributes.AttributeInstance attribute =
+                this.getHandle().getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        Preconditions.checkArgument(attribute != null, "Entity has no max health attribute");
+        attribute.setBaseValue(arg0);
+        if (this.getHandle().getHealth() > arg0) {
+            this.getHandle().setHealth((float) arg0);
+        }
     }
 
     @Override

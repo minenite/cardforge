@@ -23,6 +23,11 @@ public final class Cardforge {
 
     public Cardforge(IEventBus modBus) {
         Platform.set(new NeoForgePlatform());
+
+        // Bukkit's EntityDamageEvent is driven from NeoForge's damage pipeline
+        // rather than from a Mixin; see BukkitDamageBridge.
+        org.minenite.cardforge.event.BukkitDamageBridge.register(
+                net.neoforged.neoforge.common.NeoForge.EVENT_BUS);
         LOGGER.info("Cardforge on {} {} (Minecraft {})",
                 Platform.get().platformName(),
                 Platform.get().platformVersion(),

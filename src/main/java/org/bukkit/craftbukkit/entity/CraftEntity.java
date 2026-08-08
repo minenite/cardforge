@@ -308,7 +308,13 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
 
     protected boolean teleport0(Location location, TeleportCause cause, TeleportFlag... flags) {
         Entity entity = this.getHandle();
-        if (!entity.isAlive() || !((EntityBridge) (Object) entity).isValidBF()) {
+        // Upstream gates on the entity being removed, not on Cardboard's own
+        // "valid" tracking flag. That flag is set from EntityCallbacks#onTickingStart,
+        // which does not necessarily run in the first ticks after a spawn, so gating
+        // on it made teleport silently return false for a freshly spawned entity
+        // that was alive and in the world. Being added but not yet ticking is not a
+        // reason to refuse a teleport.
+        if (entity.isRemoved() || !entity.isAlive()) {
             return false;
         }
 
