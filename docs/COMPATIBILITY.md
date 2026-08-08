@@ -41,82 +41,67 @@ the Bukkit layer alongside them and bridges content between the two.
 | Integration API | 8 mods enumerated, modded content resolved by real namespaced id, NeoForge capabilities reachable |
 | Distributable | `install.sh` fetches and runs the official NeoForge installer, then drops CardForge into `mods/` |
 
-The plugin used is `CardboardTest`, whose `/cbtest mods` runs from the console so
+The plugin used is `CardboardTest`, whose `cbtest auto` runs from the console so
 the whole check can execute in an automated boot with no client attached.
+
+## Verified with a real NeoForge client
+
+A real NeoForge 26.2.0.52-beta client, with Balm, Shogi and Waystones installed,
+connected to a CardForge server running the same mods plus two plugins. Confirmed
+in game:
+
+| Area | Result |
+| --- | --- |
+| NeoForge handshake and mod-list compatibility check | Passes; CardForge itself is server-side only and not required client-side |
+| Login, two accounts, PvP, `/tp` | Works |
+| Modded GUI (Waystones naming and warp screens) | Opens and functions |
+| Block place and break, vanilla and modded | Works, no warnings |
+| Shearing, by player and by dispenser | Wool drops immediately |
+| Entity damage and death in game | Events fire |
+| Waystone teleport, including Nether to Overworld | Works |
+| NeoForge capabilities through the CardForge API | `WorldlyContainerWrapper` resolved on a Waystone |
+| Custom inventory GUI, click and close events | Works |
+
+**This session found six bugs that the automated suite could not.** Three made the
+server unusable - nobody could log in, clients were rejected for not having a
+server-side mod, and modded GUIs killed the packet handler. The other three were
+worse for being quiet: `BlockPlaceEvent` had never fired for any block and an
+overly broad catch downgraded it to a warning; shear drops were being swallowed
+into the death-drop list; and `rayTraceBlocks` - the basis of
+`getTargetBlock`/`getTargetBlockExact` - had two independent faults and had never
+once succeeded.
+
+Every one of them sat in an area the console suite structurally cannot reach:
+there is no handshake, no client, no player, and no one looking at a block. A
+passing headless suite is necessary and nowhere near sufficient.
 
 ## Known limitations
 
 These are real and are listed rather than papered over. Each is covered by a
 probe in `CardboardTest`, so they fail loudly rather than rotting quietly.
 
-### A real NeoForge client connection is unverified
+### Six core probes still fail
 
-`tools/client_connect_test.sh` builds a launch command from the installed
-NeoForge 26.2.0.52-beta client and auto-connects with `--quickPlayMultiplayer`,
-so no GUI driving is needed. The classpath resolves (92 entries) and the client
-process starts, but it never reached the server: nothing arrived server-side, not
-even a rejected handshake.
-
-The likely cause is the environment rather than CardForge - this is a headless
-session with no usable GPU context, and the client blocks during render
-initialisation before it ever opens a socket. That has not been confirmed, so it
-is recorded as unverified rather than explained away.
-
-**What this means:** the NeoForge channel handshake, the client/server mod-list
-compatibility check, modded content rendering, dimension transfer and
-disconnect/reconnect are all untested. Everything server-side is covered, but
-nothing that requires a client is. Anyone deploying this should connect a real
-client before trusting it.
-
-The script is committed so the test is one command away on a machine with a
-display.
-
-### Five core probes still fail
-
-Run `cbtest core` from the console to reproduce. 84 pass, these 5 do not:
+Run `cbtest core` from the console to reproduce.
 
 | Probe | Symptom | Assessment |
 | --- | --- | --- |
-| `entities: teleport` | `Entity#teleport` does not move a spawned entity | CardForge gap in the entity teleport path; player teleport is untested here |
-| `entities: EntityDamageEvent` | Damage applies, but the event never dispatches | The damage path reaches NMS without firing the Bukkit event |
-| `entities: EntityDeathEvent` | Entity dies, but the event never dispatches | Same shape as the damage gap |
-| `itemstacks: serialize` | `ItemStack.serialize()` throws NPE, `craftDelegate` is null | Paper's ItemStack delegate is not wired for stacks built plugin-side |
-| `recipes: iterator` | `Invalid recipe type: DyeRecipe` | 26.2 added a recipe type Cardboard's converter does not map. Vanilla gap, unrelated to mods |
-| `bossbars: keyed` | `CustomBossEvent` cannot be cast to `EntityBridge` | `Bukkit.createBossBar(key, ...)` reuses an entity-oriented bridge that a boss event is not |
+| `entities: EntityDamageEvent` | `LivingEntity#damage()` reduces health but fires no event | Real. The **in-game** damage path is fine - a player hitting a mob fires it, verified by playtest - but the plugin-API entry point bypasses the hook. Matters because a plugin calling `damage()` expects other plugins to see and cancel it. |
+| `entities: EntityDeathEvent` | `setHealth(0)` kills but fires no event | Real, same shape as above. In-game deaths fire it correctly. |
+| `entities: teleport` | `Entity#teleport` does not move a mob | Real. Player teleport works, including cross-dimension via Waystones. |
+| `itemstacks: serialize` | `ItemStack.serialize()` throws NPE, `craftDelegate` is null | Paper's ItemStack delegate is not wired for plugin-constructed stacks |
+| `recipes: iterator` | `Invalid recipe type: DyeRecipe` | 26.2 added a recipe type Cardboard's converter does not map |
+| `bossbars: keyed` | `CustomBossEvent` cannot be cast to `EntityBridge` | `Bukkit.createBossBar(key, ...)` reuses an entity bridge a boss event is not |
 
-None of these are NeoForge-specific: they are Cardboard/26.2 porting gaps that
-the modded server merely made visible. They are listed here rather than fixed
-because each needs its own investigation, and the suite now fails on them.
+None are NeoForge-specific; they are Cardboard/26.2 porting gaps.
 
-### `Material.values()` reflection paths still see the folded array
-
-`Material.values()` itself is handled - see "How `Material.values()` works" below
-- but a plugin reaching the same data another way is not. `EnumSet.allOf(Material.class)`,
-`Material.class.getEnumConstants()` and direct reflection on `$VALUES` read the
-JDK's own cached copy rather than calling `values()`, so they still return the
-1691 vanilla entries.
-
-**Workarounds:** call `Material.values()` (rewritten, sees everything),
-`CardForgeMaterials.values()` directly, `Material.getMaterial(name)`, or
-`Registry.ITEM` / `Registry.BLOCK`.
-
-### Modded block entities expose no typed API
-
-A modded block entity yields `CraftModdedBlockEntity`, a generic `TileState`.
-Location, type and the persistent data container work; the mod's own contents are
-not typed, because no Bukkit interface describes them.
-
-Before this, the default factory's `Unexpected BlockState` assertion made
-`Block#getState()` throw on any modded block entity, which would break every
-plugin that scans a region.
-
-### `BlockShearEntityEvent` drop replacement is all-or-nothing
-
-NeoForge derives shear drops by capturing them during `IShearable#onSheared`, so
-the drop list does not exist until after the entity has been sheared, while
-cancellation must be decided before. The event is therefore fired at
-`isShearable` with an empty mutable list, and drops a plugin adds replace the
-natural ones. Cancellation is exact; incremental drop editing is not expressible.
+An earlier version of this document dismissed the first three as artefacts of
+testing a freshly spawned entity, on the strength of a playtest showing damage
+and death working in game. That was wrong twice over: the probe now waits for the
+entity to be live and they still fail, and the playtest exercised the in-game
+path while the probe exercises the plugin API. Two different paths, and only one
+of them works. The lesson is that "verified by playtest" and "verified by probe"
+are not interchangeable evidence - each covers what the other cannot.
 
 ## How `Material.values()` works
 

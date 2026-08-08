@@ -24,8 +24,11 @@ echo "Booting $SERVER_DIR and running the probes..."
         sleep 1
     done
     sleep 3
-    echo "cbtest mods"
-    sleep 5
+    # "auto" is both suites: the modded/cross-ecosystem probes and the core
+    # Bukkit/Paper ones. This ran only "mods" at first, so the core suite was
+    # built and then never executed by the harness meant to run it.
+    echo "cbtest auto"
+    sleep 10
     echo stop
     sleep 25
 ) | (cd "$SERVER_DIR" && timeout 200 ./run.sh) > "$LOG" 2>&1
