@@ -32,3 +32,11 @@ config = "bukkitfabric.mixins.json"
 
 [[mixins]]
 config = "cardforge.mixins.json"
+
+# iCommonLib's mixins. Cardboard bundles iCommonLib's classes but on Fabric relies
+# on iCommonLib being installed as a separate mod to register them. CardForge
+# bundles the code, so it has to register them too - without this, IMixinEntity is
+# never applied to Entity and every cast to it throws ClassCastException, which is
+# what broke launchProjectile, Entity#remove and keyed boss bars.
+[[mixins]]
+config = "icommon.mixins.json"

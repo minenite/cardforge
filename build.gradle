@@ -148,3 +148,32 @@ tasks.register('apiJar', Jar) {
 }
 
 tasks.named('build') { dependsOn 'apiJar' }
+
+// The distributable a server owner actually downloads. Deliberately not a fork of
+// NeoForge and it does not redistribute it: install.sh fetches the official
+// NeoForge installer and runs it, then drops CardForge into mods/. The result is
+// an ordinary NeoForge server that also loads plugins, which is the whole design.
+tasks.register('dist', Zip) {
+    dependsOn 'jar', 'apiJar'
+    archiveFileName = "CardForge-${project.mod_version}.zip"
+    destinationDirectory = layout.buildDirectory.dir('dist')
+
+    into("CardForge-${project.mod_version}") {
+        from('dist') {
+            include 'install.sh'
+            filePermissions { unix(0755) }
+        }
+        from(tasks.named('jar')) { into 'mods' }
+        from(tasks.named('apiJar')) { into 'api' }
+        from('docs/DISTRIBUTION.md') { rename { 'README.md' } }
+        from('docs') {
+            include 'COMPATIBILITY.md'
+            into 'docs'
+        }
+        // Pin the NeoForge version the installer fetches to the one this build
+        // was compiled and tested against.
+        from(resources.text.fromString(project.neoforge_version).asFile()) {
+            rename { 'neoforge-version.txt' }
+        }
+    }
+}
