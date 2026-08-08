@@ -87,7 +87,8 @@ Plus an isolated `DamageProbe` (`cbtest damage`) and `ItemStackProbe`
 | Modded `ItemStack` | Constructed, serialized, round-tripped |
 | Modded block write/read | A plugin places a modded block via Bukkit and reads it back |
 | Modded block entities | `Block#getState()` returns a usable `TileState` |
-| `Material.values()` | 2204 entries — vanilla plus 50 Waystones materials, no duplicates; other Material calls unchanged |
+| `Material.values()` | **2735 entries** with Biomes O' Plenty installed - 1691 vanilla plus **1044 modded** - no duplicates, other Material calls unchanged. Previously verified at 2204 with Waystones alone, so the enum extension and call-site rewrite hold at roughly 20x the modded content |
+| Scale | **531 modded blocks** into the Bukkit registry and **581** into WorldEdit's, with terrain generation altered by TerraBlender. Zero errors, fresh world, no code changes required |
 | Integration API | 8 mods enumerated; modded content resolved by real id; NeoForge item capability resolved as `WorldlyContainerWrapper` |
 
 ### Real client (manual playtest, current build)
@@ -223,7 +224,7 @@ either been fixed or moved to PARTIAL with a stated limit.
 Do not read these as working.
 
 - **Further third-party plugins.** WorldEdit and LuckPerms are verified. An Essentials-style plugin and a protection/claims plugin are not.
-- **A nontrivial technology mod.** Waystones has blocks and block entities but no machines, so the capability bridge is only lightly exercised. None was available for 26.2 at the time.
+- **A technology mod with machines.** Biomes O' Plenty exercises scale and worldgen but has no capability-bearing machines, so the capability bridge is still only lightly exercised.
 
 ## Tested versions
 
@@ -232,6 +233,9 @@ Do not read these as working.
 | Balm | 26.2.0.5 |
 | KumaAPI | 26.2.0.1 |
 | Shogi / Shogi API | 26.2.0.4 |
+| Biomes O' Plenty | 26.2.0.0.26 | Large content mod that alters terrain generation |
+| TerraBlender | 26.2.0.0.2 | Biome/worldgen framework |
+| GlitchCore | 26.2.0.0.0 | BoP dependency |
 | Waystones | 26.2.0.7 |
 
 | Plugin | Kind |
