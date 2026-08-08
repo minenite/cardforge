@@ -1,56 +1,92 @@
-# Cardforge
+# CardForge
 
-Running Bukkit/Spigot/Paper plugins on **NeoForge** by reusing
-[Cardboard](https://github.com/minenite/cardboard)'s Bukkit implementation
-instead of porting CraftBukkit again.
+Run Bukkit, Spigot and Paper plugins on a real NeoForge 26.2 server, alongside
+your NeoForge mods.
 
 ```
-NeoForge 26.2  ->  Cardboard's Bukkit compatibility layer  ->  Bukkit/Spigot/Paper plugins
+NeoForge 26.2 (the real dedicated server)
+    -> CardForge (Cardboard's Bukkit/Spigot/Paper implementation, ported)
+        -> your plugins
 ```
+
+CardForge is not a fork of NeoForge or of Paper, and it does not port CraftBukkit
+again. It loads as an ordinary NeoForge mod and brings the Bukkit API up on top
+of the server NeoForge is already running, reusing
+[Cardboard](https://github.com/minenite/cardboard)'s implementation. Mods stay
+normal NeoForge mods; plugins stay normal server-side plugins.
+
+## For server owners
+
+Grab a release and run the installer — you do not need this repository, Gradle,
+or a source checkout:
+
+```sh
+./install.sh /path/to/server
+```
+
+That fetches the official NeoForge installer, runs it, and puts CardForge in
+`mods/`. See [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) for the full walkthrough.
+
+## For plugin developers
+
+Existing Bukkit/Paper plugins need no changes. If you want a plugin that is
+deliberately NeoForge-aware — enumerating loaded mods, addressing modded content
+by its real namespaced id, or reading a modded machine's inventory through
+NeoForge capabilities — compile against the API artifact and opt in:
+
+```java
+CardForge.getIfPresent().ifPresent(cardforge -> {
+    if (cardforge.isModLoaded("waystones")) {
+        // integrate
+    }
+});
+```
+
+Guarded like that, the same jar still runs on plain Paper. See
+[CardForgeExample](https://github.com/minenite/CardForgeExample) for a working
+plugin that demonstrates each part of the API.
 
 ## Status
 
-**Early. This does not build a working server yet.**
+Working and tested server-side. Strict Mixin behaviour is enabled
+(`defaultRequire: 1`), the server boots clean with zero failed injections,
+external plugins complete their full lifecycle, real NeoForge mods load
+alongside them, and modded content crosses into the Bukkit API.
 
-What exists today is the groundwork: a measured porting plan, the access
-transformer generated from Cardboard's access widener, and the platform seam
-that the loader-specific code will sit behind.
+Not verified: anything requiring a connected client. See
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md), which records what was actually
+run, what still fails, and why — including the five core probes that do not pass.
 
-| Workstream | State |
-|---|---|
-| Access widener → access transformer | done — 799 entries generated, 1 manual |
-| Porting plan, measured against both trees | done |
-| Platform adapter seam | interface defined |
-| ModDevGradle build | not started |
-| iCommonLib dependency | not resolved |
-| Mixin migration (237 classes) | not started |
-| Bukkit layer running on NeoForge | not started |
+## Building
 
-## Why reuse Cardboard
-
-Of Cardboard's **1,532 Java files, only 19 import `net.fabricmc.*`**. The
-plugin loader, Bukkit server implementation, scheduler, commands, events,
-inventories and permissions are written against Minecraft, not Fabric. The
-platform-specific surface is small enough to swap.
-
-NeoForge also ships the same Mixin stack Cardboard already uses
-(Mixin 0.8.7, MixinExtras 0.5.4), so the 237 mixin classes are expected to
-port with configuration changes rather than rewrites.
-
-See [docs/PORTING.md](docs/PORTING.md) for the full breakdown and the
-suggested order of work.
-
-## Tools
-
-```
-python3 tools/aw2at.py <cardboard>/src/main/resources/bukkitfabric.accesswidener \
-    src/main/resources/META-INF/accesstransformer.cfg
+```sh
+./gradlew jar        # the mod
+./gradlew apiJar     # the slim API artifact for plugin authors
+./gradlew dist       # the distributable zip
 ```
 
-Converts a Fabric access widener into a NeoForge access transformer and
-reports anything with no AT equivalent rather than dropping it silently.
+## Tests
 
-## Credits
+```sh
+python3 tools/check_class_overlap.py build/libs/Cardforge-26.2.jar <server-dir>
+python3 tools/audit_overlap.py src/main/java <neoforge-repo>
+tools/rewriter_test.sh <plugin.jar>
+tools/regression_test.sh <server-dir>
+tools/cycle_test.sh <server-dir> 3
+```
 
-Cardboard is by [CardboardPowered](https://github.com/CardboardPowered/cardboard)
-and inherits Paper's license. NeoForge is by [NeoForged](https://github.com/neoforged/NeoForge).
+- `check_class_overlap.py` — fails if the jar ships a class NeoForge already
+  provides, which becomes a `LinkageError` the moment it crosses a classloader.
+- `audit_overlap.py` — cross-references Cardboard's mixin targets against
+  NeoForge's patches, so a hook that still applies but no longer means the same
+  thing gets reported.
+- `rewriter_test.sh` — proves the `Material.values()` call-site rewrite is
+  correct and touches nothing else.
+- `regression_test.sh` — boots a real server and runs the probe suite.
+- `cycle_test.sh` — repeated start/stop cycles.
+
+## Documentation
+
+- [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) — installing and running
+- [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) — what works, what does not, how it was established
+- [docs/PORTING.md](docs/PORTING.md) — how the Fabric implementation was moved onto NeoForge
