@@ -17,15 +17,8 @@ import org.cardboardpowered.bridge.world.entity.EntityBridge;
 
 @Mixin(Sheep.class)
 public class SheepMixin {
-
-    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/sheep/Sheep;shear(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/sounds/SoundSource;Lnet/minecraft/world/item/ItemStack;)V") , method = "mobInteract", cancellable = true)
-    public void doBukkitEvent_PlayerShearEntityEvent(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> ci) {
-        ItemStack itemstack = player.getItemInHand(hand);
-        if (!CraftEventFactory.handlePlayerShearEntityEvent(player, (Sheep)(Object)this, itemstack, hand)) {
-            ci.setReturnValue(InteractionResult.PASS);
-            return;
-        }
-    }
+    // PlayerShearEntityEvent moved to ShearsItemMixin: NeoForge disables the
+    // vanilla per-entity shear branch and routes shearing through IShearable.
     
     // Lnet/minecraft/entity/Shearable;sheared(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/sound/SoundCategory;Lnet/minecraft/item/ItemStack;)V
 
