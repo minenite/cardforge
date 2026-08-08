@@ -74,6 +74,9 @@ dependencies {
 
     compileOnly 'javax.annotation:javax.annotation-api:1.3.2'
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.6'
+    // Provided by NeoForge at runtime and excluded from our jar, so compile
+    // against it only. Used by MaterialValuesRewriter.
+    compileOnly 'org.ow2.asm:asm:9.10.1'
 }
 
 tasks.named('jar') {

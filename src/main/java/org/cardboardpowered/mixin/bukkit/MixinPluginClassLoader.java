@@ -97,6 +97,13 @@ public class MixinPluginClassLoader extends URLClassLoader {
                     throw new ClassNotFoundException(name, ex);
                 }
 
+                // CardForge - legacy plugins do not go through Paper's
+                // ClassloaderBytecodeModifier, so apply the same rewrite here.
+                // It has to run on the bytes as the plugin compiled them: Cardboard's
+                // remapper below rewrites call owners, and after it has run the
+                // invokestatic no longer matches org/bukkit/Material.values().
+                classBytes = org.cardboardpowered.plugin.MaterialValuesRewriter.rewrite(classBytes);
+
                 classBytes = org.bukkit.Bukkit.getServer().getUnsafe().processClass(description, path, classBytes); // Paper
                 classBytes = remapUtils.remapFindClass(classBytes); // Cardboard - remapFindClass
                 

@@ -158,19 +158,26 @@ public class CardboardMagicNumbers {
         // field that HotSpot has already constant-folded, so without this the
         // modded materials stay invisible to anything that iterates values().
         if (!list.isEmpty()) {
-            // Additive, and skipped when nothing new was added. This method can run
-            // more than once; on a later pass every material already exists, so
-            // list is empty and rebuilding from the vanilla constants would drop
-            // everything registered earlier.
-            Material[] base = org.cardboardpowered.impl.MaterialValues.get();
-            if (base == null) {
-                base = Material.class.getEnumConstants();
+            // Publish the full set for CardForgeMaterials, which is what plugin
+            // Material.values() calls are rewritten to. $VALUES is authoritative:
+            // addEnums has just written every modded entry into it, alongside the
+            // vanilla ones. Read it rather than appending `list` to a snapshot -
+            // this method can run more than once, and appending would duplicate
+            // materials that are already there.
+            //
+            // Reflection is used deliberately: a direct read compiles to a
+            // getstatic on a static final field, which HotSpot has already
+            // constant-folded to the pre-extension array.
+            try {
+                java.lang.reflect.Field field = Material.class.getDeclaredField("$VALUES");
+                field.setAccessible(true);
+                org.cardboardpowered.impl.MaterialValues.set(((Material[]) field.get(null)).clone());
+            } catch (Throwable t) {
+                // Never silently: without this, modded materials are invisible to
+                // any plugin that iterates values(), with no other symptom.
+                CardboardMod.LOGGER.warning("Could not publish the extended Material set; "
+                        + "plugins iterating Material.values() will not see modded materials: " + t);
             }
-            Material[] all = java.util.Arrays.copyOf(base, base.length + list.size());
-            for (int k = 0; k < list.size(); k++) {
-                all[base.length + k] = list.get(k);
-            }
-            org.cardboardpowered.impl.MaterialValues.set(all);
         }
 
         for (Material material : list) {

@@ -35,6 +35,8 @@ the Bukkit layer alongside them and bridges content between the two.
 | Cross-ecosystem block write/read | A plugin places a modded block through the Bukkit API and reads it back |
 | Modded block entities | `Block#getState()` on a modded block entity returns a usable `TileState` |
 | Paper type registries | `Registry.ITEM` / `Registry.BLOCK` resolve modded ids; item-only ids correctly return `null` from `Registry.BLOCK` |
+| `Material.values()` in plugins | A precompiled plugin iterating `values()` sees 2204 entries: vanilla plus 50 Waystones materials, no duplicates |
+| Lookup behaviour unchanged | `valueOf`, `getMaterial`, `matchMaterial`, `Registry.MATERIAL`, `getKey`, `isBlock` all behave as before, and an unknown name still returns `null` |
 
 The plugin used is `CardboardTest`, whose `/cbtest mods` runs from the console so
 the whole check can execute in an automated boot with no client attached.
@@ -43,27 +45,17 @@ the whole check can execute in an automated boot with no client attached.
 
 These are real and are listed rather than papered over.
 
-### `Material.values()` does not include modded materials
+### `Material.values()` reflection paths still see the folded array
 
-`Material.values()` returns only the 1691 vanilla materials, even though the
-backing `$VALUES` array demonstrably holds all 2204 (verified by reading the
-field reflectively at runtime).
+`Material.values()` itself is handled - see "How `Material.values()` works" below
+- but a plugin reaching the same data another way is not. `EnumSet.allOf(Material.class)`,
+`Material.class.getEnumConstants()` and direct reflection on `$VALUES` read the
+JDK's own cached copy rather than calling `values()`, so they still return the
+1691 vanilla entries.
 
-The cause is that enum extension writes `$VALUES` through `Unsafe` after class
-initialisation, while `values()` compiles to a `getstatic` on a `static final`
-field that HotSpot has already constant-folded — `values()` is hot during
-registration, so it folds early and then keeps returning the old array.
-
-Attempted fix: the extended array is published to
-`org.cardboardpowered.impl.MaterialValues` and `BukkitMaterialMixin` injects into
-`values()` to return it. The publish is confirmed to run with the correct
-contents, and the injection is confirmed to apply (strict mode would fail the
-boot otherwise) — but `values()` still observes the folded constant. Unresolved.
-
-**Impact:** a plugin that *iterates* `Material.values()` will not see modded
-content. **Workarounds that do work:** `Material.getMaterial(name)`,
-`Material#getKey()`, and `Registry.ITEM` / `Registry.BLOCK` — all verified above.
-This affects discovery only, not manipulation.
+**Workarounds:** call `Material.values()` (rewritten, sees everything),
+`CardForgeMaterials.values()` directly, `Material.getMaterial(name)`, or
+`Registry.ITEM` / `Registry.BLOCK`.
 
 ### Modded block entities expose no typed API
 
@@ -82,6 +74,38 @@ the drop list does not exist until after the entity has been sheared, while
 cancellation must be decided before. The event is therefore fired at
 `isShearable` with an empty mutable list, and drops a plugin adds replace the
 natural ones. Cancellation is exact; incremental drop editing is not expressible.
+
+## How `Material.values()` works
+
+Modded materials are added by writing Material's private static final `$VALUES`
+array through Unsafe. The write lands - reading the field reflectively shows every
+modded entry - but `Material.values()` compiles to a `getstatic` on a static final
+field, which HotSpot constant-folds once the class is initialised. `values()` is
+hot during registration, so it folds early and then keeps returning the
+pre-extension array. Nothing done at the read site changes that, because the fold
+has already happened before any plugin runs.
+
+So the read site is not where this is solved. `MaterialValuesRewriter` rewrites
+plugin classes as they load, redirecting
+
+```
+invokestatic org/bukkit/Material.values()[Lorg/bukkit/Material;
+```
+
+to `CardForgeMaterials.values()`, which has the identical descriptor. That makes
+it a drop-in substitution: precompiled plugin jars work unchanged, with no source
+changes and no recompilation.
+
+It is wired into two paths, because plugins do not all load the same way:
+Paper plugins go through `PaperClassloaderBytecodeModifier`, and legacy Bukkit
+plugins through `PluginClassLoader#findClass`. On the legacy path it has to run
+**before** Cardboard's remapper, which rewrites call owners - after that pass the
+instruction no longer matches `org/bukkit/Material.values()`.
+
+Only that one call is touched. `valueOf`, `getMaterial`, the registries and field
+access are left exactly as the plugin compiled them, which
+`tools/rewriter_test.sh` asserts explicitly by diffing every call site before and
+after.
 
 ## Notes on porting decisions
 
@@ -118,6 +142,16 @@ cp build/libs/Cardforge-26.2.jar <server-dir>/mods/
 tools/cycle_test.sh <server-dir> 3
 ```
 
-For the cross-ecosystem probes, install Balm, Shogi and Waystones into
-`<server-dir>/mods/` and `CardboardTest.jar` into `<server-dir>/plugins/`, then
-run `cbtest mods` from the server console.
+Regression tests:
+
+```sh
+# Offline: proves the values() rewrite is correct and nothing else is touched.
+tools/rewriter_test.sh <server-dir>/plugins/CardboardTest.jar
+
+# In-server: boots, runs the probes from the console, fails on any FAIL line.
+tools/regression_test.sh <server-dir>
+```
+
+The in-server test needs Balm, Shogi and Waystones in `<server-dir>/mods/` and
+`CardboardTest.jar` in `<server-dir>/plugins/`. `cbtest mods` can also be run by
+hand from the server console.
