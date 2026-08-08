@@ -118,6 +118,7 @@ Real plugins, unmodified, from their official releases.
 | --- | --- | --- |
 | **WorldEdit** | 7.4.4 | Loads, enables, binds its own NMS adapter (`PaperweightAdapter` for `v26_2`). `//set` places a **modded** block by its real id (`waystones:andesite_waystone`, case-insensitive); setting a region to glass removes a modded block. Zero errors. |
 | **WorldGuard** | 7.0.18 | Loads, enables, region data and UUID migration. With `__global__` set to `build: DENY` and `interact: DENY` against a non-op, building, breaking and interaction are all correctly denied - **including on modded blocks**, where right-clicking a Waystone no longer opens the mod's GUI. |
+| **EssentialsX** | 2.22.0 | Loads and enables despite declaring `api-version: 1.13`, detects LuckPerms, generates its config and data directories, and correctly refuses commands to a non-operator. |
 | **LuckPerms** | 5.5.71 | Loads, enables, H2 storage, Brigadier command registration. `/lp info`, `permission set` and `permission info` all work; nodes persist and read back. |
 
 WorldEdit binding a version-specific NMS adapter is the stronger signal here:
@@ -149,6 +150,24 @@ recorded, zero errors.
 
 The interaction case is the important one: it shows a Bukkit plugin can guard
 content belonging to a mod that knows nothing about Bukkit.
+
+### Clean-room distributable
+
+Built with `./gradlew dist`, installed into a fresh directory by `install.sh`
+(which fetches and runs the official NeoForge installer), then given the four
+tested mods and six plugins.
+
+| Run | Result |
+| --- | --- |
+| First boot | Reaches `Done`, all six plugins enable, **126 probe passes, 0 failures** |
+| Restart | Reaches `Done`, **126 passes, 0 failures**, clean shutdown both times |
+| CardForge errors | **0** across both runs |
+
+Plugin data (`Essentials/`, `LuckPerms/`, `CardboardTest/`) and mod saved data
+(`waystones.dat`) are created on the first run and survive the restart.
+
+The only error logged is a Mojang API fetch failure for the Yggdrasil public
+key, which is network reachability and not CardForge.
 
 ## PARTIAL
 
@@ -183,8 +202,6 @@ either been fixed or moved to PARTIAL with a stated limit.
 Do not read these as working.
 
 - **Further third-party plugins.** WorldEdit and LuckPerms are verified. An Essentials-style plugin and a protection/claims plugin are not.
-- **An Essentials-style plugin.** Not published for 26.2 at the time of testing.
-- **Clean-room distributable test** after these fixes.
 - **A nontrivial technology mod.** Waystones has blocks and block entities but no machines, so the capability bridge is only lightly exercised. None was available for 26.2 at the time.
 
 ## Tested versions
