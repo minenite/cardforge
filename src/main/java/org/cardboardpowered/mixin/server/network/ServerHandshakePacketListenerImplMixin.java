@@ -34,7 +34,7 @@ public class ServerHandshakePacketListenerImplMixin {
             } else if (packet.protocolVersion() < ver.getProtocolVersion()) {
             } else {
                 if (org.spigotmc.SpigotConfig.bungee) {
-                    String[] split = packet.hostName.split("\00");
+                    String[] split = packet.hostName().split("\00");
                     if ( split.length == 3 || split.length == 4 ) {
                        // TODO 1.17ify packethandshakinginsetprotocol.address = split[0];
                         connection.address = new java.net.InetSocketAddress(split[1], ((java.net.InetSocketAddress) connection.getRemoteAddress()).getPort());
@@ -44,7 +44,7 @@ public class ServerHandshakePacketListenerImplMixin {
                     }
                     if ( split.length == 4 ) ((ConnectionBridge)connection).setSpoofedProfile(gson.fromJson(split[3], com.mojang.authlib.properties.Property[].class));
                 }
-                ((ServerLoginPacketListenerImplBridge)((ServerLoginPacketListenerImpl) this.connection.getPacketListener())).setHostname(packet.hostName + ":" + packet.port()); // Bukkit - set hostname
+                ((ServerLoginPacketListenerImplBridge)((ServerLoginPacketListenerImpl) this.connection.getPacketListener())).setHostname(packet.hostName() + ":" + packet.port()); // Bukkit - set hostname
             }
         }
     }

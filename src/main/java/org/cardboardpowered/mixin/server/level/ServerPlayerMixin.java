@@ -69,9 +69,6 @@ import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.fabricmc.fabric.impl.screenhandler.Networking;
 */
 
-import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
-import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
-import net.fabricmc.fabric.impl.menu.Networking;
 
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
@@ -212,11 +209,11 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
 
         if (!newExit.equals(exit)) {
         	// Set our new TeleportTarget
-        	target.newLevel = ((CraftWorld)newExit.getWorld()).getHandle();
-        	target.position = CraftLocation.toVec3(newExit);
-        	target.deltaMovement = Vec3.ZERO;
-        	target.yRot = newExit.getYaw();
-        	target.xRot = newExit.getPitch();
+        	target.newLevel() = ((CraftWorld)newExit.getWorld()).getHandle();
+        	target.position() = CraftLocation.toVec3(newExit);
+        	target.deltaMovement() = Vec3.ZERO;
+        	target.yRot() = newExit.getYaw();
+        	target.xRot() = newExit.getPitch();
 
         	if (CardboardConfig.DEBUG_PLAYER) {
         		CardboardMod.LOGGER.info("DEBUG: Teleport: Target=" + target);
@@ -303,19 +300,12 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
     private final ThreadLocal<AbstractContainerMenu> fabric_openedScreenHandler = new ThreadLocal<>();
 
     private void fabric_replaceVanillaScreenPacket_include(ServerGamePacketListenerImpl networkHandler, Packet<?> packet, MenuProvider factory) {
-        if (factory instanceof ExtendedMenuProvider) {
-            AbstractContainerMenu handler = fabric_openedScreenHandler.get();
-
-            if (handler.getType() instanceof ExtendedMenuType) { // TODO: 1.20.5: check ExtendedScreenHandlerType<?>
-                Networking.sendOpenPacket((ServerPlayer) (Object) this, (ExtendedMenuProvider) factory, handler, containerCounter);
-            } else {
-                Identifier id = BuiltInRegistries.MENU.getKey(handler.getType());
-                throw new IllegalArgumentException("[Fabric] Non-extended screen handler " + id + " must not be opened with an ExtendedScreenHandlerFactory!");
-            }
-        } else {
-            // Use vanilla logic for non-extended screen handlers
-            networkHandler.send(packet);
-        }
+        // Fabric's ExtendedScreenHandler/ExtendedMenu carries extra payload with the
+        // open-screen packet. NeoForge has its own mechanism for that
+        // (IMenuProviderWithData plus openMenu(provider, writer)) and drives it itself,
+        // so there is nothing to intercept here. Bukkit inventories are plain vanilla
+        // menus in any case, which is the path this always took for them.
+        networkHandler.send(packet);
     }
 
     @Inject(method = "openMenu(Lnet/minecraft/world/MenuProvider;)Ljava/util/OptionalInt;", at = @At("RETURN"))

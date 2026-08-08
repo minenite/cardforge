@@ -18,17 +18,17 @@ public class MixinLevelSettings implements ILevelSettings{
 	// Paper start
 	@Override
 	public LevelSettings cardboard$withLevelName(String name) {
-		return new LevelSettings(name, cb$thiz().gameType, cb$thiz().difficultySettings, cb$thiz().allowCommands, cb$thiz().dataConfiguration);
+		return new LevelSettings(name, cb$thiz().gameType(), cb$thiz().difficultySettings(), cb$thiz().allowCommands(), cb$thiz().dataConfiguration());
 	}
 
 	@Override
 	public LevelSettings cardboard$withHardcore(boolean hardcore) {
 		return new LevelSettings(
-				cb$thiz().levelName,
-				cb$thiz().gameType,
+				cb$thiz().levelName(),
+				cb$thiz().gameType(),
 				new LevelSettings.DifficultySettings(
-						cb$thiz().difficultySettings.difficulty(), hardcore, cb$thiz().difficultySettings.locked()
-				), cb$thiz().allowCommands, cb$thiz().dataConfiguration);
+						cb$thiz().difficultySettings().difficulty(), hardcore, cb$thiz().difficultySettings().locked()
+				), cb$thiz().allowCommands(), cb$thiz().dataConfiguration());
 	}
 	// Paper end
 
