@@ -5,7 +5,7 @@ issueTrackerURL = "https://github.com/minenite/cardforge/issues"
 
 [[mods]]
 modId = "cardforge"
-version = "${mod_version}"
+version = "26.2"
 displayName = "Cardforge"
 authors = "MineNite, and the Cardboard contributors"
 description = '''

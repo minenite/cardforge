@@ -155,8 +155,12 @@ public class CardboardMixinPlugin implements IMixinConfigPlugin, IEnvironmentTok
                 }
             }
 
-        } catch (Exception e) {
-            logger.info(e.getMessage());
+        } catch (Throwable e) {
+            // Reading a mixin's annotations resolves its @Mixin target. Under
+            // NeoForge the Minecraft classes are not visible to this loader, so
+            // that throws NoClassDefFoundError rather than an Exception. Applying
+            // the mixin is the correct default when the annotation cannot be read.
+            logger.debug("Could not inspect {}: {}", mixinClassName, e.toString());
         }
 
         return true;

@@ -2,7 +2,14 @@ package org.minenite.cardforge.platform;
 
 import java.util.Objects;
 
-/** Holder for the active {@link PlatformAdapter}. */
+/**
+ * Holder for the active {@link PlatformAdapter}.
+ *
+ * Cardboard's library loader and mixin plugin both run before the @Mod
+ * entrypoint, so this self-initialises on first use rather than requiring a
+ * particular startup order. The entrypoint may still call {@link #set} to
+ * install a different adapter.
+ */
 public final class Platform {
 
     private static volatile PlatformAdapter adapter;
@@ -17,8 +24,13 @@ public final class Platform {
     public static PlatformAdapter get() {
         PlatformAdapter current = adapter;
         if (current == null) {
-            throw new IllegalStateException(
-                    "Platform adapter not initialised; the mod entrypoint must call Platform.set() first");
+            synchronized (Platform.class) {
+                current = adapter;
+                if (current == null) {
+                    current = new NeoForgePlatform();
+                    adapter = current;
+                }
+            }
         }
         return current;
     }
