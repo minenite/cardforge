@@ -691,7 +691,8 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         return Iterators.unmodifiableIterator(Iterators.transform(getServer().getCustomBossEvents().getEvents().iterator(), new Function<CustomBossEvent, org.bukkit.boss.KeyedBossBar>() {
             @Override
             public org.bukkit.boss.KeyedBossBar apply(CustomBossEvent bossBattleCustom) {
-                return (KeyedBossBar) ((EntityBridge) (Object) bossBattleCustom).getBukkitEntity();
+                // Same fix as getBossBar: wrap, do not pretend it is an entity.
+                return new org.cardboardpowered.impl.CardboardBossBar(bossBattleCustom);
             }
         }));
     }
@@ -700,7 +701,11 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     public KeyedBossBar getBossBar(NamespacedKey key) {
         Preconditions.checkArgument(key != null, "key");
         net.minecraft.server.bossevents.CustomBossEvent bossBattleCustom = getServer().getCustomBossEvents().get(CraftNamespacedKey.toMinecraft(key));
-        return (bossBattleCustom == null) ? null : (KeyedBossBar) ((EntityBridge) (Object) bossBattleCustom).getBukkitEntity();
+        // A boss event is not an entity, so it has no getBukkitEntity(). Wrap it the
+        // same way createBossBar does; the old cast threw ClassCastException on
+        // every lookup, making keyed boss bars impossible to retrieve at all.
+        return (bossBattleCustom == null) ? null
+                : new org.cardboardpowered.impl.CardboardBossBar(bossBattleCustom);
     }
 
     @Override
