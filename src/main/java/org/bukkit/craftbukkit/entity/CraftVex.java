@@ -24,7 +24,7 @@ public class CraftVex extends CraftMonster implements Vex {
 		// 26.2: Vex#getOwner widened from Mob to LivingEntity
 		net.minecraft.world.entity.LivingEntity owner = this.getHandle().getOwner();
 		return owner instanceof net.minecraft.world.entity.Mob mob
-				? ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (org.bukkit.entity.Mob) mob).getBukkitEntity() : null;
+				? (org.bukkit.entity.Mob) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) mob).getBukkitEntity() : null;
 	}
 
 	@Override

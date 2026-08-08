@@ -22,7 +22,7 @@ public class ThrownExperienceBottleMixin extends ProjectileMixin {
     public void doBukkitEvent(HitResult movingobjectposition, CallbackInfo ci) {
         HitResult.Type type = movingobjectposition.getType();
         if (type == HitResult.Type.ENTITY) {
-            ((ThrownExperienceBottle)(Object)this).onHitEntity((EntityHitResult)movingobjectposition);
+            ((org.minenite.cardforge.mixin.invoker.ProjectileInvoker) (Object) this).cardforge$onHitEntity((EntityHitResult)movingobjectposition);
         } else if (type == HitResult.Type.BLOCK) this.onHitBlock((BlockHitResult)movingobjectposition);
 
         int i = 3 + this.mc_world().getRandom().nextInt(5) + this.mc_world().getRandom().nextInt(5);

@@ -556,7 +556,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             levelData.setInitialized(true);
         }
         
-        GlobalPos globalPos = ((MinecraftServer) (Object) this).selectLevelLoadFocusPos();
+        GlobalPos globalPos = ((org.minenite.cardforge.mixin.invoker.MinecraftServerInvoker) (Object) this).cardforge$selectLevelLoadFocusPos();
         ((ServerLevelBridge) (Object) overworld).cardboard$levelLoadListener().updateFocus(globalPos.dimension(), ChunkPos.containing(globalPos.pos()));
         /*
         if (worldProperties.getCustomBossEvents() != null) {

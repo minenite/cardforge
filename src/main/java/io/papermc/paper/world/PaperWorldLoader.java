@@ -158,7 +158,7 @@ public record PaperWorldLoader(MinecraftServer server, String levelId) {
 
         for (ServerLevel serverLevel : this.server.getAllLevels()) {
             // this.server.prepareLevel(serverLevel);
-        	this.server.cardboard$prepareLevel(serverLevel);
+        	((org.cardboardpowered.bridge.server.MinecraftServerBridge) (Object) this.server).cardboard$prepareLevel(serverLevel);
         }
     }
 

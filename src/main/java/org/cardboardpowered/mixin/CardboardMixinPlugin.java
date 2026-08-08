@@ -195,11 +195,10 @@ public class CardboardMixinPlugin implements IMixinConfigPlugin, IEnvironmentTok
      * Check for mods that overwrite onGameMessage for chat event.
      */
     public boolean should_force_alternate_chat() {
-        FabricLoader loader = FabricLoader.getInstance();
         String[] bad_mods = {"architectury", "dynmap"};
 
         for (String s : bad_mods) {
-            if (loader.getModContainer(s).isPresent())
+            if (org.minenite.cardforge.platform.Platform.get().isModLoaded(s))
                 return true;
         }
         return false;

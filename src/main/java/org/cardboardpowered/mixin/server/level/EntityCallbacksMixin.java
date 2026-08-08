@@ -36,7 +36,7 @@ public class EntityCallbacksMixin {
     public void unvalidateEntityBF(Entity entity, CallbackInfo ci) {
         EntityBridge bf = (EntityBridge) entity;
         bf.setValid(false);
-        CraftEventFactory.callEvent( new EntityRemoveFromWorldEvent(bf.getBukkitEntity(), entity.level().cardboard$getWorld()) );
+        CraftEventFactory.callEvent( new EntityRemoveFromWorldEvent(bf.getBukkitEntity(), ((org.cardboardpowered.bridge.world.level.LevelBridge) (Object) entity.level()).cardboard$getWorld()) );
     }
 
     @Inject(at = @At("TAIL"), method = "onTickingStart(Lnet/minecraft/world/entity/Entity;)V")
@@ -48,7 +48,7 @@ public class EntityCallbacksMixin {
         if (null == bf.getOriginBF() && bf.getBukkitEntity() != null)
             bf.setOriginBF(bf.getBukkitEntity().getLocation()); // Paper Entity Origin API
 
-        CraftEventFactory.callEvent( new EntityAddToWorldEvent(bf.getBukkitEntity(), entity.level().cardboard$getWorld()) );
+        CraftEventFactory.callEvent( new EntityAddToWorldEvent(bf.getBukkitEntity(), ((org.cardboardpowered.bridge.world.level.LevelBridge) (Object) entity.level()).cardboard$getWorld()) );
     } 
 
 }

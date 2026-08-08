@@ -27,7 +27,7 @@ public class FlintAndSteelItemMixin {
         BlockPos blockposition = context.getClickedPos().relative(context.getClickedFace());
 
         if (CraftEventFactory.callBlockIgniteEvent(world, blockposition, org.bukkit.event.block.BlockIgniteEvent.IgniteCause.FLINT_AND_STEEL, plr).isCancelled()) {
-            ((IMixinItemStack)context.getItemInHand()).IC$damage(1, plr, context.getHand());
+            ((IMixinItemStack) (Object) context.getItemInHand()).IC$damage(1, plr, context.getHand());
             
             // context.getStack().damage(1, plr, (plr1) -> plr1.sendToolBreakStatus(context.getHand()));
             // context.getStack().damage(1, plr, LivingEntity.getSlotForHand(context.getHand()));

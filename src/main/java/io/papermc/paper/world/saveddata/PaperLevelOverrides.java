@@ -37,7 +37,7 @@ public final class PaperLevelOverrides extends SavedData implements ServerLevelD
         Identifier.fromNamespaceAndPath(IdentifierExtra.PAPER_NAMESPACE, "level_overrides"),
         PaperLevelOverrides::new,
         CODEC,
-        DataFixTypes.PAPER_NONE
+        DataFixTypes.LEVEL
     );
 
     private RespawnData respawnData;
@@ -210,7 +210,7 @@ public final class PaperLevelOverrides extends SavedData implements ServerLevelD
         if (!this.difficultySettings.equals(difficultySettings)) {
             this.difficultySettings = difficultySettings;
             this.syncRootData(rootData -> rootData.settings = ((ILevelSettings) rootData.settings
-                .withDifficulty(difficultySettings.difficulty()))
+                .withDifficulty(this.rootDataOrThrow().getDifficulty()))
                 .cardboard$withHardcore(difficultySettings.hardcore())
                 .withDifficultyLock(difficultySettings.locked()));
             this.setDirty();

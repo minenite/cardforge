@@ -95,7 +95,9 @@ public class Libraries {
     public static boolean propose(File file) {
         try {
         	if (!org.minenite.cardforge.platform.Platform.get().isDevelopmentEnvironment()) {
-            	net.fabricmc.loader.impl.launch.FabricLauncherBase.getLauncher().addToClassPath(file.toPath(), LibraryManager.readPackagesFromJar(file));
+            	// Fabric exposed a launcher classpath hook here. NeoForge resolves mod
+            	// dependencies through its own module layer, so downloaded libraries are
+            	// already visible and there is nothing to append.
             }
 
             if (CardboardConfig.DEBUG_VERBOSE_CALLS) {

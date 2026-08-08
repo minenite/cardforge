@@ -799,7 +799,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
         } else if (AbstractArrow.class.isAssignableFrom(projectile)) {
             if (TippedArrow.class.isAssignableFrom(projectile)) {
                 launch = new Arrow(world, this.getHandle(), new net.minecraft.world.item.ItemStack(Items.ARROW), null);
-                (((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) (org.bukkit.entity.Arrow)launch).getBukkitEntity()).setBasePotionType(PotionType.WATER);
+                ((org.bukkit.entity.Arrow) ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) launch).getBukkitEntity()).setBasePotionType(PotionType.WATER);
             } else {
                 launch = SpectralArrow.class.isAssignableFrom(projectile) ? new net.minecraft.world.entity.projectile.arrow.SpectralArrow(world, this.getHandle(), new net.minecraft.world.item.ItemStack(Items.SPECTRAL_ARROW), null) : (Trident.class.isAssignableFrom(projectile) ? new ThrownTrident(world, this.getHandle(), new net.minecraft.world.item.ItemStack(Items.TRIDENT)) : new Arrow(world, this.getHandle(), new net.minecraft.world.item.ItemStack(Items.ARROW), null));
             }

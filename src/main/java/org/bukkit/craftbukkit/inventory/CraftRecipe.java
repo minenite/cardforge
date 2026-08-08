@@ -65,7 +65,7 @@ public interface CraftRecipe extends Recipe {
             return RecipeChoice.empty(); // Paper - null breaks API contracts
         }
 
-        IngredientBridge cblist = (IngredientBridge) list;
+        IngredientBridge cblist = (IngredientBridge) (Object) list;
 
         if (cblist.cb$isExact()) {
             List<org.bukkit.inventory.ItemStack> choices = new ArrayList<>(cblist.cb$itemStacks().size());

@@ -172,6 +172,23 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
     }
     
     private ServerLevel cb$from;
+
+    @org.spongepowered.asm.mixin.Unique
+    private TeleportTransition cardboard$replacementTarget;
+
+    /**
+     * Swaps in the transition built by the teleport event. Runs before the
+     * @Inject above on the same method, so it consumes the value produced by
+     * the previous call and clears it.
+     */
+    @org.spongepowered.asm.mixin.injection.ModifyVariable(
+            method = "teleport(Lnet/minecraft/world/level/portal/TeleportTransition;)Lnet/minecraft/server/level/ServerPlayer;",
+            at = @At("HEAD"), argsOnly = true)
+    private TeleportTransition cardboard$swapTeleportTarget(TeleportTransition original) {
+        TeleportTransition replacement = this.cardboard$replacementTarget;
+        this.cardboard$replacementTarget = null;
+        return replacement != null ? replacement : original;
+    }
     
     @Inject(cancellable = true, at = @At(
     		value = "INVOKE",
@@ -208,12 +225,17 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
         }
 
         if (!newExit.equals(exit)) {
-        	// Set our new TeleportTarget
-        	target.newLevel() = ((CraftWorld)newExit.getWorld()).getHandle();
-        	target.position() = CraftLocation.toVec3(newExit);
-        	target.deltaMovement() = Vec3.ZERO;
-        	target.yRot() = newExit.getYaw();
-        	target.xRot() = newExit.getPitch();
+        	// TeleportTransition is a record. Cardboard mutated its fields in place,
+        	// which only worked because Fabric's access widener made them mutable.
+        	// Build a replacement and let cardboard$swapTeleportTarget swap it into
+        	// the target method's argument slot.
+        	this.cardboard$replacementTarget = new TeleportTransition(
+        			((CraftWorld) newExit.getWorld()).getHandle(),
+        			CraftLocation.toVec3(newExit),
+        			Vec3.ZERO,
+        			newExit.getYaw(),
+        			newExit.getPitch(),
+        			target.postTeleportTransition());
 
         	if (CardboardConfig.DEBUG_PLAYER) {
         		CardboardMod.LOGGER.info("DEBUG: Teleport: Target=" + target);
@@ -344,14 +366,8 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
                 ci.setReturnValue(OptionalInt.empty());
             } else {
                 ((ServerPlayer)(Object)this).containerMenu = container;
-                
-                /*From FabricAPI*/
-                if (factory instanceof ExtendedMenuProvider) {
-                    fabric_openedScreenHandler.set(container);
-                } else if (container.getType() instanceof ExtendedMenuType) { // TODO: 1.20.5: check ExtendedScreenHandlerType<?>
-                    Identifier id = BuiltInRegistries.MENU.getKey(container.getType());
-                    throw new IllegalArgumentException("[Fabric] Extended screen handler " + id + " must be opened with an ExtendedScreenHandlerFactory!");
-                }
+                // Fabric ExtendedMenu bookkeeping removed; NeoForge drives extended
+                // menu data itself and Bukkit inventories are vanilla menus.
                 
                 fabric_replaceVanillaScreenPacket_include(((ServerPlayer)(Object)this).connection,
                         new ClientboundOpenScreenPacket(container.containerId, container.getType(), factory.getDisplayName()),
