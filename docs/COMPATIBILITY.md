@@ -126,6 +126,27 @@ independent lower/upper halves rather than a working structure. WorldEdit writes
 raw block states without running placement logic and does the same to vanilla
 doors and beds on ordinary Paper.
 
+### Cross-ecosystem cancellation
+
+The question is not whether a Bukkit event fires - that is easy and already
+covered - but whether cancelling it stops the NeoForge operation. An event that
+fires and is then ignored is worse than one that never fires, because the plugin
+reports success.
+
+Tested with a protection plugin in miniature (`/cbtest guard`), which cancels
+placement, breaking, interaction and damage at HIGHEST priority. 40 cancellations
+recorded, zero errors.
+
+| Cancelled event | Outcome |
+| --- | --- |
+| `BlockPlaceEvent` | Placement prevented, vanilla and modded |
+| `BlockBreakEvent` | Breaking prevented, vanilla and modded |
+| `PlayerInteractEvent` on a modded block | **The Waystone GUI does not open.** The mod's own interaction handler never runs |
+| `EntityDamageEvent` | Damage prevented, including environmental sources - an enderman's `FALL` damage arrived through the bridge with the correct cause and was cancelled |
+
+The interaction case is the important one: it shows a Bukkit plugin can guard
+content belonging to a mod that knows nothing about Bukkit.
+
 ## PARTIAL
 
 **`Material.values()` reflection paths.** `values()` itself is handled by a
@@ -159,8 +180,7 @@ either been fixed or moved to PARTIAL with a stated limit.
 Do not read these as working.
 
 - **Further third-party plugins.** WorldEdit and LuckPerms are verified. An Essentials-style plugin and a protection/claims plugin are not.
-- **Protection-plugin cancellation around modded blocks and entities.**
-- **Cross-ecosystem cancellation beyond block placement and shearing.**
+- **A real third-party protection/claims plugin.** Cancellation semantics are verified with a purpose-built guard; a production plugin such as WorldGuard or GriefPrevention is not.
 - **Clean-room distributable test** after these fixes.
 - **A nontrivial technology mod.** Waystones has blocks and block entities but no machines, so the capability bridge is only lightly exercised. None was available for 26.2 at the time.
 
