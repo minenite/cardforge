@@ -265,7 +265,8 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     private final YamlConfiguration configuration;
 
     public static DedicatedServer console;
-    protected final DedicatedPlayerList playerList;
+    // Not final: getHandle() refreshes it from the server so it cannot go stale.
+    protected DedicatedPlayerList playerList;
 
     public static CraftServer INSTANCE;
     public ApiVersion minimumAPI;
@@ -1892,6 +1893,18 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     }
 
     public DedicatedPlayerList getHandle() {
+        // Resolve live rather than returning the field captured in the constructor.
+        // That field could go stale, and when it did every op check went to the
+        // wrong PlayerList: asking the live one whether a player was an operator
+        // returned true while CraftPlayer#isOp, going through the cached one,
+        // returned false for the same player and the same NameAndId. The visible
+        // symptom was /op and /deop appearing to do nothing until reconnect, which
+        // silently defeated WorldGuard.
+        net.minecraft.server.players.PlayerList live = this.getServer().getPlayerList();
+        if (live instanceof DedicatedPlayerList dedicated) {
+            this.playerList = dedicated;
+            return dedicated;
+        }
         return this.playerList;
     }
 
