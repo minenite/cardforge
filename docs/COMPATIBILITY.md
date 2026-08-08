@@ -37,13 +37,34 @@ the Bukkit layer alongside them and bridges content between the two.
 | Paper type registries | `Registry.ITEM` / `Registry.BLOCK` resolve modded ids; item-only ids correctly return `null` from `Registry.BLOCK` |
 | `Material.values()` in plugins | A precompiled plugin iterating `values()` sees 2204 entries: vanilla plus 50 Waystones materials, no duplicates |
 | Lookup behaviour unchanged | `valueOf`, `getMaterial`, `matchMaterial`, `Registry.MATERIAL`, `getKey`, `isBlock` all behave as before, and an unknown name still returns `null` |
+| Core Bukkit/Paper behaviour | 84 passing probes across worlds, blocks, entities, projectiles, ItemStack/components, PDC, scoreboards, boss bars, scheduler, permissions, commands, configuration, registries and world saving |
+| Integration API | 8 mods enumerated, modded content resolved by real namespaced id, NeoForge capabilities reachable |
+| Distributable | `install.sh` fetches and runs the official NeoForge installer, then drops CardForge into `mods/` |
 
 The plugin used is `CardboardTest`, whose `/cbtest mods` runs from the console so
 the whole check can execute in an automated boot with no client attached.
 
 ## Known limitations
 
-These are real and are listed rather than papered over.
+These are real and are listed rather than papered over. Each is covered by a
+probe in `CardboardTest`, so they fail loudly rather than rotting quietly.
+
+### Five core probes still fail
+
+Run `cbtest core` from the console to reproduce. 84 pass, these 5 do not:
+
+| Probe | Symptom | Assessment |
+| --- | --- | --- |
+| `entities: teleport` | `Entity#teleport` does not move a spawned entity | CardForge gap in the entity teleport path; player teleport is untested here |
+| `entities: EntityDamageEvent` | Damage applies, but the event never dispatches | The damage path reaches NMS without firing the Bukkit event |
+| `entities: EntityDeathEvent` | Entity dies, but the event never dispatches | Same shape as the damage gap |
+| `itemstacks: serialize` | `ItemStack.serialize()` throws NPE, `craftDelegate` is null | Paper's ItemStack delegate is not wired for stacks built plugin-side |
+| `recipes: iterator` | `Invalid recipe type: DyeRecipe` | 26.2 added a recipe type Cardboard's converter does not map. Vanilla gap, unrelated to mods |
+| `bossbars: keyed` | `CustomBossEvent` cannot be cast to `EntityBridge` | `Bukkit.createBossBar(key, ...)` reuses an entity-oriented bridge that a boss event is not |
+
+None of these are NeoForge-specific: they are Cardboard/26.2 porting gaps that
+the modded server merely made visible. They are listed here rather than fixed
+because each needs its own investigation, and the suite now fails on them.
 
 ### `Material.values()` reflection paths still see the folded array
 
@@ -132,6 +153,33 @@ library. Shipping a second copy of a class NeoForge already provides causes
 TRANSFORMER/app loader boundary — invisible until runtime. The check currently
 reports zero overlap; it found 237 shadowed classes when first written,
 including `joptsimple`, which the option parser passes across that boundary.
+
+## Tested NeoForge mods
+
+| Mod | Version | Result |
+| --- | --- | --- |
+| Balm | 26.2.0.5 | Loads and initialises normally alongside the Bukkit layer |
+| KumaAPI | 26.2.0.1 | Loads (jarjar'd inside Balm) |
+| Shogi / Shogi API | 26.2.0.4 | Loads normally |
+| Waystones | 26.2.0.7 | Loads, registers 31 blocks and 48 items, config generated; all 31 blocks reach the Bukkit `Material` registry |
+
+All four run with zero errors alongside plugins. Waystones is the useful one for
+cross-ecosystem testing because it registers real blocks, block entities and
+items. A larger technology mod with machines and capabilities would exercise the
+capability bridge harder; none was available for 26.2 at the time of testing,
+since the version is new enough that most content mods have not updated.
+
+## Tested plugins
+
+| Plugin | Result |
+| --- | --- |
+| `CardboardTest` | Full lifecycle: discovered, loaded, enabled, command registered, disabled on shutdown. 84 of 89 core probes pass. |
+| `CardForgeExample` | Full lifecycle, and exercises the integration API against live modded content. |
+
+Both are purpose-built probes rather than third-party plugins. Testing against a
+broad set of real-world plugins (EssentialsX, WorldEdit, LuckPerms and similar)
+is the obvious next step and has not been done here; the core suite covers the
+API surface those plugins depend on, but it is not a substitute for running them.
 
 ## Reproducing
 
