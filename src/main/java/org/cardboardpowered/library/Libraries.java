@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.List;
 import org.cardboardpowered.CardboardConfig;
 
-import net.fabricmc.loader.api.FabricLoader;
 
 public class Libraries {
 
@@ -95,7 +94,7 @@ public class Libraries {
      */
     public static boolean propose(File file) {
         try {
-        	if (!FabricLoader.getInstance().isDevelopmentEnvironment()) {
+        	if (!org.minenite.cardforge.platform.Platform.get().isDevelopmentEnvironment()) {
             	net.fabricmc.loader.impl.launch.FabricLauncherBase.getLauncher().addToClassPath(file.toPath(), LibraryManager.readPackagesFromJar(file));
             }
 

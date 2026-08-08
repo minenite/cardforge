@@ -17,7 +17,6 @@ import org.cardboardpowered.CardboardMod;
 import org.cardboardpowered.bridge.world.ContainerBridge;
 import org.cardboardpowered.bridge.world.inventory.AbstractContainerMenuBridge;
 
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
@@ -92,7 +91,7 @@ public abstract class AbstractContainerMenuMixin implements AbstractContainerMen
                 imi.onClose(plr);
             }
         } else {
-            if (FabricLoader.getInstance().isDevelopmentEnvironment())
+            if (org.minenite.cardforge.platform.Platform.get().isDevelopmentEnvironment())
                 CardboardMod.LOGGER.info("Debug: " + in + " is not of type IMixinInventory");
         }
     }

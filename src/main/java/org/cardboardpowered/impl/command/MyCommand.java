@@ -2,7 +2,6 @@ package org.cardboardpowered.impl.command;
 
 import com.google.common.collect.ImmutableList;
 
-import net.fabricmc.loader.api.FabricLoader;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -63,7 +62,7 @@ public class MyCommand extends Command {
     	}
     	
     	if (args[0].equalsIgnoreCase("version")) {
-    		String ver = FabricLoader.getInstance().getModContainer("cardboard").get().getMetadata().getVersion().getFriendlyString();
+    		String ver = org.minenite.cardforge.platform.Platform.get().modVersion("cardboard").orElse("unknown");
             if (ver.contains("version")) ver = CraftServer.INSTANCE.getShortVersion(); // Dev ENV
 
             String message = ChatColor.GOLD + "Cardboard" + ChatColor.RESET + " version " + ver + ChatColor.ITALIC + " (Reimplementing Paper API version " + CardboardMod.paperVersion + ")";

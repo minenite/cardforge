@@ -26,7 +26,6 @@ import org.spongepowered.asm.mixin.extensibility.IEnvironmentTokenProvider;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-import net.fabricmc.loader.api.FabricLoader;
 
 public class CardboardMixinPlugin implements IMixinConfigPlugin, IEnvironmentTokenProvider {
 
@@ -184,7 +183,7 @@ public class CardboardMixinPlugin implements IMixinConfigPlugin, IEnvironmentTok
 
     public boolean doesNotHaveEvent(String mix, String mixin, String event) {
         if (mix.contains(mixin)) {
-            boolean dev = FabricLoader.getInstance().isDevelopmentEnvironment();
+            boolean dev = org.minenite.cardforge.platform.Platform.get().isDevelopmentEnvironment();
             boolean found = isEventFound(event);
             if (dev && !found) {logger.info("DEBUG: Status of " + mixin + ": " + found + ". (" + event + ")");}
             return !found;

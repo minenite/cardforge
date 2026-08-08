@@ -1,7 +1,7 @@
-# Method widenings that NeoForge's Minecraft recompile rejects.
-# Widening these in a superclass narrows an existing subclass override,
-# which is legal in Fabric's runtime bytecode widening but not in Java source.
-# Each needs a Mixin @Invoker accessor instead. Found by tools/at_prune.sh.
+# Method widenings NeoForge's Minecraft recompile rejects: widening these
+# would narrow an existing subclass override. Legal under Fabric's runtime
+# bytecode widening, not in Java source. Each needs a Mixin @Invoker.
+# Regenerate with tools/at_prune.py
 
 public net.minecraft.server.MinecraftServer selectLevelLoadFocusPos()Lnet/minecraft/core/GlobalPos;
 public net.minecraft.server.MinecraftServer stopServer()V
@@ -22,22 +22,16 @@ public net.minecraft.world.entity.LivingEntity isImmobile()Z
 public net.minecraft.world.entity.Mob getAmbientSound()Lnet/minecraft/sounds/SoundEvent;
 public net.minecraft.world.entity.Mob getBaseExperienceReward(Lnet/minecraft/server/level/ServerLevel;)I
 public net.minecraft.world.entity.monster.zombie.Zombie isSunSensitive()Z
-public net.minecraft.world.entity.player.Player isImmobile()Z
 public net.minecraft.world.entity.player.Player removeEntitiesOnShoulder()V
-public net.minecraft.world.entity.projectile.arrow.AbstractArrow setPickupItemStack(Lnet/minecraft/world/item/ItemStack;)V
-public net.minecraft.world.entity.projectile.FireworkRocketEntity getDefaultItem()Lnet/minecraft/world/item/ItemStack;
-public net.minecraft.world.entity.projectile.hurtingprojectile.windcharge.AbstractWindCharge explode(Lnet/minecraft/world/phys/Vec3;)V
 public net.minecraft.world.entity.projectile.Projectile onHitEntity(Lnet/minecraft/world/phys/EntityHitResult;)V
+public net.minecraft.world.entity.projectile.arrow.AbstractArrow setPickupItemStack(Lnet/minecraft/world/item/ItemStack;)V
+public net.minecraft.world.entity.projectile.hurtingprojectile.windcharge.AbstractWindCharge explode(Lnet/minecraft/world/phys/Vec3;)V
 public net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile getDefaultItem()Lnet/minecraft/world/item/Item;
-public net.minecraft.world.entity.vehicle.boat.AbstractBoat getDropItem()Lnet/minecraft/world/item/Item;
-public net.minecraft.world.entity.vehicle.minecart.MinecartTNT explode(Lnet/minecraft/world/damagesource/DamageSource;D)V
 public net.minecraft.world.entity.vehicle.VehicleEntity getDropItem()Lnet/minecraft/world/item/Item;
 public net.minecraft.world.item.BlockItem mustSurvive()Z
 public net.minecraft.world.item.BlockItem placeBlock(Lnet/minecraft/world/item/context/BlockPlaceContext;Lnet/minecraft/world/level/block/state/BlockState;)Z
 public net.minecraft.world.item.component.ResolvableProfile unpack()Lcom/mojang/datafixers/util/Either;
-public net.minecraft.world.level.block.ChestBlock getMenuProvider(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/MenuProvider;
 public net.minecraft.world.level.block.CraftingTableBlock getMenuProvider(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/MenuProvider;
 public net.minecraft.world.level.block.DiodeBlock shouldTurnOn(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z
-public net.minecraft.world.level.block.EnchantingTableBlock getMenuProvider(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/MenuProvider;
-public net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase asState()Lnet/minecraft/world/level/block/state/BlockState;
 public net.minecraft.world.level.block.state.BlockBehaviour getMenuProvider(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/MenuProvider;
+public net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase asState()Lnet/minecraft/world/level/block/state/BlockState;

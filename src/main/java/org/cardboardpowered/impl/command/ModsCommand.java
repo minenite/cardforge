@@ -1,8 +1,6 @@
 package org.cardboardpowered.impl.command;
 
 import com.google.common.collect.ImmutableList;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -32,8 +30,8 @@ public class ModsCommand extends Command {
         if (sender.hasPermission("cardboard.command.mods")) {
             String mods = "";
             int count = 0;
-            for (ModContainer mod : FabricLoader.getInstance().getAllMods()) {
-                String name = mod.getMetadata().getName();
+            for (String modId : org.minenite.cardforge.platform.Platform.get().loadedModIds()) {
+                String name = org.minenite.cardforge.platform.Platform.get().modName(modId).orElse(modId);
 
                 if (name.startsWith("Fabric") && name.endsWith(")")) continue; // Don't list all modules of FAPI
                 if (name.startsWith("Fabric API Base")) name = "Fabric API";

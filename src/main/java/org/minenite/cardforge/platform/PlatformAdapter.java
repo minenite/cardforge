@@ -33,4 +33,13 @@ public interface PlatformAdapter {
 
     /** True when running a dedicated (non-integrated) server. */
     boolean isDedicatedServer();
+
+    /** True in a development//deobfuscated environment. */
+    boolean isDevelopmentEnvironment();
+
+    /** Ids of every loaded mod. */
+    java.util.Collection<String> loadedModIds();
+
+    /** Display name of a loaded mod, if present. */
+    Optional<String> modName(String modId);
 }

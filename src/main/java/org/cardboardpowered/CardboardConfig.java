@@ -1,7 +1,6 @@
 package org.cardboardpowered;
 
 import me.isaiah.config.FileConfiguration;
-import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
 import java.io.IOException;
@@ -164,7 +163,7 @@ public class CardboardConfig {
 	public static boolean shouldStripConsoleColor = false;
 
     public static void setup() throws Exception {
-        File fabDir = FabricLoader.getInstance().getConfigDir().toFile();
+        File fabDir = org.minenite.cardforge.platform.Platform.get().configDirectory().toFile();
         File oldDir = new File(fabDir, "bukkit4fabric");
         File dir = new File(fabDir, "cardboard");
         if (oldDir.exists()) {
@@ -212,8 +211,8 @@ public class CardboardConfig {
     }
     
     private static boolean checkIfModLoaded(String modId) {
-    	boolean isLoaded = FabricLoader.getInstance().isModLoaded(modId);
-    	boolean isPresent = FabricLoader.getInstance().getModContainer(modId).isPresent();
+    	boolean isLoaded = org.minenite.cardforge.platform.Platform.get().isModLoaded(modId);
+    	boolean isPresent = org.minenite.cardforge.platform.Platform.get().isModLoaded(modId);
     	return isLoaded || isPresent;
     }
     

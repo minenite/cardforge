@@ -53,4 +53,26 @@ public final class NeoForgePlatform implements PlatformAdapter {
     public boolean isDedicatedServer() {
         return FMLEnvironment.getDist().isDedicatedServer();
     }
+
+    @Override
+    public boolean isDevelopmentEnvironment() {
+        return !FMLEnvironment.isProduction();
+    }
+
+    @Override
+    public java.util.Collection<String> loadedModIds() {
+        if (ModList.get() == null) {
+            return java.util.List.of();
+        }
+        return ModList.get().getMods().stream().map(m -> m.getModId()).toList();
+    }
+
+    @Override
+    public Optional<String> modName(String modId) {
+        if (ModList.get() == null) {
+            return Optional.empty();
+        }
+        return ModList.get().getModContainerById(modId)
+                .map(container -> container.getModInfo().getDisplayName());
+    }
 }

@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import io.papermc.paper.adventure.PaperAdventure;
-import net.fabricmc.loader.api.FabricLoader;
 import net.kyori.adventure.key.Key;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -262,7 +261,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     @Override
     public boolean hasPermission(String name) {
         boolean b = this.perm.hasPermission(name);
-        if (!b && FabricLoader.getInstance().isModLoaded("fabric-permissions-api-v0")) {
+        if (!b && org.minenite.cardforge.platform.Platform.get().isModLoaded("fabric-permissions-api-v0")) {
             if (org.cardboardpowered.util.PermissionHook.hasPermission(this.getHandle(), name)) {
             	return true;
             }
@@ -273,7 +272,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     @Override
     public boolean hasPermission(Permission perm) {
         boolean b = this.perm.hasPermission(perm);
-        if (!b && FabricLoader.getInstance().isModLoaded("fabric-permissions-api-v0")) {
+        if (!b && org.minenite.cardforge.platform.Platform.get().isModLoaded("fabric-permissions-api-v0")) {
         	if (org.cardboardpowered.util.PermissionHook.hasPermission(this.getHandle(), perm.getName())) {
         		return true;
         	}

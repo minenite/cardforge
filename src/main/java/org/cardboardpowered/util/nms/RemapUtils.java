@@ -31,8 +31,6 @@ import com.mohistmc.remap.remappers.ClassRemapperSupplier;
 import com.mohistmc.remap.remappers.ReflectMethodRemapper;
 import com.mohistmc.remap.remappers.ReflectRemapper;
 
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.MappingResolver;
 import net.md_5.specialsource.InheritanceMap;
 import net.md_5.specialsource.provider.ClassLoaderProvider;
 import net.md_5.specialsource.provider.JointProvider;
@@ -143,7 +141,8 @@ public class RemapUtils implements IRemapUtils {
 
     }
 
-    public static MappingResolver mr = FabricLoader.getInstance().getMappingResolver(); 
+    // 26.2 ships unobfuscated on both platforms, so no mapping resolver is needed.
+    // Names are already the ones plugins reflect against.
     
     @Override
     public String map(String typeName) {
@@ -292,8 +291,8 @@ public class RemapUtils implements IRemapUtils {
         	
         	if (!name.isEmpty()) {
         		// String in = jt.getInternalName().replace('/', '.');
-    			String ll = mr.unmapClassName(name, clazz.getName().replace('/', '.'));
-    			return "L" + ll.replace('.', '/') + ";";
+    			// 26.2 is unobfuscated: the runtime name is already the mapped name.
+    			return "L" + clazz.getName().replace('.', '/') + ";";
         	}
         	
             return "L" + clazz.getName().replace('.', '/') + ";";
@@ -303,7 +302,8 @@ public class RemapUtils implements IRemapUtils {
 
 	@Override
 	public String getClassDescriptorResolveName(String namespace, String name) {
-		return mr.unmapClassName(namespace, name);
+		// 26.2 is unobfuscated; nothing to unmap.
+		return name;
 	}
 
 	@Override
