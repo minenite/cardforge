@@ -532,9 +532,14 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	public List<Entity> getEntities() {
 		List<Entity> list = new ArrayList<>();
 
+		// Filter on being alive, not on Cardboard's "valid" tracking flag. That flag
+		// only becomes true once the entity's chunk is entity-ticking, so on a
+		// server with nobody online this returned an empty list while the world was
+		// full of entities - and a plugin has no way to tell that apart from a
+		// genuinely empty world.
 		world.getAllEntities().forEach(entity -> {
 			Entity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntity();
-			if(bukkitEntity != null && bukkitEntity.isValid())
+			if (bukkitEntity != null && !bukkitEntity.isDead())
 				list.add(bukkitEntity);
 		});
 

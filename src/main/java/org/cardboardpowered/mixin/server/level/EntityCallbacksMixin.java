@@ -39,6 +39,16 @@ public class EntityCallbacksMixin {
         CraftEventFactory.callEvent( new EntityRemoveFromWorldEvent(bf.getBukkitEntity(), ((org.cardboardpowered.bridge.world.level.LevelBridge) (Object) entity.level()).cardboard$getWorld()) );
     }
 
+    // Also mark valid when the entity is created in the world, not only when it
+    // starts ticking. onTickingStart fires when the entity's chunk becomes
+    // entity-ticking, which does not happen while no player is nearby - so on a
+    // quiet server every entity stayed "invalid", which silently emptied
+    // World#getEntities() and made Entity#teleport refuse to run.
+    @Inject(at = @At("TAIL"), method = "onCreated(Lnet/minecraft/world/entity/Entity;)V")
+    public void validateOnCreateBF(Entity entity, CallbackInfo ci) {
+        ((EntityBridge) entity).setValid(true);
+    }
+
     @Inject(at = @At("TAIL"), method = "onTickingStart(Lnet/minecraft/world/entity/Entity;)V")
     public void validateEntityBF(Entity entity, CallbackInfo ci) {
         EntityBridge bf = (EntityBridge) entity;

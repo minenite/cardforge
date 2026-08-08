@@ -1155,10 +1155,16 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     @SuppressWarnings("resource")
     @Override
     public Entity getEntity(UUID uuid) {
+        // 26.2 renamed the UUID lookup: ServerLevel#getEntity now takes a network
+        // id, and the UUID form is getEntityInAnyDimension. The old call resolved to
+        // something that never matched, so Bukkit.getEntity(uuid) returned null for
+        // entities that plainly existed - and that is one of the most used lookups
+        // in the whole API, since a UUID is what plugins persist.
         for (ServerLevel world : getServer().getAllLevels()) {
-            net.minecraft.world.entity.Entity entity = world.getEntity(uuid);
-            if (entity != null)
+            net.minecraft.world.entity.Entity entity = world.getEntityInAnyDimension(uuid);
+            if (entity != null) {
                 return ((EntityBridge) (Object) entity).getBukkitEntity();
+            }
         }
 
         return null;
