@@ -321,11 +321,21 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
             if (moddedMaterials.size() > 0)
                 CardboardMod.LOGGER.info("Adding Modded blocks/items to WorldEdit registry...");
-            for (String mid : moddedMaterials.keySet()) {
+            for (java.util.Map.Entry<String, Material> entry : moddedMaterials.entrySet()) {
                 try {
-                    REGISTER_ITEM.invoke(REGISTRY_ITEM, "minecraft:" + mid.toLowerCase(), ITEM_TYPE.getConstructor(String.class).newInstance(mid));
-                    REGISTER_BLOCK.invoke(REGISTRY_BLOCK, "minecraft:" + mid.toLowerCase(), BLOCK_TYPE.getConstructor(String.class).newInstance(mid));
+                    // Register under the id the mod actually used, not
+                    // "minecraft:" + the mangled enum name. The old form told
+                    // WorldEdit a Waystone was called
+                    // minecraft:WAYSTONES_ANDESITE_WAYSTONE, so WorldEdit
+                    // faithfully asked Bukkit for that and the block parser
+                    // rejected it - modded blocks were registered but unusable.
+                    String realId = entry.getValue().getKey().toString();
+                    REGISTER_ITEM.invoke(REGISTRY_ITEM, realId,
+                            ITEM_TYPE.getConstructor(String.class).newInstance(realId));
+                    REGISTER_BLOCK.invoke(REGISTRY_BLOCK, realId,
+                            BLOCK_TYPE.getConstructor(String.class).newInstance(realId));
                 } catch (Exception e) {
+                    // One unmappable material must not stop the rest registering.
                 }
             }
             if (moddedMaterials.size() > 0) {

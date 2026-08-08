@@ -623,6 +623,21 @@ public class CraftBlockData implements BlockData {
     }
     // Paper end - cache block data strings
 
+    /** Builds from an already-resolved namespaced key, bypassing BlockType. */
+    public static CraftBlockData fromString(String blockKey, String data) {
+        StringBuilder serializedData = new StringBuilder();
+        if (blockKey != null) {
+            serializedData.append(blockKey);
+        }
+
+        if (data != null) {
+            serializedData.append(data);
+        }
+
+        CraftBlockData cached = ENCODER_CACHE.computeIfAbsent(serializedData.toString(), CraftBlockData::parseData);
+        return (CraftBlockData) cached.clone();
+    }
+
     public static CraftBlockData fromString(BlockType blockType, String data) {
         StringBuilder serializedData = new StringBuilder();
         if (blockType != null) {

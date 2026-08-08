@@ -658,13 +658,20 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     
     public BlockData createBlockData(org.bukkit.Material material, String data) {
         Preconditions.checkArgument(material != null || data != null, "Must provide one of material or data");
-        BlockType type = null;
+
+        // Use the Material's own key rather than the BlockType's. For modded
+        // materials asBlockType() hands back a type keyed minecraft:<ENUM_NAME> -
+        // the mangled enum name, uppercased, in the wrong namespace - so building
+        // the string from it produced "minecraft:WAYSTONES_ANDESITE_WAYSTONE" and
+        // the block parser rejected it. The Material key is already correct, which
+        // is what every other modded lookup goes through.
+        String key = null;
         if (material != null) {
-            type = material.asBlockType();
-            Preconditions.checkArgument(type != null, "Provided material must be a block");
+            Preconditions.checkArgument(material.asBlockType() != null, "Provided material must be a block");
+            key = material.getKey().toString();
         }
 
-        return CraftBlockData.fromString(type, data);
+        return CraftBlockData.fromString(key, data);
     }
 
     @Override
