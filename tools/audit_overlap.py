@@ -61,6 +61,40 @@ REPLACEMENT_MARKERS = [
 ]
 
 
+
+def _annotations(text):
+    """Yields (name, argument-text) for each annotation, with balanced parens.
+
+    The previous pattern stopped the argument text at the first ';' or '{'. Mixin
+    targets are JVM descriptors - @At(target = "Lnet/minecraft/world/Foo;bar()V")
+    - so every injection carrying one failed to match at all, and the file looked
+    as though it contained no injections. That silently emptied the audit's
+    largest bucket.
+    """
+    for m in re.finditer(r'@(\w+)\s*\(', text):
+        depth = 0
+        i = m.end() - 1
+        in_string = False
+        while i < len(text):
+            ch = text[i]
+            if in_string:
+                if ch == '\\':
+                    i += 2
+                    continue
+                if ch == '"':
+                    in_string = False
+            elif ch == '"':
+                in_string = True
+            elif ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+                if depth == 0:
+                    yield m.group(1), text[m.end():i]
+                    break
+            i += 1
+
+
 def mixin_targets(src_root):
     """Maps Minecraft class name -> list of (mixin file, injections)."""
     out = collections.defaultdict(list)
@@ -79,11 +113,11 @@ def mixin_targets(src_root):
             continue
 
         injections = []
-        for block in re.finditer(r'@(\w+)\s*\(([^;{]*)\)', text, re.S):
-            kind = block.group(1)
+        for block in _annotations(text):
+            kind = block[0]
             if kind not in SEVERITY:
                 continue
-            args = block.group(2)
+            args = block[1]
             methods = METHOD_ARG.findall(args)
             targets = TARGET_ARG.findall(args)
             injections.append({
