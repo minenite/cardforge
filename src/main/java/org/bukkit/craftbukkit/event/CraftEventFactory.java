@@ -166,7 +166,10 @@ public class CraftEventFactory {
     }
 
     public static ServerListPingEvent callServerListPingEvent(Server craftServer, InetAddress address, String motd, int numPlayers, int maxPlayers) {
-    	ServerListPingEvent event =  new ServerListPingEvent("", address, motd, numPlayers, maxPlayers);
+        // The subclass, not the base class: ServerListPingEvent#iterator throws by
+        // design and expects the server implementation to supply a player sample.
+        ServerListPingEvent event = new org.bukkit.craftbukkit.CraftServerListPingEvent(
+                address, motd, numPlayers, maxPlayers);
         craftServer.getPluginManager().callEvent(event);
         return event;
     }

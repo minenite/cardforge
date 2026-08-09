@@ -73,6 +73,7 @@ Plus an isolated `DamageProbe` (`cbtest damage`) and `ItemStackProbe`
 | Boss bars | Create, retrieve by key, retitle, progress, colour, style, visibility, players, enumerate, remove |
 | Blocks | Place, read back, `BlockData` round-trip, relative navigation, `breakNaturally` |
 | PDC | Item, entity and world containers round-trip |
+| Server-list ping | `ServerListPingEvent` is iterable; EssentialsX's vanished-player handling runs without error. **Limit:** removing a player from the sample does not yet change the response, since CardForge does not populate a player sample |
 | Operator status | `/op` and `/deop` take effect immediately on a connected player, in both directions, and permission resolution follows |
 | Permission resolution | Unregistered node is false for a non-op and true for an op; a `FALSE`-default permission is false even for an op; `isPermissionSet` and `getPermission` correct |
 | Scoreboards, scheduler, permissions, commands, configuration, registries, world save | See suite |
@@ -248,13 +249,6 @@ the equivalent under Mojang names.
 `tools/audit_overlap.py` now reports live injections targeting `method_NNNNN`
 so this class of latent crash is caught statically. It strips comments first,
 since most surviving intermediary names here are inside disabled code.
-
-### `ServerListPingEvent.iterator()` throws
-
-`UnsupportedOperationException` from the bundled API. EssentialsX calls it on
-every server-list ping to hide vanished players and logs a warning each time.
-Harmless in that the caller catches it, but any plugin iterating the ping player
-list will fail.
 
 
 
