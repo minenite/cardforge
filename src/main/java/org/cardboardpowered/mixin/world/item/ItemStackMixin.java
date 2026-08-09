@@ -129,8 +129,19 @@ public abstract class ItemStackMixin implements ItemStackBridge {
     // The Bukkit event now fires inside that replacement instead; see
     // org.cardboardpowered.mixin.neoforge.CommonHooksMixin.
 
-    @Inject(method = "hurtAndBreak(ILnet/minecraft/server/level/ServerLevel;Lnet/minecraft/server/level/ServerPlayer;Ljava/util/function/Consumer;)V", at = @At("HEAD"), cancellable = true)
-    public void hurtAndBreakPaper(int damage, ServerLevel level, @Nullable ServerPlayer player, Consumer<Item> onBreak, CallbackInfo ci) { // Paper - Add EntityDamageItemEvent
+    // NeoForge widened this the same way it widened processDurabilityChange, and
+    // then changed the caller that matters. Vanilla's
+    // hurtAndBreak(int, LivingEntity, EquipmentSlot) - the path every tool, weapon
+    // and armour piece takes - passed `owner instanceof ServerPlayer player ?
+    // player : null`, resolving to the narrow overload. NeoForge passes `owner`
+    // directly, which resolves to the wide one. Targeting the narrow signature
+    // still applied cleanly, because the delegate exists, and silently stopped
+    // firing PlayerItemDamageEvent for ordinary tool damage.
+    //
+    // Hooking the wide overload covers both: the narrow form delegates to it, so
+    // callers of either arrive here exactly once.
+    @Inject(method = "hurtAndBreak(ILnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Ljava/util/function/Consumer;)V", at = @At("HEAD"), cancellable = true)
+    public void hurtAndBreakPaper(int damage, ServerLevel level, @Nullable LivingEntity player, Consumer<Item> onBreak, CallbackInfo ci) { // Paper - Add EntityDamageItemEvent
         // Paper start - add force boolean overload
         this.hurtAndBreak(damage, level, player, onBreak, false);
         ci.cancel();

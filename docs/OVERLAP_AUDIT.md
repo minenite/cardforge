@@ -244,3 +244,42 @@ is, so the two paths are separated by condition rather than by luck. The
 `equals` hook runs at RETURN and can only narrow a true to false when Paper's
 exact stacks differ; it never overturns a false. NeoForge's added
 `customIngredient` comparison therefore stands in every case where it decides.
+
+### 5. `ItemStack#hurtAndBreak` — BROKEN, FIXED
+
+Found while re-reading the six already-retargeted intersections, which is the
+argument for re-reading them: `processDurabilityChange` had been moved to the
+wide overload in an earlier pass, and `hurtAndBreak` sitting directly above it
+had not.
+
+**NeoForge changed:** widened all three of `hurtAndBreak`,
+`processDurabilityChange` and `applyDamage` to take a `LivingEntity`, leaving the
+`ServerPlayer` forms as delegates. Then it changed the caller that matters.
+`hurtAndBreak(int, LivingEntity, EquipmentSlot)` - the path every tool, weapon
+and armour piece takes - was:
+
+```java
+this.hurtAndBreak(amount, serverLevel, owner instanceof ServerPlayer player ? player : null, ...)
+```
+
+and became:
+
+```java
+this.hurtAndBreak(amount, serverLevel, owner, ...)
+```
+
+Passing `owner` resolves to the wide overload.
+
+**What was wrong:** Cardboard's hook targeted the narrow `ServerPlayer`
+signature. The delegate still exists, so the injection applied cleanly and
+strict mode reported nothing, while `PlayerItemDamageEvent` stopped firing for
+ordinary tool damage. Durability still decreased, so there is no visible
+symptom - the only effect is that a plugin cancelling item damage is silently
+ignored.
+
+**Fix:** hook the wide overload. The narrow form delegates to it, so callers of
+either arrive exactly once.
+
+**Regression test:** `BreakProbe.runItemDamage` damages a held pickaxe through
+`hurtAndBreak(int, LivingEntity, EquipmentSlot)` and asserts
+`PlayerItemDamageEvent` fires. It fails against the previous hook.
