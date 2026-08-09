@@ -31,8 +31,8 @@ replacement rather than restoring the vanilla path.
 
 ### Automated suite
 
-`tools/regression_test.sh` — **67 probes, 0 failures, 0 server errors** in one
-full run.
+`tools/regression_test.sh` — **69 probes, 0 failures, 0 server errors** in one
+full run, with 5 reported as skipped because they need a connected client.
 
 | Area | Probes |
 | --- | --- |
@@ -46,8 +46,10 @@ full run.
 | worlds, scoreboards, projectiles, permissions, ItemStacks, configuration, commands | 2 each |
 | world save, scheduler | 1 each |
 
-Plus an isolated `DamageProbe` (`cbtest damage`) and `ItemStackProbe`
-(`cbtest item`).
+Plus an isolated `DamageProbe` (`cbtest damage`), `ItemStackProbe`
+(`cbtest item`), `BreakProbe` (`cbtest break`) and an opt-in `RespawnProbe`
+(`cbtest respawn`), which is separate because it has to kill the player for
+real.
 
 ### Server and platform
 
@@ -186,6 +188,55 @@ The harness distinguishes the two claims: exit 0 means everything ran and
 passed, exit 2 means everything that ran passed but some probes were skipped.
 "Nothing failed" can no longer be read as "everything ran".
 
+### Defects found by the overlap audit, fixed and covered
+
+Four hooks were bound to NeoForge code that had moved underneath them. All four
+are fixed, and **none was visible in play** - the visible behaviour was correct
+while the contract underneath was not. Full class-by-class working in
+[OVERLAP_AUDIT.md](OVERLAP_AUDIT.md).
+
+| Defect | Symptom before the fix | Now covered by |
+| --- | --- | --- |
+| `destroyBlock` fired a second break event in parallel with NeoForge's | Plugin cancellation never reached mods, and mod cancellation never reached plugins | `cbtest break`: event fires exactly once, cancellation composes, pre-cancelled breaks still notify |
+| `ItemStack#hurtAndBreak` hooked a delegate | `PlayerItemDamageEvent` never fired; durability still decreased, so nothing looked wrong | `cbtest break`: event fires from the real tool-damage path |
+| `MappedRegistry#register` hooked a delegate | Registrations made through the wide overload were missed by Paper's registry API | reasoning recorded; no probe |
+| `handleSetCarriedItem` overwrote a patched method | NeoForge's hotbar-switch events silently discarded | boot-time strict mode only |
+
+### Defects found by playing, fixed and covered
+
+| Defect | Symptom | Now covered by |
+| --- | --- | --- |
+| Respawn placement refused by Paper's dead-entity guard | Client stuck on "loading terrain" forever while its body stayed in the world | `cbtest respawn` |
+| `CraftPlayer` not rebound across respawn | A `Player` reference held across death pointed at the corpse | `cbtest respawn` |
+| `Player#getHealth()` returned a cached constant | Every player read as 20.0 regardless of damage, healing or death | `health` probe in the player sweep |
+| `CraftHumanEntity.op` never seeded from the op list | Every op-default plugin permission denied after a restart; EssentialsX `/i` and WorldGuard bypass both failed | `cbtest perm` asserts `isOp()` matches the op list |
+| Unmapped mod entities threw from inside the world tick | First natural spawn of any unrecognised mod entity crashed the server | entity-wrapping probe over every loaded entity |
+| `/reload` handed closed jar handles to new classloaders | Every plugin failed to load and the server came back up with none, still running | two consecutive reloads verified by hand |
+| `CompoundContainer#getMaxStackSize` merged over vanilla's | Reported 64 regardless of what either half allowed | verified in exported bytecode |
+
+### Scale
+
+With 14 mods installed including Mekanism (all four modules), `Material.values()`
+reports **3,881 entries with no duplicates**, and `getEnumConstants`,
+`EnumSet.allOf` and `EnumMap` all agree with it. Vanilla lookup through
+`valueOf`, `getMaterial`, `matchMaterial`, `Registry` and `getKey` is unchanged.
+Boot time did not move (9.1s against 9.5s without Mekanism).
+
+### Lifecycle
+
+- **Restart torture:** 8 consecutive stop/start cycles, each requiring `Done`,
+  plugins enabling *and* disabling, a clean `Stopping server`, and zero
+  ERROR/FATAL lines. All 8 passed.
+- **`/reload`:** two consecutive reloads, all six plugins back each time, probe
+  suite green afterwards. Discouraged upstream regardless; "works" here means it
+  no longer destroys the server.
+
+### Two players
+
+Two accounts connected simultaneously: shared chest inventories, `/op` and
+`/deop` taking effect live on a connected player, WorldGuard denying a non-op,
+and PvP once the operator's own `__global__` deny flags were cleared.
+
 ## PARTIAL
 
 **Modded block entities expose no typed API.** They yield a generic `TileState`:
@@ -254,21 +305,17 @@ things on a dev box match "neoforge", including the Minecraft client.
 
 ## UNSUPPORTED
 
-### Clicking in a modded GUI threw (fixed)
+### Clicking in a modded GUI (fixed)
 
-The NullPointerException that used to kill `ServerboundContainerClickPacket`
-is fixed - the fallback `getBukkitView()` now
-carries the real viewer instead of null. But clicks still do not reach the mod:
-verified with Pipez, whose wrench GUI opens and whose buttons do nothing, so a
-pipe can never be set to Extract and no items move. Energy transfer through the
-same mod works, so capabilities and block-entity ticking are fine; it is
-specific to menu interaction.
+Was recorded here as unfixed: the GUI opened and its buttons did nothing, so a
+Pipez pipe could never be set to Extract. It now works, verified in game.
 
-Suspected cause, not confirmed: Cardboard's `doBukkitEvent_InventoryClickedEvent`
-mixin appears to reimplement click handling rather than observe it, which is the
-same shape as the `openMenu` problem fixed earlier - a modded menu's non-slot
-widgets would then be handled as vanilla slots and do nothing. Needs
-verification before changing anything.
+Two changes landed close together and the credit cannot be split cleanly between
+them: the `InventoryClickEvent` mixin returned early for non-slot widgets while
+leaving `doCl` false, and a `@Redirect` drops `clicked()` when `doCl` is false -
+so "skip the Bukkit event" silently meant "drop the click". The other was the
+`PrepareRamNearestTarget` retarget below. The first is the plausible cause; that
+is not the same as knowing.
 
 ### Strict mode catches broken injections late, not at boot
 
@@ -295,11 +342,31 @@ either been fixed or moved to PARTIAL with a stated limit.
 
 Do not read these as working.
 
-- **Further third-party plugins.** WorldEdit and LuckPerms are verified. An Essentials-style plugin and a protection/claims plugin are not.
-- **A large technology mod.** IndustrialCraft, Mekanism, Create, AE2, Immersive
-Engineering and Thermal have no 26.2 builds yet - 26.2 is still NeoForge beta.
-Capabilities are verified against Trash Cans, which implements item, fluid and
-energy handlers, but not against a mod with complex multi-block machines.
+- **Sustained uptime.** The server has never been left running for hours. This is
+the largest remaining gap, and the one that matters most: a broken hook can pass
+boot and fire when a class first loads, which is exactly how the
+`PrepareRamNearestTarget` crash behaved.
+- **Load.** Two players idling is not load. Nothing has been measured under
+concurrent activity, and there are no TPS or memory figures at all.
+- **Plugin messaging, database-backed plugins, dimension travel combined with
+death.**
+- **A protection or claims plugin beyond WorldGuard.**
+
+## NOT CARDFORGE
+
+Recorded because each cost real time to attribute, and the attribution is the
+useful part.
+
+- **Modded fluids you cannot walk into.** A player floats on the surface, frozen.
+Reproduced with CardForge removed from `mods/` entirely, and again in
+single-player with no server at all. Vanilla water and lava are unaffected, and
+so is at least one modded fluid. Zero movement rejections were logged across
+every run, so the server never refused the movement - it is client-side. Belongs
+to the mod stack.
+- **EssentialsX `/itemdb` and `/give` on modded items.** Its bundled item
+database is vanilla-only.
+- **WorldEdit `//set` producing half of a two-block structure.** Raw block
+states; identical on Paper.
 
 ## Tested versions
 
@@ -312,11 +379,21 @@ energy handlers, but not against a mod with complex multi-block machines.
 | TerraBlender | 26.2.0.0.2 | Biome/worldgen framework |
 | GlitchCore | 26.2.0.0.0 | BoP dependency |
 | Waystones | 26.2.0.7 |
+| Trash Cans | 1.0.18 | Item, fluid and energy capabilities |
+| Easy Villagers | 1.1.43 |
+| Energized Power | 3.0.0-rc.1 | Tech mod, machines and energy |
+| Pipez | 1.2.31 | Item/fluid/energy transport |
+| SuperMartijn642 config + core lib | 1.1.8 / 1.1.23a |
+| **Mekanism** (+ Additions, Generators, Tools) | 10.8.0 built from source | Large tech mod, multiblocks, ~767 added materials |
 
-| Plugin | Kind |
-| --- | --- |
-| `CardboardTest` | Purpose-built probe |
-| `CardForgeExample` | CardForge-native example |
+| Plugin | Version | Kind |
+| --- | --- | --- |
+| WorldEdit | 7.4.4 | Binds `PaperweightAdapter` for `v26_2` |
+| WorldGuard | 7.0.18 | Region protection, enforced against modded blocks |
+| LuckPerms | 5.5.71 | Permissions |
+| EssentialsX | 2.22.0 | General-purpose, loads with `api-version: 1.13` |
+| `CardboardTest` | - | Purpose-built probe |
+| `CardForgeExample` | - | CardForge-native example |
 
 ## Reproducing
 
@@ -345,3 +422,27 @@ or account for that explicitly.
 Equally, two real bugs were found in under a minute once measured, after repeated
 wrong guesses from reading the code: the `craftDelegate` trace and the boss-bar
 stack. Measure before theorising.
+
+Later sessions produced sharper versions of the same lesson.
+
+**Isolation settles disagreements faster than argument.** Twice a fault was
+attributed by removing CardForge from `mods/` and re-testing: once it proved
+CardForge *was* at fault when the reasoning said otherwise, and once it cleared
+CardForge of a fluid bug that reproduced in single-player with no server at all.
+
+**Exported bytecode beats inference.** `-Dmixin.debug.export=true` writes the
+transformed classes out. It answered in one step a question that source reading
+could not - whether a merged method had replaced its target - and it should be
+the first tool reached for, not the last.
+
+**Every static check here has been wrong at least once.** The audit tooling gave
+confident false clears four separate times: a regex that broke on JVM
+descriptors, delegate detection that only matched value-returning delegates,
+annotations counted inside commented-out code, and enclosing declarations read
+only from hunk headers. Each fix changed the numbers. Treat the tools as a way to
+narrow the queue, never as the verdict.
+
+**"No injection annotation" is not a safety argument.** Mixin merges plain
+methods and interface implementations with no annotation at all. 41 classes
+cleared on that basis turned out to be live code, and one of them supplied an
+entire method implementation the registry API depends on.
