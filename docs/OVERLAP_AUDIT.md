@@ -146,3 +146,48 @@ overwrite replace, what NeoForge behaviour is lost, how do we keep both?
 - `LevelChunk` (LevelChunkMixin.java)
 - `PrimaryLevelData` (PrimaryLevelDataMixin.java)
 - `LootItemRandomChanceWithEnchantedBonusCondition` (LootItemRandomChanceWithEnchantedBonusConditionMixin.java)
+
+---
+
+## Semantic review
+
+### 1. `ServerPlayerGameMode#destroyBlock` — BROKEN
+
+**Vanilla:** `destroyBlock` began with `if (!getMainHandItem().canDestroyBlock(state, level, pos, player)) return false;` — the sword-cannot-break check — then removed the block and spawned drops.
+
+**NeoForge changed:** it deleted that check and fires its own event in its place:
+
+```java
+// Neo: Fire the BlockBreakEvent, and ignore the original ItemStack#canDestroyBlock
+// check since the break event manages the status of it.
+var event = CommonHooks.fireBlockBreak(level, gameModeForPlayer, player, pos, state);
+if (event.isCanceled()) return false;
+```
+
+Block removal also moved into a new `removeBlock(pos, state, canHarvest, toolStack)`.
+
+**Cardboard's hook:** `@Inject(at = @At("HEAD"), cancellable = true)`. It recomputes
+`isSwordNoBreak = !canDestroyBlock(...)` by hand, fires Bukkit's `BlockBreakEvent`
+pre-cancelled to that value, and returns false if cancelled.
+
+**What is wrong:**
+
+1. It reimplements the exact vanilla check NeoForge deliberately removed, so the
+   sword case is now decided twice by two different authorities.
+2. Two break events fire for one break: Bukkit's at HEAD, then NeoForge's
+   `BlockEvent.BreakEvent` inside the method. Nothing reconciles them. A mod
+   cancelling NeoForge's event does not inform Bukkit plugins that already ran and
+   may have acted; a plugin cancelling Bukkit's returns before NeoForge's event
+   fires at all, so mods never observe the attempt.
+3. Cardboard's event carries no exp or canHarvest, both of which NeoForge's event
+   now owns, so a plugin adjusting drops or exp is editing a value the real path
+   no longer reads.
+
+**How to preserve both:** stop firing a parallel event at HEAD. Bridge the two -
+listen on (or redirect) `CommonHooks.fireBlockBreak`, build the Bukkit
+`BlockBreakEvent` from the NeoForge event's state, and map cancellation and exp
+back onto it. That is the same pattern already used for
+`PlayerShearEntityEvent` on `IShearable` and for `BlockPlaceEvent` in
+`CommonHooksMixin`: one event source, translated, rather than two in parallel.
+
+**Not yet done.** No fix or regression test is written for this.
