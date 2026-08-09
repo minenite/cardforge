@@ -498,3 +498,32 @@ Corrected state of the audit:
 | **UNREVIEWED (merge members, no injections)** | **38** |
 
 38 classes still need reading. The queue is not empty.
+
+## The merged-member check (`tools/check_merged_members.py`)
+
+Written because "no injection annotation" turned out to be no safety argument at
+all. It asks the narrower question: does a mixin merge a member sharing a name
+**and arity** with a method that already exists on the compiled target? Checked
+against the class in the shipped server jar, not the patch, since the patch only
+shows what NeoForge changed rather than what the class has.
+
+Across all 247 mixins it reports 6, of which 5 are noise the checker cannot yet
+distinguish: methods declared inside anonymous inner classes, and one method
+call matched as a declaration. Inner-class awareness is the obvious next
+improvement.
+
+The remaining one is real and **open**:
+
+### `CompoundContainer#getMaxStackSize` — OPEN
+
+The target declares `public int getMaxStackSize()`; vanilla returns the minimum
+of the two halves. `CompoundContainerMixin` merges its own returning a constant
+`MAX_STACK`, with neither `@Overwrite` nor `@Shadow`.
+
+Whether Mixin replaced the target method or skipped the merge cannot be told
+from the source, and no conflict was logged at boot. If it replaced it, a double
+container reports 64 even when one half limits stacks - invisible on a
+vanilla-only server, wrong as soon as a mod sets a smaller limit.
+
+Resolving it needs the transformed bytecode or a runtime probe against a modded
+container with a reduced stack size. Not attempted yet.
