@@ -195,6 +195,7 @@ public class VersionCommand extends Command {
         switch (behind) {
             case 0 -> setVersionMessage(ChatColor.GREEN + "You are running the latest version (" + built + ")");
             case -1 -> setVersionMessage(ChatColor.RED + "You are running an unreleased build ahead of " + BRANCH + " (" + built + ")");
+            case -4 -> setVersionMessage(ChatColor.RED + "This build's commit has diverged from " + BRANCH + " (" + built + ")");
             case -2 -> setVersionMessage(ChatColor.RED + "This commit is not on " + REPOSITORY + " (" + built + ")");
             case -3 -> setVersionMessage(ChatColor.RED + "Could not reach GitHub to check for updates (" + built + ")");
             default -> setVersionMessage(ChatColor.RED + "You are " + behind + " version(s) behind (" + built + ")");
@@ -237,8 +238,12 @@ public class VersionCommand extends Command {
 
             if (status.equalsIgnoreCase("identical")) return 0;
             if (status.equalsIgnoreCase("behind")) return obj.get("behind_by").getAsInt();
+            if (status.equalsIgnoreCase("ahead")) return -1;
 
-            return -1;
+            // "diverged" is the ordinary result after history is rewritten, and it
+            // is not the same thing as being ahead - the commit is genuinely not an
+            // ancestor or descendant of the branch any more.
+            return -4;
         } catch (IOException | RuntimeException e) {
             // An offline server is a normal condition, not something to dump a
             // stack trace over; the caller turns -3 into a readable line.
