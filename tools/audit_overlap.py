@@ -62,6 +62,52 @@ REPLACEMENT_MARKERS = [
 
 
 
+
+def _strip_comments(text):
+    """Removes block and line comments, preserving line count and string literals.
+
+    The annotation scan was counting @Overwrite inside commented-out code -
+    PlayerDataStorage reported three overwrites and has none live - which both
+    inflates the review queue and, worse, invites the conclusion that a bucket was
+    examined when the entries in it were never real.
+    """
+    out = []
+    i = 0
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == '"' or c == "'":
+            quote = c
+            out.append(c)
+            i += 1
+            while i < n:
+                out.append(text[i])
+                if text[i] == '\\':
+                    i += 2
+                    if i - 1 < n:
+                        out.append(text[i - 1])
+                    continue
+                if text[i] == quote:
+                    i += 1
+                    break
+                i += 1
+            continue
+        if text.startswith('//', i):
+            while i < n and text[i] != '\n':
+                i += 1
+            continue
+        if text.startswith('/*', i):
+            end = text.find('*/', i + 2)
+            end = n if end == -1 else end + 2
+            # keep newlines so line numbers still line up
+            out.append('\n' * text.count('\n', i, end))
+            i = end
+            continue
+        out.append(c)
+        i += 1
+    return ''.join(out)
+
+
 def _annotations(text):
     """Yields (name, argument-text) for each annotation, with balanced parens.
 
@@ -99,7 +145,7 @@ def mixin_targets(src_root):
     """Maps Minecraft class name -> list of (mixin file, injections)."""
     out = collections.defaultdict(list)
     for path in sorted(pathlib.Path(src_root).rglob('*.java')):
-        text = path.read_text(errors='replace')
+        text = _strip_comments(path.read_text(errors='replace'))
         m = MIXIN_TARGET.search(text)
         if not m:
             continue
@@ -148,7 +194,12 @@ def patched_methods(patch_path):
         if not line or line[0] not in '+-@':
             continue
         if line.startswith('@@'):
-            # Hunk headers carry the enclosing declaration.
+            # Hunk headers carry the enclosing declaration - sometimes. Just as
+            # often the declaration is on a context line a line or two below, and
+            # reading only the @@ line missed handleSetCarriedItem, where an
+            # @Overwrite was discarding NeoForge's hotbar-switch events. The
+            # context lines are scanned below, so nothing more is needed here
+            # beyond not stopping at the header.
             for name in re.findall(r'\b(\w+)\s*\(', line):
                 methods.add(name)
             continue
@@ -157,7 +208,17 @@ def patched_methods(patch_path):
                 markers.add(label)
         for name in re.findall(r'\b(\w+)\s*\(', line[1:]):
             methods.add(name)
+    # Context lines too: a patch that inserts into the middle of a method shows the
+    # signature as unchanged context, and that method is every bit as patched as one
+    # whose signature line moved.
+    for line in patch_path.read_text(errors='replace').splitlines():
+        if line[:1] in (' ', '+', '-') and DECL.search(line):
+            for name in re.findall(r'\b(\w+)\s*\(', line):
+                methods.add(name)
     return methods, markers
+
+
+DECL = re.compile(r'\b(?:public|protected|private)\b[^;]*\(')
 
 
 # Two shapes. A value-returning delegate is `return wider(...)`; a void one is a
@@ -203,7 +264,7 @@ def intermediary_injections(src_root):
     """
     hits = []
     for path in sorted(pathlib.Path(src_root).rglob('*.java')):
-        text = path.read_text(errors='replace')
+        text = _strip_comments(path.read_text(errors='replace'))
         text = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
         text = re.sub(r'//[^\n]*', '', text)
         for m in INTERMEDIARY.finditer(text):

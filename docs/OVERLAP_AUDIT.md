@@ -374,3 +374,52 @@ list is recorded for that second pass.
 `StatsCounter`, `LeashFenceKnotEntity`, `PiglinAi`, `ItemStack`, `MapItem`,
 `TeleportRandomlyConsumeEffect`, `BambooStalkBlock`,
 `EnchantedCountIncreaseFunction`.
+
+### 10. `ServerGamePacketListenerImpl#handleSetCarriedItem` — BROKEN, FIXED
+
+**Vanilla:** validate the slot, stop any item use, set the selected slot.
+
+**NeoForge changed:** added hotbar-switch events to that body - a cancellable
+`EventHooks.onSwitchHotbarSlotPre` before the change and
+`EventHooks.onSwitchHotbarSlotPost` after it.
+
+**Cardboard's hook:** an `@Overwrite` carrying a copy of the old vanilla body,
+with Bukkit's `PlayerItemHeldEvent` added.
+
+**What was lost:** both NeoForge events. No mod could observe or veto a hotbar
+change. Nothing failed visibly - the events simply never fired.
+
+**Fix:** replaced the overwrite with an inject placed after the thread check, so
+NeoForge's body runs intact and any future addition to it keeps working. The
+plugin still gets first refusal.
+
+### 11. Two more parser gaps, both of which hid real work
+
+The audit reported "no overwrite lands on a NeoForge-patched method". That was
+wrong twice over.
+
+1. **Annotations inside comments were counted.** `PlayerDataStorage` reported
+   three overwrites and has none live. Stripping comments first drops the live
+   overwrite count from 19 to 12 and raises the no-injection rows from 32 to 45.
+2. **Only the `@@` line was read for the enclosing declaration.** Patches
+   frequently show the signature as a context line below the header, so a method
+   NeoForge inserted into mid-body was not recorded as patched. This is what hid
+   `handleSetCarriedItem`. Context lines carrying a declaration are now scanned.
+
+With both fixed, `handleSetCarriedItem` is the only overwrite colliding with a
+NeoForge-patched method, and it is now fixed.
+
+**Standing conclusion:** every numeric claim this tool has made so far has been
+wrong at least once. It is a queue-narrowing device. The classification has to
+come from reading the patch against the hook.
+
+### 12. The 45 no-injection rows — SAFE, validated
+
+Re-checked with comments stripped: **zero** contain a behaviour-changing
+annotation. The only live annotations across all 45 are `@Mixin`, `@Shadow`,
+`@Unique` and `@Final` - plumbing that cannot alter behaviour, and which fails
+at boot under `defaultRequire: 1` if a shadowed member moves.
+
+20 of them contain nothing but `@Mixin`: their entire body is commented out.
+They are inert, but they inflate the mixin surface and every future audit's
+queue. Worth deleting as a separate cleanup, not folded into this one.

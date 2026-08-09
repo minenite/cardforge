@@ -741,26 +741,41 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
     }
 
     /**
-     * @reason .
-     * @author .
+     * Fires Bukkit's PlayerItemHeldEvent without replacing the method.
+     *
+     * <p>This was an @Overwrite carrying a copy of the vanilla body. NeoForge has
+     * since added hotbar-switch events to that body - a cancellable
+     * {@code onSwitchHotbarSlotPre} and a matching {@code onSwitchHotbarSlotPost} -
+     * and the overwrite discarded both, so no mod could observe or veto a hotbar
+     * change. Nothing failed visibly; the events simply never fired.
+     *
+     * <p>Injecting after the thread check leaves NeoForge's body intact, so its
+     * hooks run and any later addition to that method keeps working. The plugin
+     * gets first refusal, which matches the order Bukkit callers expect.
      */
-    @Overwrite
-    public void handleSetCarriedItem(ServerboundSetCarriedItemPacket packetplayinhelditemslot) {
-        PacketUtils.ensureRunningOnSameThread(packetplayinhelditemslot, get(), this.player.level());
-        if (packetplayinhelditemslot.getSlot() >= 0 && packetplayinhelditemslot.getSlot() < Inventory.getSelectionSize()) {
-            PlayerItemHeldEvent event = new PlayerItemHeldEvent(this.getPlayer(), this.player.inventory.selected, packetplayinhelditemslot.getSlot());
-            CraftServer.INSTANCE.getPluginManager().callEvent(event);
-            if (event.isCancelled()) {
-                this.send(new ClientboundSetHeldSlotPacket(this.player.inventory.selected));
-                this.player.resetLastActionTime();
-                return;
-            }
-            if (this.player.inventory.selected != packetplayinhelditemslot.getSlot() && this.player.getUsedItemHand() == InteractionHand.MAIN_HAND) this.player.stopUsingItem();
-            this.player.inventory.selected = packetplayinhelditemslot.getSlot();
+    @Inject(
+            method = "handleSetCarriedItem",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V",
+                    shift = At.Shift.AFTER),
+            cancellable = true)
+    private void cardboard$playerItemHeldEvent(ServerboundSetCarriedItemPacket packet, CallbackInfo ci) {
+        if (packet.getSlot() < 0 || packet.getSlot() >= Inventory.getSelectionSize()) {
+            // CraftBukkit treats an out-of-range slot as a protocol violation rather
+            // than logging and ignoring it, as vanilla does.
+            this.disconnect(Component.nullToEmpty("Invalid hotbar selection (Hacking?)"));
+            ci.cancel();
+            return;
+        }
+        if (this.player.inventory.selected == packet.getSlot()) {
+            return;
+        }
+        PlayerItemHeldEvent event = new PlayerItemHeldEvent(this.getPlayer(), this.player.inventory.selected, packet.getSlot());
+        CraftServer.INSTANCE.getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            this.send(new ClientboundSetHeldSlotPacket(this.player.inventory.selected));
             this.player.resetLastActionTime();
-        } else {
-            System.out.println(this.player.getName().getString() + " tried to set an invalid carried item");
-            this.disconnect(Component.nullToEmpty("Invalid hotbar selection (Hacking?)")); // CraftBukkit
+            ci.cancel();
         }
     }
 
