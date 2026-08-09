@@ -52,6 +52,9 @@ public interface EntityBridge {
 
 	CraftEntity getBukkitEntityRaw();
 
+	/** Rebinds the cached CraftEntity, used when one entity replaces another. */
+	void cardboard$setBukkitEntityRaw(CraftEntity entity);
+
     boolean cardboard$isCollidable(boolean ignoreClimbing);
 
     boolean cardboard$canCollideWithBukkit(Entity entity);

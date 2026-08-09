@@ -2585,12 +2585,28 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public double getHealth() {
-        return this.health;
+        // Was `return this.health`, a cached field kept in sync by setRealHealth -
+        // which nothing in CardForge ever calls. CraftBukkit updates it from
+        // ServerPlayer#setHealth; there is no equivalent hook here, so the cache
+        // stayed at its initial 20.0 for the entire session and Player#getHealth()
+        // reported full health for every player no matter what had happened to
+        // them. Nothing errored: plugins reading health simply read a constant.
+        //
+        // The handle is the single source of truth, exactly as CraftLivingEntity
+        // already does it. That removes the staleness rather than adding another
+        // sync point that the next signature change can quietly bypass.
+        return this.getHandle().getHealth();
     }
 
+    /**
+     * Retained for callers that expect Paper's health cache to exist. It now also
+     * writes through to the entity, so a caller that sets it and then reads
+     * getHealth() sees what it wrote.
+     */
     public void setRealHealth(double health) {
         if (Double.isNaN(health)) return; // Paper - Check for NaN
         this.health = health;
+        this.getHandle().setHealth((float) health);
     }
 
     public void updateScaledHealth() {

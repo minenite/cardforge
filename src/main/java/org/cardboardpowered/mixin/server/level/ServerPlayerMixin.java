@@ -558,6 +558,30 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
 		((ServerPlayer)(Object)this).connection.resetPosition();
     }
 
+    /**
+     * Carries the CraftPlayer across a respawn.
+     *
+     * <p>EntityMixin rebinds the cached CraftEntity in
+     * {@code Entity#restoreFrom(Entity)}, but a respawning player goes through
+     * {@code ServerPlayer#restoreFrom(ServerPlayer, boolean)} - a different
+     * overload that never reaches it. The new entity therefore had no CraftPlayer
+     * and minted a fresh one, while every reference a plugin was already holding
+     * still pointed at the dead entity.
+     *
+     * <p>Bukkit's contract is that a Player object stays valid for the session, so
+     * a plugin storing one across death - combat loggers, scoreboard trackers,
+     * anything with a respawn listener - was operating on a removed entity, with
+     * its calls silently doing nothing.
+     */
+    @Inject(method = "restoreFrom(Lnet/minecraft/server/level/ServerPlayer;Z)V", at = @At("HEAD"))
+    private void cardboard$carryBukkitEntityAcrossRespawn(ServerPlayer that, boolean keepEverything, CallbackInfo ci) {
+        org.bukkit.craftbukkit.entity.CraftEntity existing = ((EntityBridge) (Object) that).getBukkitEntityRaw();
+        if (existing != null) {
+            existing.setHandle((net.minecraft.world.entity.Entity) (Object) this);
+            ((EntityBridge) (Object) this).cardboard$setBukkitEntityRaw(existing);
+        }
+    }
+
     // Paper start
     @Override
     public @org.jspecify.annotations.Nullable ServerPlayer_RespawnResult cardboard$findRespawnPositionAndUseSpawnBlock0(boolean useCharge, TeleportTransition.PostTeleportTransition postTeleportTransition, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason respawnReason) {

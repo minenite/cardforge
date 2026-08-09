@@ -176,6 +176,11 @@ public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
     public CraftEntity getBukkitEntityRaw() {
     	return bukkitEntity;
     }
+
+    @Override
+    public void cardboard$setBukkitEntityRaw(CraftEntity entity) {
+        this.bukkitEntity = entity;
+    }
     
     @Override
     public org.bukkit.craftbukkit.entity.CraftEntity getBukkitEntity() {
