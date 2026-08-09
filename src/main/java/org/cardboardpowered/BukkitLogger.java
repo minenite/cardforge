@@ -92,9 +92,18 @@ public class BukkitLogger extends Logger {
         	}
             // log4j.log(level, lr.getMessage());
         } else {
-        	log4j.atLevel(level).log(lr.getMessage(), lr.getThrown());
-        	// log4j.error(lr.getMessage(), lr.getThrown());;
-        	// log4j.log(level, lr.getMessage(), lr.getThrown());
+        	// setCause, not log(message, throwable). SLF4J's fluent builder treats a
+        	// trailing argument to log(String, Object) as a {} format argument, and
+        	// this message has no placeholder, so the throwable was being dropped
+        	// entirely. Every exception a plugin reported through
+        	// getLogger().log(SEVERE, msg, ex) logged its message with no stack
+        	// trace - which is how a tab-completion failure showed up as one
+        	// unexplained line.
+        	String message = lr.getMessage();
+        	if (this.doPrefix) {
+        		message = "[" + this.getName() + "] " + message;
+        	}
+        	log4j.atLevel(level).setCause(lr.getThrown()).log(message);
         }
     }
     

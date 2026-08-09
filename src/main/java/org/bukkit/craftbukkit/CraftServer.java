@@ -1864,7 +1864,12 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
             completions = (pos == null) ? getCommandMap().tabComplete(player, message) :
                     getCommandMap().tabComplete(player, message, new Location(((LevelBridge)(Object)world).cardboard$getWorld(), pos.x, pos.y, pos.z));
-        } catch (CommandException ex) {
+        } catch (Throwable ex) {
+            // Was catching only CommandException. A tab completer that throws
+            // anything else - an NPE from a plugin reaching for state a completion
+            // has no reason to need - would propagate into the packet handler
+            // instead of being reported, and the completion request would take the
+            // connection down with it.
             player.sendMessage(ChatColor.RED + "An internal error occurred while attempting to tab-complete this command");
             getLogger().log(Level.SEVERE, "Exception when " + player.getName() + " attempted to tab complete " + message, ex);
         }
