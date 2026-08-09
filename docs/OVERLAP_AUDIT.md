@@ -283,3 +283,23 @@ either arrive exactly once.
 **Regression test:** `BreakProbe.runItemDamage` damages a held pickaxe through
 `hurtAndBreak(int, LivingEntity, EquipmentSlot)` and asserts
 `PlayerItemDamageEvent` fires. It fails against the previous hook.
+
+### 5b. `BreakBlockEvent` listener missed pre-cancelled breaks — FIXED
+
+A regression introduced by the destroyBlock fix above, found when a probe run
+happened to be made in spectator mode.
+
+`addListener(Class, Consumer)` does not run for an event that arrives already
+cancelled. NeoForge pre-cancels `BreakBlockEvent` for every case it absorbed
+from vanilla - the item cannot destroy the block, `blockActionRestricted`
+(adventure, spectator), a game-master block - so in all of those the Bukkit
+`BlockBreakEvent` never fired at all. Paper fires it cancelled and lets a plugin
+overturn it, and Cardboard's original hook reproduced that by pre-setting
+cancelled from the sword check.
+
+Fixed with `addListener(true, ...)`. `BreakProbe` now exercises the
+pre-cancelled path deliberately rather than avoiding it.
+
+**Lesson recorded:** replacing a parallel event with a bridge moves the hook onto
+the other ecosystem's dispatch semantics. Cancellation delivery is part of that
+contract, not an implementation detail.

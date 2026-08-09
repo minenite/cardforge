@@ -52,7 +52,16 @@ public final class BukkitBlockBreakBridge {
     }
 
     public static void register(IEventBus gameBus) {
-        gameBus.addListener(BreakBlockEvent.class, BukkitBlockBreakBridge::onBreak);
+        // receiveCancelled = true. NeoForge pre-cancels this event for the cases it
+        // absorbed from vanilla - the item cannot destroy the block, the player is
+        // action-restricted (adventure, spectator), a game-master block - and posts
+        // it already cancelled. A plain addListener does not run for an event that
+        // arrives cancelled, so the Bukkit event would simply never fire in those
+        // cases. On Paper it does fire, cancelled, and a plugin may overturn it;
+        // Cardboard's original hook reproduced that by pre-setting cancelled from
+        // the sword check. Dropping the notification would have been a regression
+        // hidden behind "the block did not break anyway".
+        gameBus.addListener(true, BreakBlockEvent.class, BukkitBlockBreakBridge::onBreak);
     }
 
     private static void onBreak(BreakBlockEvent event) {
