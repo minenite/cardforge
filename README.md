@@ -1,4 +1,6 @@
-# CardForge
+<p align="center">
+  <img src="docs/assets/cardforge-logo.png" alt="CardForge" width="640">
+</p>
 
 Run Bukkit, Spigot and Paper plugins on a real NeoForge 26.2 server, alongside
 your NeoForge mods.
