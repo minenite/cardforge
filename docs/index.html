@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CardForge — Bukkit plugins on NeoForge</title>
+<title>CardForge: Bukkit plugins on NeoForge</title>
 <meta name="description" content="Run Bukkit, Spigot and Paper plugins on a real NeoForge server, alongside your NeoForge mods.">
 <style>
   :root {
@@ -68,7 +68,7 @@
   details { border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; background: var(--card); }
   summary { cursor: pointer; font-weight: 600; }
   footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
-  .warn { border-left: 3px solid var(--accent); padding-left: 14px; }
+  .warn { border: 2px solid var(--accent); }
 </style>
 </head>
 <body>
@@ -76,7 +76,7 @@
 
 <header>
   <img src="assets/cardforge-logo.png" alt="CardForge">
-  <p class="tag">Run Bukkit, Spigot and Paper plugins on a real NeoForge server —<br>alongside your NeoForge mods.</p>
+  <p class="tag">Run Bukkit, Spigot and Paper plugins on a real NeoForge server,<br>alongside your NeoForge mods.</p>
 </header>
 
 <div id="latest" class="card">
@@ -114,12 +114,12 @@ which CardForge creates on first run.</p>
 <h2>Before you rely on it</h2>
 <div class="card warn">
   <p style="margin-top:0">CardForge works and is actively tested, but it is not battle-hardened. It has
-  been run on one server with a dozen mods and a handful of real plugins — not under
+  been run on one server with a dozen mods and a handful of real plugins, not under
   load, and not for long periods.</p>
   <p style="margin-bottom:0">Read
   <a href="https://github.com/minenite/cardforge/blob/main/docs/COMPATIBILITY.md">COMPATIBILITY.md</a>
   before deploying it anywhere that matters. It records what has actually been verified,
-  what is only partly supported, and what is known to be broken — with the evidence for each.</p>
+  what is only partly supported, and what is known to be broken, with the evidence for each.</p>
 </div>
 
 <h2>Documentation</h2>
@@ -198,7 +198,7 @@ fetch(`https://api.github.com/repos/${REPO}/releases`)
       ? older.map(r =>
           `<details>
              <summary>${r.name || r.tag_name}
-               <span class="small muted" style="font-weight:400"> — ${when(r.published_at)}</span>
+               <span class="small muted" style="font-weight:400"> · ${when(r.published_at)}</span>
              </summary>
              ${assetList(r)}
              <p class="small" style="margin-bottom:0"><a href="${r.html_url}">Release notes</a></p>
@@ -210,7 +210,7 @@ fetch(`https://api.github.com/repos/${REPO}/releases`)
     // somewhere that always works rather than showing a dead page.
     const link = `<a href="https://github.com/${REPO}/releases">the releases page on GitHub</a>`;
     document.getElementById('latest').innerHTML =
-      `<p style="margin:0">Could not reach the GitHub API just now — please use ${link}.</p>`;
+      `<p style="margin:0">Could not reach the GitHub API just now, please use ${link}.</p>`;
     document.getElementById('older').innerHTML = '';
   });
 </script>
