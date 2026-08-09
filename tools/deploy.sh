@@ -24,10 +24,20 @@
 set -euo pipefail
 
 usage() {
-    echo "usage: $0 <server-dir> [jar]" >&2
+    echo "usage: $0 [--plugin] <server-dir> [jar]" >&2
     echo "  jar defaults to build/libs/Cardforge-26.2.jar" >&2
+    echo "  --plugin installs into plugins/ instead of mods/" >&2
     exit 2
 }
+
+# Plugin jars are held open by the plugin classloader exactly as the mod jar is
+# held by the module classloader, so they carry the same hazard and get the same
+# protection.
+SUBDIR=mods
+if [ "${1:-}" = "--plugin" ]; then
+    SUBDIR=plugins
+    shift
+fi
 
 [ $# -ge 1 ] || usage
 
@@ -36,7 +46,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 JAR="${2:-$REPO_ROOT/build/libs/Cardforge-26.2.jar}"
 
 [ -d "$SERVER_DIR" ]      || { echo "error: no such server directory: $SERVER_DIR" >&2; exit 1; }
-[ -d "$SERVER_DIR/mods" ] || { echo "error: not a server directory (no mods/): $SERVER_DIR" >&2; exit 1; }
+[ -d "$SERVER_DIR/$SUBDIR" ] || { echo "error: not a server directory (no $SUBDIR/): $SERVER_DIR" >&2; exit 1; }
 [ -f "$JAR" ]             || { echo "error: no such jar: $JAR" >&2; exit 1; }
 
 # A jar that is not a readable zip must never reach mods/; the server would fail
@@ -44,7 +54,7 @@ JAR="${2:-$REPO_ROOT/build/libs/Cardforge-26.2.jar}"
 # a corrupt file when checking costs nothing.
 unzip -qt "$JAR" >/dev/null 2>&1 || { echo "error: $JAR is not a valid zip archive" >&2; exit 1; }
 
-TARGET="$SERVER_DIR/mods/$(basename "$JAR")"
+TARGET="$SERVER_DIR/$SUBDIR/$(basename "$JAR")"
 
 # Is a JVM holding this server open? Match on the resolved server directory rather
 # than a process-name pattern: several unrelated things on a dev box have
@@ -72,7 +82,7 @@ if [ -n "$PIDS" ]; then
 fi
 
 # Same filesystem as the target, so the rename below is atomic.
-TMP="$(mktemp "$SERVER_DIR/mods/.deploy.XXXXXX")"
+TMP="$(mktemp "$SERVER_DIR/$SUBDIR/.deploy.XXXXXX")"
 trap 'rm -f "$TMP"' EXIT
 cp "$JAR" "$TMP"
 chmod 644 "$TMP"

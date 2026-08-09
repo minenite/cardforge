@@ -2,6 +2,12 @@
 # In-server regression test: boots a real NeoForge server, runs the CardboardTest
 # probes from the console, and fails on any FAIL line.
 #
+# Exit codes: 0 everything ran and passed, 1 something failed, 2 everything that
+# ran passed but some probes were skipped for want of a connected player. 2 is
+# deliberately not 0 - this harness once reported green while never executing the
+# player-only probes at all, so "clean" and "complete" are now separate claims.
+# Override with SKIP_EXIT_CODE=0 if a caller genuinely wants skips tolerated.
+#
 # This is the counterpart to tools/rewriter_test.sh. That one proves the bytecode
 # rewrite is correct in isolation; this one proves it actually reaches a
 # precompiled plugin on a running server, alongside the rest of the
@@ -48,6 +54,7 @@ echo "$results"
 echo
 
 fails=$(echo "$results" | grep -c '\[FAIL\]' || true)
+skips=$(echo "$results" | grep -c '\[SKIP\]' || true)
 errors=$(grep -cE '/ERROR\]|/FATAL\]' "$LOG" || true)
 
 if [ "$fails" -ne 0 ] || [ "$errors" -ne 0 ]; then
@@ -55,5 +62,18 @@ if [ "$fails" -ne 0 ] || [ "$errors" -ne 0 ]; then
     exit 1
 fi
 
+# A skipped probe is not a passing probe. This harness drives the console, so the
+# checks that need a player online cannot run here, and reporting the run as clean
+# would restate the gap that let a whole category go unexercised while the suite
+# stayed green. Report the count, and say plainly what it does not cover.
+if [ "$skips" -ne 0 ]; then
+    echo "INCOMPLETE: $fails failed, $skips skipped (no player online), no server errors."
+    echo "$results" | grep '\[SKIP\]' | sed 's/^/  /'
+    echo
+    echo "These require a connected client. Run '/cbtest all' in game to cover them."
+    echo "Log kept for inspection -> $LOG"
+    exit "${SKIP_EXIT_CODE:-2}"
+fi
+
 rm -f "$LOG"
-echo "PASS: all probes passed, no server errors."
+echo "PASS: all probes passed, nothing skipped, no server errors."
