@@ -326,3 +326,16 @@ call. The guard is not removed - every other caller keeps it.
 The refusal now logs the calling frame. Previously it logged one line with no
 caller, and since a refused teleport is invisible to the client there was
 nothing to connect the symptom to the cause.
+
+### 7. The six RETARGETED intersections, re-read — 5 SAFE, 1 was BROKEN
+
+| Class | Verdict |
+| --- | --- |
+| `ServerPlayer#openMenu` | SAFE. The live hook is a `@Redirect` on the wide two-argument form. A second inject on the narrow delegate existed but only cleared a ThreadLocal nothing ever set - dead on both counts, removed. |
+| `ServerPlayer#drop` | SAFE. `onPlayerTossEvent` still routes through `drop(stack, ...)`; cancellation returns before `addFreshEntity`, so no orphan and no double-spawn. |
+| `Entity#spawnAtLocation` | SAFE, **and a prediction of mine was wrong**. NeoForge wraps `dropAllDeathLoot` in `captureDrops` and adds to the capture instead of calling `addFreshEntity`, which is the call Cardboard redirects, so I expected `EntityDeathEvent#getDrops()` to be empty. It carries 2 stacks - drops are collected by another path. Now asserted in the headless suite rather than reasoned about. |
+| `BucketItem#emptyContents` | SAFE. Hooked on the wide five-argument overload NeoForge introduced. |
+| `ItemStack#hurtAndBreak` | **BROKEN, fixed** - see item 5. |
+| `ShearsItem` / `ShearsDispenseItemBehavior` | SAFE. Both moved onto NeoForge's `IShearable` replacement and playtested, including the dispenser path. |
+
+Score for the intersections overall: **3 of 9 were genuinely broken**, none of them visible in play.
