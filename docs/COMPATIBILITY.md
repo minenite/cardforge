@@ -218,10 +218,39 @@ item database. That would be a new feature and is not currently implemented.
 
 ## UNSUPPORTED
 
-### Clicking in a modded GUI does not reach the mod
+### Pipez GUI config does nothing (CardForge confirmed at fault, cause unknown)
 
-Opening a modded menu works, and the NullPointerException that used to kill
-`ServerboundContainerClickPacket` is fixed - the fallback `getBukkitView()` now
+Pipez's wrench GUI opens and its controls do nothing, so a pipe can never be set
+to Extract and no items move. Energy transfer through the same mod works.
+
+**Attribution is settled by isolation:** the identical server, world, mods and
+client with `Cardforge-26.2.jar` removed from `mods/` works correctly. It is
+CardForge, not Pipez and not 26.2.
+
+**Cause not found.** Ruled out by reading the mod's source (github.com/henkelmax/pipez,
+`minecraft_version=26.2`, current):
+
+- It does not use vanilla container clicks or menu buttons. Config travels on
+  Pipez's own `CustomPacketPayload` channel via `de.maxhenkel.corelib`, which
+  CardForge does not touch.
+- Handlers key off `sender.containerMenu instanceof ExtractContainer`; if that
+  fails they return silently, which matches the symptom exactly.
+- CardForge's `openMenu` redirect returns the mod's own menu unchanged -
+  `callInventoryOpenEventWithTitle` returns `Pair.of(titleOverride, container)`
+  with the same container on success.
+- CardForge never assigns `ServerPlayer#containerMenu`; every reference in the
+  mixins is a shadow or a read.
+- No packet-handling failures and no server errors are logged.
+
+**Next step:** bisect CardForge's own changes rather than guess again. Disable
+the `openMenu` redirect in `ServerPlayerMixin` first, since it is the only
+CardForge code between the mod and its menu, and log
+`sender.containerMenu.getClass()` when a Pipez message arrives.
+
+### Clicking in a modded GUI threw (fixed)
+
+The NullPointerException that used to kill `ServerboundContainerClickPacket`
+is fixed - the fallback `getBukkitView()` now
 carries the real viewer instead of null. But clicks still do not reach the mod:
 verified with Pipez, whose wrench GUI opens and whose buttons do nothing, so a
 pipe can never be set to Extract and no items move. Energy transfer through the
