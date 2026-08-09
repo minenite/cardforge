@@ -160,7 +160,12 @@ def patched_methods(patch_path):
     return methods, markers
 
 
-DELEGATE = re.compile(r'^\+\s*return\s+(?:this\.)?(\w+)\(')
+# Two shapes. A value-returning delegate is `return wider(...)`; a void one is a
+# bare call. Matching only the first missed ItemStack#hurtAndBreak, which is void
+# and whose narrow form NeoForge reduced to `this.hurtAndBreak(amount, level,
+# (LivingEntity) player, onBreak);` - a real delegate that silently stopped a
+# Bukkit event firing, found by hand because this tool did not report it.
+DELEGATE = re.compile(r'^\+\s*(?:return\s+)?(?:this\.)?(\w+)\(')
 
 
 def delegating_overloads(patch_path):

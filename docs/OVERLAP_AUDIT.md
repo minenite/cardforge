@@ -339,3 +339,38 @@ nothing to connect the symptom to the cause.
 | `ShearsItem` / `ShearsDispenseItemBehavior` | SAFE. Both moved onto NeoForge's `IShearable` replacement and playtested, including the dispenser path. |
 
 Score for the intersections overall: **3 of 9 were genuinely broken**, none of them visible in play.
+
+### 8. Delegate detection missed void delegates — tooling FIXED
+
+`delegating_overloads` matched only `return wider(...)`. `ItemStack#hurtAndBreak`
+is void, so NeoForge's narrow form reduced to a bare
+`this.hurtAndBreak(amount, level, (LivingEntity) player, onBreak);` and the tool
+reported no delegate risk on the one class where a delegate had actually broken
+a Bukkit event. It was found by hand instead.
+
+The pattern now accepts both shapes. Re-running reports the same four classes,
+with `hurtAndBreak` and `applyDamage` added to `ItemStack` - all four resolved:
+
+| Class | Method | State |
+| --- | --- | --- |
+| `MappedRegistry` | `register` | FIXED (item 2) |
+| `ServerPlayer` | `openMenu` | SAFE - live hook is on the wide form |
+| `BucketItem` | `emptyContents` | SAFE - hooked on the wide five-argument form |
+| `ItemStack` | `hurtAndBreak` | FIXED (item 5) |
+| `ItemStack` | `processDurabilityChange`, `applyDamage` | SAFE - both hooked on the wide form |
+
+### 9. `@Overwrite` classes — 19, none colliding by method name
+
+No overwritten method appears in the corresponding NeoForge patch, so none of
+them is discarding a NeoForge change to that same method. This is a weaker
+statement than it sounds: the tool compares names, so an overwrite whose
+*original body* called something NeoForge changed would not be reported. The
+list is recorded for that second pass.
+
+`ServerGamePacketListenerImpl` (7), `PlayerDataStorage` (3),
+`BuiltInRegistries` (2), `EnchantmentMenu` (2), and one each in
+`RegistryDataLoader`, `ReloadableServerRegistries`, `DedicatedServer`,
+`ServerLevel`, `ServerPlayer`, `ServerStatusPacketListenerImpl`, `PlayerList`,
+`StatsCounter`, `LeashFenceKnotEntity`, `PiglinAi`, `ItemStack`, `MapItem`,
+`TeleportRandomlyConsumeEffect`, `BambooStalkBlock`,
+`EnchantedCountIncreaseFunction`.
