@@ -423,3 +423,38 @@ at boot under `defaultRequire: 1` if a shadowed member moves.
 20 of them contain nothing but `@Mixin`: their entire body is commented out.
 They are inert, but they inflate the mixin surface and every future audit's
 queue. Worth deleting as a separate cleanup, not folded into this one.
+
+---
+
+## Final state: all 114 classified
+
+| State | Count | Basis |
+| --- | --- | --- |
+| FIXED | 3 | `MappedRegistry`, `ItemStack`, `ServerGamePacketListenerImpl` - a defect was found and corrected, each with a regression test or a headless assertion where one was possible |
+| REVIEWED SAFE | 18 | Patch read against the hook by hand; reasoning recorded per class above |
+| SAFE (no injections) | 45 | Contain no behaviour-changing annotation at all, verified with comments stripped. `@Shadow` fails at boot under `defaultRequire: 1` if a target moves, so these self-report |
+| SAFE (disjoint) | 48 | Live injections whose target methods do not appear in the NeoForge patch, including declarations on context lines |
+
+Four defects were found and fixed in total, counting the one in
+`ServerPlayerGameMode` that is now a bridge rather than a hook:
+
+1. `ServerPlayerGameMode#destroyBlock` - two unreconciled break events
+2. `MappedRegistry#register` - hook on a delegate, missing wide-overload callers
+3. `ItemStack#hurtAndBreak` - hook on a delegate, `PlayerItemDamageEvent` dead
+4. `ServerGamePacketListenerImpl#handleSetCarriedItem` - overwrite discarding
+   NeoForge's hotbar events
+
+**None of the four was visible in play.** Blocks broke, durability decreased,
+registries populated, hotbars switched. In every case the ecosystem that lost
+its notification was the one nobody was watching.
+
+## What this audit cannot tell you
+
+It compares Cardboard's hooks against NeoForge's patches. It says nothing about
+hooks that are wrong on their own terms, and this session found four of those
+by other means - the respawn hang, the CraftPlayer not surviving death,
+`Player#getHealth()` returning a constant, and a cancellation-delivery
+regression introduced by one of the fixes above. All four are
+Cardboard-versus-Paper defects that no amount of patch diffing would surface.
+
+The audit is a floor, not a ceiling.
