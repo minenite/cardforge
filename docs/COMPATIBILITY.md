@@ -73,6 +73,7 @@ Plus an isolated `DamageProbe` (`cbtest damage`) and `ItemStackProbe`
 | Boss bars | Create, retrieve by key, retitle, progress, colour, style, visibility, players, enumerate, remove |
 | Blocks | Place, read back, `BlockData` round-trip, relative navigation, `breakNaturally` |
 | PDC | Item, entity and world containers round-trip |
+| Modded GUI interaction | Pipez's wrench GUI opens and its config controls work: pipes can be set to Extract and items move. Verified after the click-path and mixin fixes; a menu trace confirms the mod's own `ExtractContainer` reaches `containerMenu` unmodified |
 | Server-list ping | `ServerListPingEvent` is iterable; EssentialsX's vanished-player handling runs without error. **Limit:** removing a player from the sample does not yet change the response, since CardForge does not populate a player sample |
 | Operator status | `/op` and `/deop` take effect immediately on a connected player, in both directions, and permission resolution follows |
 | Permission resolution | Unregistered node is false for a non-op and true for an op; a `FALSE`-default permission is false even for an op; `isPermissionSet` and `getPermission` correct |
@@ -217,35 +218,6 @@ into WorldEdit's registry at startup; the same could be done for EssentialsX's
 item database. That would be a new feature and is not currently implemented.
 
 ## UNSUPPORTED
-
-### Pipez GUI config does nothing (CardForge confirmed at fault, cause unknown)
-
-Pipez's wrench GUI opens and its controls do nothing, so a pipe can never be set
-to Extract and no items move. Energy transfer through the same mod works.
-
-**Attribution is settled by isolation:** the identical server, world, mods and
-client with `Cardforge-26.2.jar` removed from `mods/` works correctly. It is
-CardForge, not Pipez and not 26.2.
-
-**Cause not found.** Ruled out by reading the mod's source (github.com/henkelmax/pipez,
-`minecraft_version=26.2`, current):
-
-- It does not use vanilla container clicks or menu buttons. Config travels on
-  Pipez's own `CustomPacketPayload` channel via `de.maxhenkel.corelib`, which
-  CardForge does not touch.
-- Handlers key off `sender.containerMenu instanceof ExtractContainer`; if that
-  fails they return silently, which matches the symptom exactly.
-- CardForge's `openMenu` redirect returns the mod's own menu unchanged -
-  `callInventoryOpenEventWithTitle` returns `Pair.of(titleOverride, container)`
-  with the same container on success.
-- CardForge never assigns `ServerPlayer#containerMenu`; every reference in the
-  mixins is a shadow or a read.
-- No packet-handling failures and no server errors are logged.
-
-**Next step:** bisect CardForge's own changes rather than guess again. Disable
-the `openMenu` redirect in `ServerPlayerMixin` first, since it is the only
-CardForge code between the mod and its menu, and log
-`sender.containerMenu.getClass()` when a Pipez message arrives.
 
 ### Clicking in a modded GUI threw (fixed)
 
