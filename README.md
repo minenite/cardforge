@@ -34,6 +34,11 @@ can address modded content by its real namespaced id, cancel a mod's operation,
 and a CardForge-native plugin can reach NeoForge capabilities directly. See
 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for what that is verified to mean.
 
+## Download
+
+**[minenite.github.io/cardforge](https://minenite.github.io/cardforge/)** — latest build,
+previous versions, and which file you want.
+
 ## For server owners
 
 Grab a release and run the installer — you do not need this repository, Gradle,
