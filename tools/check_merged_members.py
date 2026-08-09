@@ -87,7 +87,14 @@ def main():
         if existing is None:
             continue
         checked += 1
-        for anns, name, params in MEMBER.findall(text):
+        for m in MEMBER.finditer(text):
+            anns, name, params = m.group(1), m.group(2), m.group(3)
+            # Only the class body itself merges into the target. A method declared
+            # inside an anonymous class - new CommandSource() { ... } - belongs to
+            # that inner type, but looks identical to the regex.
+            depth = text.count('{', 0, m.start()) - text.count('}', 0, m.start())
+            if depth != 1:
+                continue
             # Injection handlers are callbacks, not merged members, and @Unique is
             # an explicit promise that the name is the mixin's own. Neither can
             # displace a target method, so neither belongs in this report.

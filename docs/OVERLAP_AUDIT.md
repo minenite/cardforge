@@ -553,3 +553,36 @@ bytecode after the fix.
 **Method note:** exporting transformed classes answers "did this mixin actually
 change the target, and to what" directly. Every other technique used in this
 audit infers it from source. Worth reaching for first next time.
+
+### 14. The 38 merged-member classes — reviewed
+
+Of the 93 members these classes merge, **78** are either namespaced
+(`cardboard$`, `cb$`, `spigot$`) or `@Override`s of a CardForge bridge
+interface. Neither can displace anything: the names do not exist on the target.
+
+The remaining 15 are plainly named additions - `dispenseSilently`,
+`getFullChunkNow`, `addEntity`, `raycastBlock`, `openOrClose` and similar. None
+appears in the collision report, so each adds a method the target does not have.
+Additive members cannot discard NeoForge behaviour the way an `@Overwrite` or a
+misplaced inject can; the worst they can do is be wrong when CardForge itself
+calls them, which is ordinary code, not overlap risk.
+
+**Verdict: SAFE**, with the caveat stated rather than hidden - "additive" is a
+claim about displacement, not about correctness.
+
+### 15. Known baseline for `check_merged_members.py`
+
+Four hits remain, all understood:
+
+| Hit | Status |
+| --- | --- |
+| `CompoundContainer#getMaxStackSize/0` | A deliberate override, now matching vanilla (item 13). Correctly flagged. |
+| `ServerGamePacketListenerImpl#getPlayer/0` | Returns `CraftPlayer`, target returns `ServerPlayer`. Different descriptors, so both exist; NMS callers still reach vanilla's, as the running server demonstrates. |
+| `ServerLoginPacketListenerImpl#disconnect/1` | `@Shadow`. Missed because the annotation matcher's prefix pattern breaks on descriptors. |
+| `ItemStack#hurtAndBreak/4` | An `@Inject` handler, missed for the same reason, and matched only because the check compares arity rather than parameter types. |
+
+The last two are parser limits, not findings. An attempt to fix them by scanning
+back to the previous statement boundary made the output substantially noisier,
+so it was reverted; the checker keeps the depth fix, which removed four genuine
+false positives from anonymous inner classes. Comparing full parameter types
+rather than arity is the right next improvement, and is not attempted here.
