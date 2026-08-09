@@ -432,7 +432,7 @@ queue. Worth deleting as a separate cleanup, not folded into this one.
 | --- | --- | --- |
 | FIXED | 3 | `MappedRegistry`, `ItemStack`, `ServerGamePacketListenerImpl` - a defect was found and corrected, each with a regression test or a headless assertion where one was possible |
 | REVIEWED SAFE | 18 | Patch read against the hook by hand; reasoning recorded per class above |
-| SAFE (no injections) | 45 | Contain no behaviour-changing annotation at all, verified with comments stripped. `@Shadow` fails at boot under `defaultRequire: 1` if a target moves, so these self-report |
+| SAFE (no injections) | 45 | **See the correction below - this classification was overstated.** |
 | SAFE (disjoint) | 48 | Live injections whose target methods do not appear in the NeoForge patch, including declarations on context lines |
 
 Four defects were found and fixed in total, counting the one in
@@ -458,3 +458,43 @@ regression introduced by one of the fixes above. All four are
 Cardboard-versus-Paper defects that no amount of patch diffing would surface.
 
 The audit is a floor, not a ceiling.
+
+
+## Correction: the "no injections" bucket was overstated
+
+I classified 45 classes as unable to alter behaviour because they carry no
+injection annotation. That is wrong, and it is the fifth time a claim from this
+tooling has failed.
+
+Mixin merges plain methods, fields and interface implementations into the target
+without any annotation at all. `RegistryLookup_DelegateMixin` is the clearest
+case: no annotation beyond `@Mixin`, and it supplies the whole implementation of
+`getValueForCopying` that Paper's registry-modification API depends on.
+
+Re-measured, of those 45:
+
+- **41** merge plain members or implement a bridge interface. They are live code.
+  The absence of an injection annotation says nothing about them.
+- **7** are genuinely inert - no annotations, no method bodies, no interface.
+
+This was very nearly a destructive mistake: I had a list of 62 "dead" mixin files
+queued for deletion on the same reasoning, and `RegistryLookup_DelegateMixin` was
+on it.
+
+**What the 41 still have going for them:** they add members rather than
+intercepting NeoForge's control flow, so they cannot discard a NeoForge change
+the way an `@Overwrite` can, and a `@Shadow` whose target moved fails at boot
+under `defaultRequire: 1`. That is a real argument, and it is weaker than
+"cannot alter behaviour". They are **UNREVIEWED**, not SAFE.
+
+Corrected state of the audit:
+
+| State | Count |
+| --- | --- |
+| FIXED | 3 |
+| REVIEWED SAFE | 18 |
+| SAFE (inert) | 7 |
+| SAFE (disjoint) | 48 |
+| **UNREVIEWED (merge members, no injections)** | **38** |
+
+38 classes still need reading. The queue is not empty.
