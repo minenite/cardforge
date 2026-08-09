@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.io.IOException;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -120,9 +121,27 @@ public class SpigotPluginProvider implements PluginProvider<JavaPlugin>, Provide
 
             server.getUnsafe().checkSupported(this.description);
 
+            // A fresh handle per load, deliberately. The provider opens jarFile once
+            // at discovery, but PluginClassLoader takes ownership of whatever it is
+            // given and closes it when the plugin is disabled. Handing the cached
+            // handle over a second time is therefore fine exactly once: /reload
+            // disables every plugin, closing them all, and then loads them again
+            // from providers still holding the now-closed handles. Every plugin
+            // failed with "zip file closed" and the server came back up with none
+            // loaded.
+            //
+            // Opening per load matches the ownership: the classloader closes the
+            // one it was given, and the next load opens its own.
+            final JarFile pluginJar;
+            try {
+                pluginJar = new JarFile(this.path.toFile());
+            } catch (IOException ex) {
+                throw new InvalidPluginException("Could not reopen " + this.path.getFileName(), ex);
+            }
+
             final PluginClassLoader loader;
             try {
-                loader = new PluginClassLoader(this.getClass().getClassLoader(), this.description, dataFolder, this.path.toFile(), LIBRARY_LOADER.createLoader(this.description, this.paperLibraryPaths), this.jarFile, this.dependencyContext); // Paper
+                loader = new PluginClassLoader(this.getClass().getClassLoader(), this.description, dataFolder, this.path.toFile(), LIBRARY_LOADER.createLoader(this.description, this.paperLibraryPaths), pluginJar, this.dependencyContext); // Paper
             } catch (InvalidPluginException ex) {
                 throw ex;
             } catch (Throwable ex) {
