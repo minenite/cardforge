@@ -90,6 +90,27 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
 
     public CraftHumanEntity(final CraftServer server, final Player entity) {
         super(server, entity);
+        // CraftBukkit seeds this from the server's op list. Cardboard left the field
+        // at its default false, so isOp() was false for a player listed in ops.json
+        // until something happened to call setOp - which only /op does, and only for
+        // that session. After a restart every op was, as far as the Bukkit API was
+        // concerned, not an op.
+        //
+        // The damage is quiet and wide: PermissibleBase resolves a permission with
+        // no explicit value using isOp(), so every plugin permission defaulting to
+        // op was denied. EssentialsX /i stopped working, WorldGuard's region bypass
+        // never applied, and nothing logged a thing because "denied" is a normal
+        // answer. Vanilla commands were unaffected, since those go through the
+        // server's own permission level rather than Bukkit's map, which is what
+        // made the two disagree.
+        try {
+            this.op = server.getHandle().isOp(entity.nameAndId());
+            this.perm.recalculatePermissions();
+        } catch (Throwable ignored) {
+            // A human entity can be constructed before the player list exists (world
+            // generation, early boot). Staying false there matches the old
+            // behaviour and is corrected by setOp when the real player joins.
+        }
         this.mode = server.getDefaultGameMode();
         this.inventory = new CraftInventoryPlayer(entity.getInventory());
         this.enderChest = new CraftInventory(entity.getEnderChestInventory());
