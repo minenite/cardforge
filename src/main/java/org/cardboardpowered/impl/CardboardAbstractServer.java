@@ -13,7 +13,7 @@ public abstract class CardboardAbstractServer implements org.bukkit.Server {
 
 	public static final String API_VERSION = "26.2";
 
-	public final String serverName = "Cardboard";
+	public final String serverName = "CardForge";
 	
 	public final String serverVersion;
     public final String shortVersion;
@@ -23,9 +23,11 @@ public abstract class CardboardAbstractServer implements org.bukkit.Server {
 	
     public CardboardAbstractServer(DedicatedServer dserver) {
     	server = dserver;
-    	String hash = VersionCommand.getGitHash().substring(0,7); // use short hash
-        serverVersion = "git-Cardboard-" + hash;
-        shortVersion = "git-" + hash;
+    	// Cardboard read this from a generated GitVersion class that does not exist
+    	// here, so the hash was always the literal "-unknow". BuildInfo is stamped
+    	// in by the build and degrades to a stated "unknown" rather than a fake hash.
+    	serverVersion = "git-CardForge-" + org.minenite.cardforge.BuildInfo.shortCommit();
+        shortVersion = org.minenite.cardforge.BuildInfo.versionString();
 	}
 
 	@Override
@@ -39,7 +41,7 @@ public abstract class CardboardAbstractServer implements org.bukkit.Server {
     }
     
     public String getShortVersion() {
-        return shortVersion + " (MC: " + server.getServerVersion() + ")";
+        return org.minenite.cardforge.BuildInfo.versionString() + " (MC: " + server.getServerVersion() + ")";
     }
     
     public void loadIcon() {

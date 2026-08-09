@@ -62,10 +62,9 @@ public class MyCommand extends Command {
     	}
     	
     	if (args[0].equalsIgnoreCase("version")) {
-    		String ver = org.minenite.cardforge.platform.Platform.get().modVersion("cardboard").orElse("unknown");
-            if (ver.contains("version")) ver = CraftServer.INSTANCE.getShortVersion(); // Dev ENV
+    		String ver = CraftServer.INSTANCE.getShortVersion();
 
-            String message = ChatColor.GOLD + "Cardboard" + ChatColor.RESET + " version " + ver + ChatColor.ITALIC + " (Reimplementing Paper API version " + CardboardMod.paperVersion + ")";
+            String message = ChatColor.GOLD + Bukkit.getName() + ChatColor.RESET + " version " + ver + ChatColor.ITALIC + " (Reimplementing Paper API version " + CardboardMod.paperVersion + ")";
             sender.sendMessage(message);
     	}
     	

@@ -79,6 +79,53 @@ dependencies {
     compileOnly 'org.ow2.asm:asm:9.10.1'
 }
 
+// Stamp the build with real identity. Cardboard resolved its version by reading
+// a GitVersion class that this project never generates, so getGitHash() always
+// returned "-unknown-" and /version reported "unknown". Rather than reintroduce a
+// generated class, write the facts to a resource the jar carries; a missing git
+// binary or a source tarball degrades to a sensible value instead of failing.
+static String gitOutput(File dir, String... command) {
+    try {
+        def proc = new ProcessBuilder(command).directory(dir).redirectErrorStream(true).start()
+        def text = proc.inputStream.text.trim()
+        return proc.waitFor() == 0 ? text : ''
+    } catch (Exception ignored) {
+        return ''
+    }
+}
+
+def buildInfoDir = layout.buildDirectory.dir('generated/buildinfo')
+
+tasks.register('buildInfo') {
+    // Never up-to-date: the working tree can go dirty without any input changing.
+    outputs.upToDateWhen { false }
+    outputs.dir(buildInfoDir)
+    def projectDir = project.projectDir
+    def modVersion = project.mod_version
+    def mcVersion = project.minecraft_version
+    def neoVersion = project.neoforge_version
+    def outDir = buildInfoDir
+    doLast {
+        def sha = gitOutput(projectDir, 'git', 'rev-parse', 'HEAD')
+        def branch = gitOutput(projectDir, 'git', 'rev-parse', '--abbrev-ref', 'HEAD')
+        def dirty = !gitOutput(projectDir, 'git', 'status', '--porcelain').isEmpty()
+        def file = outDir.get().file('cardforge-build.properties').asFile
+        file.parentFile.mkdirs()
+        file.text = """\
+            version=${modVersion}
+            commit=${sha.isEmpty() ? 'unknown' : sha}
+            branch=${branch.isEmpty() || branch == 'HEAD' ? 'detached' : branch}
+            dirty=${dirty}
+            buildTime=${java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS)}
+            minecraft=${mcVersion}
+            neoforge=${neoVersion}
+            """.stripIndent()
+    }
+}
+
+sourceSets.main.resources.srcDir buildInfoDir
+tasks.named('processResources') { dependsOn 'buildInfo' }
+
 tasks.named('jar') {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {

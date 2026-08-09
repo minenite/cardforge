@@ -22,6 +22,7 @@ import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.util.StringUtil;
+import org.minenite.cardforge.BuildInfo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -30,7 +31,9 @@ import com.google.gson.JsonObject;
 
 public class VersionCommand extends Command {
 
-    public static String BRANCH = "ver/26.1";
+    /** The repository this build is compared against when checking for updates. */
+    public static String REPOSITORY = "minenite/cardforge";
+    public static String BRANCH = "main";
 
     public VersionCommand(String name) {
         super(name);
@@ -46,8 +49,10 @@ public class VersionCommand extends Command {
         if (!testPermission(sender)) return true;
 
         if (args.length == 0) {
-            String ver = org.minenite.cardforge.platform.Platform.get().modVersion("cardboard").orElse("unknown");
-            if (ver.contains("version")) ver = CraftServer.INSTANCE.getShortVersion(); // Dev ENV
+            // Was modVersion("cardboard"), a mod id that does not exist here - it
+            // resolved to the literal "unknown" on every server. The build stamp is
+            // the authoritative answer and needs no registry lookup at all.
+            String ver = CraftServer.INSTANCE.getShortVersion();
 
             String message = "This server is running " + ChatColor.GOLD + Bukkit.getName() + ChatColor.RESET + " version " + ver + ChatColor.ITALIC + " (Implementing API version " + Bukkit.getBukkitVersion() + ")";
             sender.sendMessage(message);
@@ -162,14 +167,38 @@ public class VersionCommand extends Command {
         }
     }
 
+    /**
+     * Describes this build honestly on the second line of /version.
+     *
+     * <p>Cardboard gated the update check on the version string starting with
+     * "git-Cardboard-", and since nothing here ever produced that prefix, every
+     * server fell through to "Unknown version, custom build?" regardless of what
+     * it was actually running. The gate is now the one fact that decides whether a
+     * check is even meaningful: whether the jar knows which commit built it.
+     */
     private void obtainVersion() {
-        String version = Bukkit.getVersion();
-        if (version == null) version = "Custom";
+        if (BuildInfo.isUnknownBuild()) {
+            setVersionMessage(ChatColor.RED + "Unknown build - this jar was not built from a git checkout.");
+            return;
+        }
 
-        if (version.startsWith("git-Cardboard-")) {
-            int cbVersions = check();
-            setVersionMessage(cbVersions == 0 ? "You are running the latest version" : "You are " + cbVersions + " version(s) behind");
-        } else setVersionMessage("Unknown version, custom build?");
+        String built = BuildInfo.BRANCH + "@" + BuildInfo.shortCommit() + ", built " + BuildInfo.BUILD_TIME;
+
+        if (BuildInfo.DIRTY) {
+            // Uncommitted changes mean the commit does not describe the jar, so
+            // comparing it against the remote would report on code that is not here.
+            setVersionMessage(ChatColor.RED + "Development build with uncommitted changes (" + built + ")");
+            return;
+        }
+
+        int behind = check();
+        switch (behind) {
+            case 0 -> setVersionMessage(ChatColor.GREEN + "You are running the latest version (" + built + ")");
+            case -1 -> setVersionMessage(ChatColor.RED + "You are running an unreleased build ahead of " + BRANCH + " (" + built + ")");
+            case -2 -> setVersionMessage(ChatColor.RED + "This commit is not on " + REPOSITORY + " (" + built + ")");
+            case -3 -> setVersionMessage(ChatColor.RED + "Could not reach GitHub to check for updates (" + built + ")");
+            default -> setVersionMessage(ChatColor.RED + "You are " + behind + " version(s) behind (" + built + ")");
+        }
     }
 
     private void setVersionMessage(String msg) {
@@ -188,26 +217,16 @@ public class VersionCommand extends Command {
     }
     
     public static String getGitHash() {
-        try {
-            Class<?> version = Class.forName("org.cardboardpowered.GitVersion");
-            return (String) version.getField("GIT_SHA").get(null);
-        } catch (ClassNotFoundException | NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-            return "-unknown-";
-        }
+        return BuildInfo.COMMIT;
     }
-    
+
     public static boolean isDirty() {
-        try {
-            Class<?> version = Class.forName("org.cardboardpowered.GitVersion");
-            return ( (Integer) version.getField("DIRTY").get(null) ) == 1;
-        } catch (ClassNotFoundException | NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-            return false;
-        }
+        return BuildInfo.DIRTY;
     }
 
     public static int check() {
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL("https://api.github.com/repos/CardboardPowered/cardboard/compare/" + BRANCH + "..." + getGitHash()).openConnection();
+            HttpURLConnection connection = (HttpURLConnection) new URL("https://api.github.com/repos/" + REPOSITORY + "/compare/" + BRANCH + "..." + getGitHash()).openConnection();
             connection.connect();
 
             if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) return -2; // Unknown commit
@@ -220,8 +239,9 @@ public class VersionCommand extends Command {
             if (status.equalsIgnoreCase("behind")) return obj.get("behind_by").getAsInt();
 
             return -1;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException | RuntimeException e) {
+            // An offline server is a normal condition, not something to dump a
+            // stack trace over; the caller turns -3 into a readable line.
             return -3;
         }
     }

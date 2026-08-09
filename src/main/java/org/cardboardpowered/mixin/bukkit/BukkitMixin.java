@@ -18,11 +18,9 @@ public class BukkitMixin {
 	 */
 	@Overwrite(remap = false)
     public static String getVersionMessage() {
-		String metadataVersion = org.minenite.cardforge.platform.Platform.get().modVersion("cardforge").orElse("unknown");
-		
-		String ver = metadataVersion;
-        if (ver.contains("version")) ver = CraftServer.INSTANCE.getShortVersion(); // Dev ENV
-		
+		// One source of truth with /version: the build stamp, not a registry lookup.
+		String ver = CraftServer.INSTANCE.getShortVersion();
+
 		return "This server is running " + Bukkit.getName() + " version " + ver + " (Implementing API version " + Bukkit.getBukkitVersion() + ")";
     }
 	
