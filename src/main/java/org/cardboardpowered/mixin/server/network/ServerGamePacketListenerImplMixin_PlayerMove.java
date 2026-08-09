@@ -25,6 +25,7 @@ import org.spigotmc.SpigotConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 
 import com.destroystokyo.paper.event.player.PlayerJumpEvent;
 import org.cardboardpowered.bridge.world.entity.EntityBridge;
@@ -58,6 +59,10 @@ public class ServerGamePacketListenerImplMixin_PlayerMove {
     @Shadow private int receivedMovePacketCount;
     @Shadow private int knownMovePacketCount;
 	
+	@Unique
+	private static final org.slf4j.Logger MOVE_LOGGER =
+			org.slf4j.LoggerFactory.getLogger("CardForge|PlayerMove");
+
 	@Shadow public ServerPlayer player;
 	@Shadow public void resetPosition() {}
 	@Shadow private void handlePlayerKnownMovement(Vec3 movement) {}
@@ -208,7 +213,11 @@ public class ServerGamePacketListenerImplMixin_PlayerMove {
                                     float f3 = f2 = flag ? 300.0f : 100.0f;
                                     if (d10 - d9 > Math.max((double)f2, Math.pow(SpigotConfig.movedTooQuicklyMultiplier * (double)i * speed, 2.0)) && !(event4 = this.fireFailMove(PlayerFailMoveEvent.FailReason.MOVED_TOO_QUICKLY, toX, toY, toZ, toYaw, toPitch, true)).isAllowed()) {
                                         if (event4.getLogWarning()) {
-                                            // LOGGER.warn("{} moved too quickly! {},{},{}", new Object[]{this.player.getName().getString(), d6, d7, d8});
+                                            // Vanilla and Paper both log these. Cardboard commented them
+                                        // out, so a server rejecting a player's movement did it
+                                        // silently - the player is snapped back with no way to tell
+                                        // whether the server refused the move or the client mispredicted.
+                                        MOVE_LOGGER.warn("{} moved too quickly! {},{},{}", this.player.getName().getString(), d6, d7, d8);
                                         }
                                         this.teleport(this.player.getX(), this.player.getY(), this.player.getZ(), this.player.getYRot(), this.player.getXRot());
                                         return;
@@ -261,7 +270,7 @@ public class ServerGamePacketListenerImplMixin_PlayerMove {
                             if (!(this.player.isChangingDimension() || !(d10 > SpigotConfig.movedWronglyThreshold) || this.player.isSleeping() || this.player.gameMode.isCreative() || this.player.gameMode.getGameModeForPlayer() == GameType.SPECTATOR || (event2 = this.fireFailMove(PlayerFailMoveEvent.FailReason.MOVED_WRONGLY, toX, toY, toZ, toYaw, toPitch, true)).isAllowed())) {
                                 movedWrongly = true;
                                 if (event2.getLogWarning()) {
-                                    // LOGGER.warn("{} moved wrongly!", (Object)this.player.getName().getString());
+                                    MOVE_LOGGER.warn("{} moved wrongly!", this.player.getName().getString());
                                 }
                             }
                             boolean teleportBack = !this.player.noPhysics && !this.player.isSleeping() && movedWrongly;
