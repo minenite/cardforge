@@ -320,7 +320,10 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
 
     /**/
     @Unique
-    private final ThreadLocal<AbstractContainerMenu> fabric_openedScreenHandler = new ThreadLocal<>();
+    // Removed with its only hook: a ThreadLocal that nothing ever set, cleared by
+    // an inject on the one-argument openMenu that NeoForge turned into a delegate.
+    // Dead on both counts, and it made the overlap audit report a hook on a
+    // delegate where no behaviour existed at all.
 
     private void fabric_replaceVanillaScreenPacket_include(ServerGamePacketListenerImpl networkHandler, Packet<?> packet, MenuProvider factory) {
         // Fabric's ExtendedScreenHandler/ExtendedMenu carries extra payload with the
@@ -329,11 +332,6 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
         // so there is nothing to intercept here. Bukkit inventories are plain vanilla
         // menus in any case, which is the path this always took for them.
         networkHandler.send(packet);
-    }
-
-    @Inject(method = "openMenu(Lnet/minecraft/world/MenuProvider;)Ljava/util/OptionalInt;", at = @At("RETURN"))
-    private void fabric_clearStoredScreenHandler_include(MenuProvider factory, CallbackInfoReturnable<OptionalInt> info) {
-        fabric_openedScreenHandler.remove();
     }
 
     /**

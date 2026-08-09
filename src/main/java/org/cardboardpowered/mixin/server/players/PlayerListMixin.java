@@ -349,7 +349,7 @@ public abstract class PlayerListMixin implements PlayerListBridge {
 
     @WrapOperation(method = "respawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;teleport(DDDFF)V"))
     private void cardboard$respawnUseInternalTeleport(ServerGamePacketListenerImpl connection, double x, double y, double z, float yRot, float xRot, Operation<Void> original) {
-        ((ServerGamePacketListenerImplBridge) (Object) connection).cardboard$internalTeleport(x, y, z, yRot, xRot);
+        ((ServerGamePacketListenerImplBridge) (Object) connection).cardboard$internalTeleportForRespawn(x, y, z, yRot, xRot);
     }
 
     @Inject(method = "respawn", at = @At("RETURN"))

@@ -303,3 +303,26 @@ pre-cancelled path deliberately rather than avoiding it.
 **Lesson recorded:** replacing a parallel event with a bridge moves the hook onto
 the other ecosystem's dispatch semantics. Cancellation delivery is part of that
 contract, not an implementation detail.
+
+### 6. Respawn placement refused by Paper's dead-entity guard — FIXED
+
+Not a NeoForge overlap at all, and worth recording because the audit tooling
+cannot see this class of defect: it is Cardboard-versus-Paper semantics.
+
+`PlayerList#respawn` removes the old entity, builds a new one, then places the
+client. At that placement call the connection's own `player` field still refers
+to the old entity, which is by definition removed. Vanilla does the same and its
+`teleport` has no guard, so the position packet goes out and the client spawns.
+
+Cardboard wraps that call to use Paper's `internalTeleport`, to avoid firing
+`PlayerTeleportEvent` on respawn, and inherited Paper's dead-entity guard with
+it. The guard refused the one teleport whose purpose is placing a respawning
+player. The client sat on "loading terrain" indefinitely while its old body
+stayed in the world and kept taking damage.
+
+Fixed with a respawn-only entry point that suspends the guard for that single
+call. The guard is not removed - every other caller keeps it.
+
+The refusal now logs the calling frame. Previously it logged one line with no
+caller, and since a refused teleport is invisible to the client there was
+nothing to connect the symptom to the cause.

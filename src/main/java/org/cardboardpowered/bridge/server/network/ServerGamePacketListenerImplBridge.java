@@ -32,6 +32,13 @@ public interface ServerGamePacketListenerImplBridge {
 
 	void cardboard$internalTeleport(double x, double y, double z, float yRot, float xRot);
 
+	/**
+	 * The respawn placement, which must go through even though the connection's
+	 * player is a removed entity at that moment. See the implementation for why
+	 * the ordinary dead-entity guard cannot apply here.
+	 */
+	void cardboard$internalTeleportForRespawn(double x, double y, double z, float yRot, float xRot);
+
 	void cardboard$internalTeleport(PositionMoveRotation positionmoverotation, Set<Relative> set);
 
 	/**

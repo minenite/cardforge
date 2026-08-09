@@ -307,18 +307,58 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
         this.cardboard$internalTeleport(dest.getX(), dest.getY(), dest.getZ(), dest.getYaw(), dest.getPitch());
     }
 
+    /** First frame outside this class, for the refusal message above. */
+    @Unique
+    private static String cardboard$callerOf() {
+        for (StackTraceElement e : new Throwable().getStackTrace()) {
+            if (!e.getClassName().endsWith("ServerGamePacketListenerImpl")) {
+                return e.toString();
+            }
+        }
+        return "unknown";
+    }
+
     @Override
     public void cardboard$internalTeleport(double x, double y, double z, float yRot, float xRot) {
         this.cardboard$internalTeleport(new PositionMoveRotation(new Vec3(x, y, z), Vec3.ZERO, yRot, xRot), Collections.emptySet());
+    }
+
+    /**
+     * Respawn placement. Skips the dead-entity guard, deliberately.
+     *
+     * <p>PlayerList#respawn removes the old entity, builds a new one, and only then
+     * places the client. At the placement call the connection's own player field
+     * still refers to the old entity, which is by definition removed - vanilla is
+     * the same, and its teleport has no such guard, so the position packet goes out
+     * and the client spawns. Cardboard routes respawn through internalTeleport to
+     * avoid firing PlayerTeleportEvent, and inherited Paper's guard along with it,
+     * which refused the one teleport that places a respawning player. The client
+     * then sat on "loading terrain" forever while its old body stayed in the world.
+     */
+    @Unique
+    private boolean cardboard$placingRespawn;
+
+    @Override
+    public void cardboard$internalTeleportForRespawn(double x, double y, double z, float yRot, float xRot) {
+        this.cardboard$placingRespawn = true;
+        try {
+            this.cardboard$internalTeleport(new PositionMoveRotation(new Vec3(x, y, z), Vec3.ZERO, yRot, xRot), Collections.emptySet());
+        } finally {
+            this.cardboard$placingRespawn = false;
+        }
     }
 
     @Override
     public void cardboard$internalTeleport(PositionMoveRotation posMoveRotation, Set<Relative> relatives) {
         org.spigotmc.AsyncCatcher.catchOp("teleport"); // Paper
         // Paper start - Prevent teleporting dead entities
-        if (this.player.isRemoved()) {
-            LOGGER.info("Attempt to teleport removed player {} restricted", player.getScoreboardName());
-            //if (this.server.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Attempt to teleport removed player");
+        if (this.player.isRemoved() && !this.cardboard$placingRespawn) {
+            // Name the caller. A refused teleport is silent from the client's point
+            // of view - it simply never gets placed - so the one line that used to
+            // be logged here was not enough to tell a misbehaving plugin from the
+            // respawn path refusing itself, which is what it turned out to be.
+            LOGGER.info("Attempt to teleport removed player {} restricted, called from {}",
+                    player.getScoreboardName(), cardboard$callerOf());
             return;
         }
         // Paper end - Prevent teleporting dead entities
