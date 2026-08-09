@@ -158,40 +158,12 @@ public class ServerPlayerGameModeMixin implements ServerPlayerGameModeBridge {
     	// instance.method_41250(pos, success, sequence, reason);
     }
 
-    @Inject(at = @At("HEAD"), method = "destroyBlock", cancellable = true)
-    public void blockBreak(BlockPos blockposition, CallbackInfoReturnable<Boolean> ci) {
-        org.bukkit.block.Block bblock = CraftBlock.at(level, blockposition);
-
-        boolean isSwordNoBreak = !this.player.getMainHandItem().canDestroyBlock(this.level.getBlockState(blockposition), this.level, blockposition, this.player);
-        if (level.getBlockEntity(blockposition) == null && !isSwordNoBreak) {
-            ClientboundBlockUpdatePacket packet = new ClientboundBlockUpdatePacket(this.level, blockposition);
-            // TODO 1.17ify packet.state = Blocks.AIR.getDefaultState();
-            this.player.connection.send(packet);
-        }
-        BlockBreakEvent event = new BlockBreakEvent(bblock, (Player) ((ServerPlayerBridge) (Object) this.player).getBukkitEntity());
-        event.setCancelled(isSwordNoBreak);
-
-        CraftServer.INSTANCE.getPluginManager().callEvent(event);
-
-        if (event.isCancelled()) {
-            if (isSwordNoBreak)
-                ci.setReturnValue(false);
-
-            this.player.connection.send(new ClientboundBlockUpdatePacket(this.level, blockposition)); // Let the client know the block still exists
-
-            // Brute force all possible updates
-            for (Direction dir : Direction.values())
-                this.player.connection.send(new ClientboundBlockUpdatePacket(level, blockposition.relative(dir)));
-
-            // Update any tile entity data for this block
-            BlockEntity tileentity = this.level.getBlockEntity(blockposition);
-            if (tileentity != null)
-                this.player.connection.send(tileentity.getUpdatePacket());
-
-            ci.setReturnValue(false);
-            return;
-        }
-    }
+    // destroyBlock's BlockBreakEvent used to be fired from a HEAD inject here.
+    // NeoForge replaced the top of that method with its own BreakBlockEvent and
+    // deleted the vanilla canDestroyBlock guard, so this hook fired a second,
+    // unreconciled event, recomputed a guard NeoForge had removed, and re-sent
+    // block-update packets CommonHooks.fireBlockBreak already sends. It is now
+    // bridged from NeoForge's event instead; see BukkitBlockBreakBridge.
 
     public boolean interactResult = false;
     public boolean firedInteract = false;

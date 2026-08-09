@@ -28,6 +28,10 @@ public final class Cardforge {
         // rather than from a Mixin; see BukkitDamageBridge.
         org.minenite.cardforge.event.BukkitDamageBridge.register(
                 net.neoforged.neoforge.common.NeoForge.EVENT_BUS);
+        // BlockBreakEvent likewise: NeoForge owns the break decision now, so the
+        // Bukkit event is translated from its event rather than fired in parallel.
+        org.minenite.cardforge.event.BukkitBlockBreakBridge.register(
+                net.neoforged.neoforge.common.NeoForge.EVENT_BUS);
         LOGGER.info("Cardforge on {} {} (Minecraft {})",
                 Platform.get().platformName(),
                 Platform.get().platformVersion(),
