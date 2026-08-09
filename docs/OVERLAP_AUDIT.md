@@ -527,3 +527,29 @@ vanilla-only server, wrong as soon as a mod sets a smaller limit.
 
 Resolving it needs the transformed bytecode or a runtime probe against a modded
 container with a reduced stack size. Not attempted yet.
+
+### 13. `CompoundContainer#getMaxStackSize` — BROKEN, FIXED (was OPEN)
+
+Resolved by exporting the transformed class with `-Dmixin.debug.export=true` and
+disassembling it, which is the only way to tell a merged method from a skipped
+one. Mixin had merged it over the target:
+
+```
+public int getMaxStackSize();
+   0: bipush 64
+   2: ireturn
+```
+
+Vanilla returns `container1.getMaxStackSize()`. Two consequences: a modded
+container whose halves limit stacks below 64 was reported as allowing 64, and
+the mixin contradicted its own setter - `cardboard$setMaxStackSize` writes
+through to both halves, so a plugin could set 16 and read back 64.
+
+Invisible on a vanilla-only server, where everything answers 64.
+
+Now delegates to `container1` exactly as vanilla does, verified in the exported
+bytecode after the fix.
+
+**Method note:** exporting transformed classes answers "did this mixin actually
+change the target, and to what" directly. Every other technique used in this
+audit infers it from source. Worth reaching for first next time.

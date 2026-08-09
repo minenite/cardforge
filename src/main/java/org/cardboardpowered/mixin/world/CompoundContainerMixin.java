@@ -70,9 +70,23 @@ public abstract class CompoundContainerMixin implements Container, ContainerBrid
         return ((ContainerBridge) (Object) this.container1).getLocation();
     }
 
+    /**
+     * Vanilla returns {@code container1.getMaxStackSize()}. This returned a
+     * constant 64, and because the method exists on the target and this one
+     * carries no {@code @Shadow}, Mixin merged it over the top - confirmed by
+     * exporting the transformed class, where the body is {@code bipush 64;
+     * ireturn}.
+     *
+     * <p>Two things were wrong with that. A modded container whose halves limit
+     * stacks to less than 64 was reported as allowing 64, and the mixin
+     * contradicted its own setter: {@code cardboard$setMaxStackSize} writes
+     * through to both halves, so a plugin could set 16 and read back 64.
+     *
+     * <p>Invisible on a vanilla-only server, where every container answers 64.
+     */
     @Override
     public int getMaxStackSize() {
-        return MAX_STACK;
+        return this.container1.getMaxStackSize();
     }
 
 }
