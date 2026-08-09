@@ -89,6 +89,7 @@ Plus an isolated `DamageProbe` (`cbtest damage`) and `ItemStackProbe`
 | Modded `ItemStack` | Constructed, serialized, round-tripped |
 | Modded block write/read | A plugin places a modded block via Bukkit and reads it back |
 | Modded block entities | `Block#getState()` returns a usable `TileState` |
+| Enum access paths | `Material.class.getEnumConstants()` and `EnumSet.allOf(Material.class)` both report **3114**, matching `values()`; a modded material round-trips through `EnumSet` and `EnumMap`. These read Class's own enum cache rather than calling `values()`, so the call-site rewrite never covered them - the cache is now seeded with the extended array. Vanilla lookup through `valueOf`, `getMaterial`, `matchMaterial`, `Registry` and `getKey` unchanged |
 | `Material.values()` | **2735 entries** with Biomes O' Plenty installed - 1691 vanilla plus **1044 modded** - no duplicates, other Material calls unchanged. Previously verified at 2204 with Waystones alone, so the enum extension and call-site rewrite hold at roughly 20x the modded content |
 | Scale | **531 modded blocks** into the Bukkit registry and **581** into WorldEdit's, with terrain generation altered by TerraBlender. Zero errors, fresh world, no code changes required |
 | **NeoForge capabilities** | Verified against Trash Cans, which implements all three handler types: the Item can exposes an item handler only, the Fluid can a fluid handler only, the Energy can an energy handler only, and the Ultimate can **all three** - each resolving through `blockCapability` from a plugin that knows nothing about the mod |
@@ -173,14 +174,19 @@ Plugin data (`Essentials/`, `LuckPerms/`, `CardboardTest/`) and mod saved data
 The only error logged is a Mojang API fetch failure for the Yggdrasil public
 key, which is network reachability and not CardForge.
 
-## PARTIAL
+### Harness coverage
 
-**`Material.values()` reflection paths.** `values()` itself is handled by a
-class-load rewrite to `CardForgeMaterials.values()`. But
-`EnumSet.allOf(Material.class)`, `Material.class.getEnumConstants()` and direct
-reflection on `$VALUES` read the JDK's cached copy and still return the 1691
-vanilla entries. Workarounds: `Material.values()`, `CardForgeMaterials.values()`,
-`Material.getMaterial(name)`, or the registries.
+`regression_test.sh` drives the console, and `probeNms`, `probeItemMeta` and
+`openGui` used to require a player, so an entire probe category never ran in
+automation - and an absent probe reads exactly like a passing one. Most of it
+never needed a player and now runs headlessly; the four checks that genuinely
+need a connected client report `[SKIP]` with the reason.
+
+The harness distinguishes the two claims: exit 0 means everything ran and
+passed, exit 2 means everything that ran passed but some probes were skipped.
+"Nothing failed" can no longer be read as "everything ran".
+
+## PARTIAL
 
 **Modded block entities expose no typed API.** They yield a generic `TileState`:
 location, type and PDC work; the mod's own contents do not, because no Bukkit
@@ -217,33 +223,34 @@ alias lookup has no entry.
 into WorldEdit's registry at startup; the same could be done for EssentialsX's
 item database. That would be a new feature and is not currently implemented.
 
-### Intermittent NoClassDefFoundError on core Bukkit classes (unexplained)
+### Intermittent NoClassDefFoundError on core Bukkit classes (explained, fixed)
 
-Seen once, not reproduced. A player-run `/cbtest all` shortly after a restart
-failed four probes with `NoClassDefFoundError` for classes that are physically
-present in the jar:
+Previously recorded here as unexplained. It was not a CardForge fault: it was
+the deploy procedure. Copying a new jar over `mods/Cardforge-26.2.jar` while the
+server ran corrupted the running JVM's view of the archive. `cp` rewrites in
+place and keeps the inode, but the JVM holds the zip open with the entry offsets
+it read at startup, so afterwards every cached offset points into unrelated
+bytes:
 
 ```
-org/bukkit/Difficulty
-org/bukkit/conversations/Conversation
-org/bukkit/inventory/LecternInventory
-org/bukkit/inventory/meta/AxolotlBucketMeta
+NoClassDefFoundError: org/bukkit/craftbukkit/event/CraftEventFactory
+Caused by: java.util.zip.ZipException: ZipFile invalid LOC header (bad signature)
 ```
 
-An immediate re-run passed all 42 probes with no code change, so this is
-intermittent rather than fixed. `NoClassDefFoundError` rather than
-`ClassNotFoundException` points at a failed initialisation or linkage problem
-rather than a missing class, and the jar was confirmed to contain all four.
+Only classes not yet loaded fail, which is why it looked random, and why the
+classes were provably present in the jar - the file on disk was fine, the JVM's
+index of it was not.
 
-Suspected but unproven: a classloading race when a player joins immediately
-after a restart, while mods and the Material registry are still settling. Both
-the failing and passing runs are with 12 mods and 3114 materials.
+Reproduced deliberately rather than inferred: boot clean with 94 probes passing,
+copy a jar with shifted entry offsets over it, and the failure appears on the
+next cold class load. A first attempt did not reproduce it because `zip` had
+appended the padding after the existing entries, leaving their offsets
+untouched - which confirms the mechanism from the other side.
 
-**Why it matters:** these probes are player-only, so `regression_test.sh` never
-runs them - it drives `cbtest auto` from the console, where `probeNms`,
-`probeItemMeta` and `openGui` are all skipped. A whole probe category only
-executes when a human types the command, which is how the suite stayed green
-through this.
+`tools/deploy.sh` now refuses to install while a server is running from the
+target directory, and otherwise installs atomically via rename. It identifies a
+running server by process cwd rather than a command-line pattern, since several
+things on a dev box match "neoforge", including the Minecraft client.
 
 ## UNSUPPORTED
 
