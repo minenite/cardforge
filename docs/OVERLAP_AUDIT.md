@@ -191,3 +191,56 @@ back onto it. That is the same pattern already used for
 `CommonHooksMixin`: one event source, translated, rather than two in parallel.
 
 **Not yet done.** No fix or regression test is written for this.
+
+### 2. `MappedRegistry#register` — FIXED
+
+**NeoForge changed:** split `register(ResourceKey, T, RegistrationInfo)` into a
+delegate over a new `register(int, ResourceKey, T, RegistrationInfo)` holding the
+body. It also binds the holder's value at registration time, commented
+*"Neo: Bind the value immediately so it can be queried while the registry is not
+frozen"*, and keeps `unregisteredIntrusiveHolders` alive because it freezes and
+unfreezes registries more than once.
+
+**Cardboard's hook:** `@Inject(at = RETURN)` on the three-argument signature,
+filling `temporaryUnfrozenMap`, which `getValueForCopying` read whenever the
+registry was unfrozen. Paper uses that to copy an existing value as the base of
+a modified one.
+
+**What was wrong:** the hook binds to the narrow overload, which still exists, so
+it applies cleanly and reports nothing — but anything calling the wide overload
+directly, which NeoForge's own registration does, never reaches it. The map
+silently misses those entries and the copy sees nothing.
+
+**Fix:** `getValueForCopying` now asks the bound holder first, which answers for
+every registration regardless of overload, and falls back to the map. The map is
+kept rather than deleted: it still covers anything registered before a holder is
+bound, and costs nothing once the lookup succeeds.
+
+### 3. `ServerPlayer#drop` — SAFE
+
+**NeoForge changed:** `drop(boolean)` gained an `onDroppedByPlayer` veto and now
+calls `CommonHooks.onPlayerTossEvent(...)` instead of `drop(stack, false, true)`.
+
+**Why the hook survives:** `onPlayerTossEvent` calls `player.drop(item, ...)`
+itself, so Cardboard's inject on the three-argument `drop` still fires. NeoForge
+wraps that call in `captureDrops`, so the entity is captured rather than added,
+and NeoForge adds it after posting `ItemTossEvent`. Cardboard's cancellation
+path returns null, which makes `onPlayerTossEvent` return before
+`addFreshEntity`, so a cancelled drop spawns nothing and leaves no orphan. No
+double-spawn: Cardboard never adds the entity itself.
+
+Ordering is `PlayerDropItemEvent` then `ItemTossEvent`. An item vetoing via
+`onDroppedByPlayer` means no drop happens at all and no Bukkit event fires,
+which is correct.
+
+### 4. `Ingredient#test` / `#equals` — SAFE
+
+**NeoForge changed:** both now consult a `customIngredient`, delegating `test` to
+it and adding it to the `equals` comparison.
+
+**Why disjoint:** Cardboard's `test` hook only takes over when the ingredient is
+a Bukkit exact choice (`cb$isExact()`), which a modded custom ingredient never
+is, so the two paths are separated by condition rather than by luck. The
+`equals` hook runs at RETURN and can only narrow a true to false when Paper's
+exact stacks differ; it never overturns a false. NeoForge's added
+`customIngredient` comparison therefore stands in every case where it decides.

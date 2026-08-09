@@ -55,9 +55,36 @@ public class MappedRegistryMixin<T> implements MappedRegistryBridge<T> {
 		 this.temporaryUnfrozenMap.put(key.identifier(), value); // Paper - support pre-filling in registry mod API
 	}
 	
+	/**
+	 * Paper reads this while a registry is unfrozen, to copy an existing value as
+	 * the base of a modified one.
+	 *
+	 * <p>It used to consult {@link #temporaryUnfrozenMap} whenever the registry was
+	 * unfrozen, and that map is filled by an inject on
+	 * {@code register(ResourceKey, T, RegistrationInfo)}. NeoForge turned that
+	 * signature into a delegate and moved the body to a four-argument
+	 * {@code register(int, ResourceKey, T, RegistrationInfo)}, so anything calling
+	 * the wide overload directly - which NeoForge's own registration does - never
+	 * reaches the inject, and the map silently misses those entries.
+	 *
+	 * <p>NeoForge also made the map unnecessary. It binds the value at
+	 * registration time for exactly this reason:
+	 *
+	 * <pre>// Neo: Bind the value immediately so it can be queried while the registry is not frozen</pre>
+	 *
+	 * <p>So the bound value is asked first and answers for every registration
+	 * regardless of which overload made it. The map stays as a fallback rather
+	 * than being deleted, since it still covers anything registered before a
+	 * holder is bound, and costs nothing when the lookup already succeeded.
+	 */
 	@Override
     public Optional<T> getValueForCopying(ResourceKey<T> resourceKey) {
-        return this.frozen ? ((MappedRegistry) (Object) this).getOptional(resourceKey) : Optional.ofNullable(this.temporaryUnfrozenMap.get(resourceKey.identifier()));
+        Optional<T> bound = ((MappedRegistry) (Object) this).getOptional(resourceKey);
+        if (bound.isPresent()) {
+            return bound;
+        }
+        return this.frozen ? Optional.empty()
+                : Optional.ofNullable(this.temporaryUnfrozenMap.get(resourceKey.identifier()));
     }
 	
 }
