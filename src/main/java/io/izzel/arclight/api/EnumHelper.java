@@ -114,4 +114,35 @@ public class EnumHelper {
         Unsafe.putObject(cl, enumConstantsOffset, null);
     }
   }
+
+    /**
+     * Seeds {@link Class}'s own enum cache with the extended constants.
+     *
+     * <p>{@link #reset} only clears that cache, which is not enough. The JDK
+     * rebuilds it lazily by reflectively invoking the enum's {@code values()},
+     * and for Material that method reads a {@code static final $VALUES} which
+     * HotSpot constant-folded long before any of this ran - so the rebuild
+     * faithfully reproduces the vanilla-only array. Everything downstream of the
+     * cache inherits that: {@code Class#getEnumConstants},
+     * {@code EnumSet.allOf}, {@code EnumMap}, and any library that enumerates a
+     * enum generically.
+     *
+     * <p>Writing the array in directly skips the rebuild, so those paths see the
+     * same set as {@code values()}. It also matters for correctness rather than
+     * just visibility: EnumSet sizes its bit storage from this universe, so a
+     * set built off the short array cannot hold a modded constant at all.
+     *
+     * <p>The directory is cleared rather than rewritten - it is a name lookup map
+     * the JDK regenerates from the constants above on next use.
+     */
+    public static <T> void publishConstants(Class<T> cl, T[] values) {
+        if (System.getProperty("java.vm.name").contains("OpenJ9")) {
+            // OpenJ9 keeps a different internal shape; clearing is the most that
+            // can be done safely, leaving the pre-existing behaviour.
+            Unsafe.putObject(cl, enumVarsOffset, null);
+            return;
+        }
+        Unsafe.putObject(cl, enumConstantsOffset, values.clone());
+        Unsafe.putObject(cl, enumConstantDirectoryOffset, null);
+    }
 }

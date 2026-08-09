@@ -171,7 +171,16 @@ public class CardboardMagicNumbers {
             try {
                 java.lang.reflect.Field field = Material.class.getDeclaredField("$VALUES");
                 field.setAccessible(true);
-                org.cardboardpowered.impl.MaterialValues.set(((Material[]) field.get(null)).clone());
+                Material[] extended = ((Material[]) field.get(null)).clone();
+                org.cardboardpowered.impl.MaterialValues.set(extended);
+
+                // The call-site rewrite covers plugins that call Material.values().
+                // It cannot cover EnumSet.allOf(Material.class),
+                // Material.class.getEnumConstants(), or any library that enumerates
+                // an enum generically, because those read Class's own cache instead
+                // of calling values(). Seed that cache with the same array so every
+                // route agrees on what a Material is.
+                EnumHelper.publishConstants(Material.class, extended);
             } catch (Throwable t) {
                 // Never silently: without this, modded materials are invisible to
                 // any plugin that iterates values(), with no other symptom.
