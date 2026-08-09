@@ -217,6 +217,34 @@ alias lookup has no entry.
 into WorldEdit's registry at startup; the same could be done for EssentialsX's
 item database. That would be a new feature and is not currently implemented.
 
+### Intermittent NoClassDefFoundError on core Bukkit classes (unexplained)
+
+Seen once, not reproduced. A player-run `/cbtest all` shortly after a restart
+failed four probes with `NoClassDefFoundError` for classes that are physically
+present in the jar:
+
+```
+org/bukkit/Difficulty
+org/bukkit/conversations/Conversation
+org/bukkit/inventory/LecternInventory
+org/bukkit/inventory/meta/AxolotlBucketMeta
+```
+
+An immediate re-run passed all 42 probes with no code change, so this is
+intermittent rather than fixed. `NoClassDefFoundError` rather than
+`ClassNotFoundException` points at a failed initialisation or linkage problem
+rather than a missing class, and the jar was confirmed to contain all four.
+
+Suspected but unproven: a classloading race when a player joins immediately
+after a restart, while mods and the Material registry are still settling. Both
+the failing and passing runs are with 12 mods and 3114 materials.
+
+**Why it matters:** these probes are player-only, so `regression_test.sh` never
+runs them - it drives `cbtest auto` from the console, where `probeNms`,
+`probeItemMeta` and `openGui` are all skipped. A whole probe category only
+executes when a human types the command, which is how the suite stayed green
+through this.
+
 ## UNSUPPORTED
 
 ### Clicking in a modded GUI threw (fixed)
