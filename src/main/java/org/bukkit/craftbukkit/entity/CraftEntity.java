@@ -27,6 +27,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerPlayerConnection;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.EntityProcessor;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
@@ -137,7 +138,28 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
             return (CraftEntity) entityTypeData.convertFunction().apply(server, entity);
         }
 
-        throw new AssertionError("Unknown entity " + (entity == null ? null : entity.getClass()));
+        // A modded entity type has no Bukkit equivalent, so the lookup above returns
+        // null. Throwing here killed the server: this runs inside the world tick,
+        // by way of ServerLevel$EntityCallbacks.onTickingStart, so the first
+        // natural spawn of any unrecognised mod entity took the whole server down.
+        // Mekanism's baby skeletons did exactly that, minutes after install:
+        //
+        //   AssertionError: Unknown entity class
+        //     mekanism.additions.common.entity.baby.EntityBabySkeleton
+        //
+        // Wrapping it as its nearest concrete Bukkit supertype is both survivable
+        // and more honest than a crash. A modded skeleton genuinely is a Creature
+        // and a LivingEntity, so a plugin asking that much gets a true answer; it
+        // simply cannot ask what kind of skeleton it is, which was already so.
+        // CraftMob is abstract, hence PathfinderMob -> CraftCreature and everything
+        // else living -> CraftLivingEntity.
+        if (entity instanceof PathfinderMob pathfinderMob) {
+            return new CraftCreature(server, pathfinderMob);
+        }
+        if (entity instanceof net.minecraft.world.entity.LivingEntity) {
+            return new CraftLivingEntity(server, entity);
+        }
+        return new org.cardboardpowered.impl.entity.UnknownEntity(entity);
     }
 
     public Entity getHandle() {
