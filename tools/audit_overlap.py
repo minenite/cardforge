@@ -146,6 +146,32 @@ def delegating_overloads(patch_path):
     return names
 
 
+INTERMEDIARY = re.compile(r'method\s*=\s*"(method_\d+)"')
+
+
+def intermediary_injections(src_root):
+    """Live injections still targeting a Fabric intermediary name.
+
+    Cardboard came from Fabric, where method_NNNNN is a real name. Under Mojang
+    mappings it matches nothing, so the injection can never bind - and because
+    Mixin only resolves a config's targets when the class is first loaded, strict
+    mode does not catch it at boot. It crashes the server whenever something
+    first needs that class, which can be hours in. One of these took the server
+    down during chunk generation when a ram behaviour loaded.
+
+    Comments are stripped first, since most surviving intermediary names in this
+    codebase are inside disabled code and harmless.
+    """
+    hits = []
+    for path in sorted(pathlib.Path(src_root).rglob('*.java')):
+        text = path.read_text(errors='replace')
+        text = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
+        text = re.sub(r'//[^\n]*', '', text)
+        for m in INTERMEDIARY.finditer(text):
+            hits.append((path, m.group(1)))
+    return hits
+
+
 def main():
     if len(sys.argv) < 3:
         print(__doc__)
@@ -158,6 +184,15 @@ def main():
     if not patch_root.is_dir():
         print(f'no patches under {patch_root}')
         return 0
+
+    stale = intermediary_injections(src_root)
+    if stale:
+        print('!! Live injections targeting Fabric intermediary names.')
+        print('   These cannot bind under Mojang mappings and crash the server')
+        print('   when the class is first loaded, not at boot.\n')
+        for path, name in stale:
+            print(f'   {path.name}: {name}')
+        print()
 
     targets = mixin_targets(src_root)
     print(f'Cardboard mixes into {len(targets)} Minecraft classes.\n')

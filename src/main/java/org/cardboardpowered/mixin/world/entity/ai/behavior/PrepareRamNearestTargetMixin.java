@@ -15,7 +15,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PrepareRamNearestTarget.class)
 public class PrepareRamNearestTargetMixin {
 
-    @Inject(method = "method_36270",
+    // method_36270 was a Fabric intermediary name left over from Cardboard's
+    // origin; it means nothing under Mojang mappings, so this injection could
+    // never bind. Strict mode did catch it - but only when the class first
+    // loaded, which is the moment a ram or goat behaviour is needed, so the
+    // server booted clean and then crashed during chunk generation hours later.
+    // The equivalent under Mojang names is the lambda in start(...) that calls
+    // chooseRamPosition, with the same signature.
+    @Inject(method = "lambda$start$2",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/ai/behavior/PrepareRamNearestTarget;chooseRamPosition(Lnet/minecraft/world/entity/PathfinderMob;Lnet/minecraft/world/entity/LivingEntity;)V"), cancellable = true)
     private void targetEvent(PathfinderMob pathAwareEntity, LivingEntity mob, CallbackInfo ci) {

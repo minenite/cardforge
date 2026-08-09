@@ -48,8 +48,18 @@ public class ServerGamePacketListenerImplMixin_InventoryClickEvent {
     @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/AbstractContainerMenu;clicked(IILnet/minecraft/world/inventory/ContainerInput;Lnet/minecraft/world/entity/player/Player;)V", 
             shift = At.Shift.BEFORE), method = "handleContainerClick", cancellable = true)
     public void doBukkitEvent_InventoryClickedEvent(ServerboundContainerClickPacket packet, CallbackInfo ci) {
-        if(packet.slotNum() < -1 && packet.slotNum() != -999)
+        // Let the click through, then bail out of firing the Bukkit event.
+        //
+        // The Redirect above drops AbstractContainerMenu#clicked entirely unless
+        // doCl is set, so returning here without setting it did not mean "skip the
+        // Bukkit event" - it meant "skip the click". Slot numbers outside vanilla's
+        // range are exactly what a mod's own GUI widgets use, so every such click
+        // was swallowed: the menu opened, the buttons did nothing, and there was no
+        // error to show for it.
+        if(packet.slotNum() < -1 && packet.slotNum() != -999) {
+            this.doCl = true;
             return;
+        }
 
         this.doCl = false;
         InventoryView inventory = ((AbstractContainerMenuBridge) (Object) player.containerMenu).getBukkitView();

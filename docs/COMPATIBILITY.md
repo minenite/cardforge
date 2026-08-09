@@ -233,6 +233,22 @@ same shape as the `openMenu` problem fixed earlier - a modded menu's non-slot
 widgets would then be handled as vanilla slots and do nothing. Needs
 verification before changing anything.
 
+### Strict mode catches broken injections late, not at boot
+
+Mixin resolves a config's targets when the target class is **first loaded**, not
+at startup. A live injection that can never bind therefore passes boot silently
+and takes the server down whenever something first needs that class.
+
+This happened: `PrepareRamNearestTargetMixin` targeted `method_36270`, a Fabric
+intermediary name left over from Cardboard's origin that means nothing under
+Mojang mappings. The server ran for hours and then crashed during chunk
+generation, when a ram behaviour first loaded. Retargeted to `lambda$start$2`,
+the equivalent under Mojang names.
+
+`tools/audit_overlap.py` now reports live injections targeting `method_NNNNN`
+so this class of latent crash is caught statically. It strips comments first,
+since most surviving intermediary names here are inside disabled code.
+
 ### `ServerListPingEvent.iterator()` throws
 
 `UnsupportedOperationException` from the bundled API. EssentialsX calls it on
