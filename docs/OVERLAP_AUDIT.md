@@ -609,6 +609,7 @@ NeoForge's own events, and replacing the method discards them.
 | `Mob#setTarget` | `LivingChangeTargetEvent` | **FIXED** |
 | `ServerPlayerGameMode#destroyBlock` | `BreakBlockEvent` | fixed earlier |
 | `ServerGamePacketListenerImpl#handleSetCarriedItem` | hotbar switch events | fixed earlier |
+| `ServerPlayer#setRespawnPosition` | `EventHooks.onPlayerSpawnSet` | **FIXED** |
 
 In every case the visible behaviour is correct - mobs drop loot, healing heals,
 mobs acquire targets - while the mod half of the contract is silently skipped.
@@ -669,3 +670,37 @@ side can veto.
 
 Both bridges fall back to the previous behaviour if the mod event throws, rather
 than costing the heal or the target.
+
+
+### `ServerPlayer#setRespawnPosition` - FIXED
+
+The sixth instance. NeoForge fires a cancellable `onPlayerSpawnSet` at the top of
+the method; Cardboard's HEAD hook cancels it to run Paper's spawn events, so no
+mod could observe or veto a spawn point change - beds, anchors, or a mod setting
+one directly. The spawn point still moved, so there was no symptom. The mod event
+now runs first and may veto.
+
+### Reviewed and sound, second batch
+
+- `ServerPlayerGameMode#handleBlockBreakAction` - NeoForge's `LeftClickBlock`
+  event is at the top; all four Cardboard hooks are at `INVOKE`/`FIELD` points
+  inside, so a mod cancelling correctly prevents them.
+- `ServerPlayer#teleport` - Cardboard uses `ModifyVariable` and `INVOKE`/`RETURN`
+  hooks, none cancelling, so `onTravelToDimension`, attachment sync and
+  `firePlayerChangedDimensionEvent` all still run.
+- `ItemEntity#tick` - non-cancelling HEAD inject that only attaches the Bukkit
+  entity. NeoForge's `onEntityItemUpdate` and custom fluid movement are untouched.
+- `LivingEntity#completeUsingItem` / `finishUsingItem` - NeoForge does not patch
+  the body; the flag came from a shared method name at a call site.
+- `CocoaBlock#randomTick` - Cardboard redirects the `setBlock` call, which sits
+  inside NeoForge's `canCropGrow` gate, so the gate still applies.
+- `LootItemRandomChanceWithEnchantedBonusCondition#test` - Cardboard injects at
+  RETURN, after NeoForge has adjusted the enchantment level.
+- `ServerConnectionListener#startTcpServerListener` - unrelated changes; TAIL
+  inject.
+- `TntBlock#onCaughtFire` - NeoForge adds the method; nothing of Cardboard's is
+  displaced.
+
+**Running total: 6 defects of the one pattern, all fixed.** Every one had the
+same signature - correct visible behaviour, the mod half of the contract silently
+skipped, nothing in any log.

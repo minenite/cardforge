@@ -732,6 +732,19 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
 
     @Override
     public boolean cardboard$setRespawnPosition(ServerPlayer.@org.jspecify.annotations.Nullable RespawnConfig respawnConfig, boolean displayInChat, com.destroystokyo.paper.event.player.PlayerSetSpawnEvent.Cause cause) {
+        // NeoForge fires a cancellable onPlayerSpawnSet at the top of
+        // setRespawnPosition, and the hook that reaches this method cancels that
+        // method, so no mod could observe or veto a spawn point change - beds,
+        // anchors, or anything a mod sets. Nothing looked wrong because the spawn
+        // point still moved.
+        try {
+            if (net.neoforged.neoforge.event.EventHooks.onPlayerSpawnSet((ServerPlayer) (Object) this, respawnConfig)) {
+                return false;
+            }
+        } catch (Throwable t) {
+            org.cardboardpowered.CardboardMod.LOGGER.warning("Could not fire onPlayerSpawnSet: " + t);
+        }
+
         org.bukkit.Location spawnLoc = null;
         boolean actuallyDisplayInChat = false;
         if (respawnConfig != null) {
