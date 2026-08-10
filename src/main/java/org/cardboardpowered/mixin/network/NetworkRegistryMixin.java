@@ -1,6 +1,13 @@
 package org.cardboardpowered.mixin.network;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import net.minecraft.resources.Identifier;
+import net.neoforged.neoforge.network.negotiation.NegotiableNetworkComponent;
 import net.neoforged.neoforge.network.negotiation.NegotiationResult;
+import net.neoforged.neoforge.network.negotiation.NetworkComponentNegotiator;
 import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,19 +25,29 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * This channel is missing on the server side, but required on the client!
  * </pre>
  *
- * <p>That is the right default for a single server, where a client with mods the
- * server lacks is a misconfiguration. It is wrong for a network: one client
- * connection visits several servers, so a lobby deliberately kept free of content
- * mods will always see clients carrying the modpack the other servers need.
+ * <p>The right default for a single server, where that is a misconfiguration. It
+ * is wrong for a network: one client connection visits several servers, so a
+ * lobby deliberately kept free of content mods will always see clients carrying
+ * the modpack the other servers need.
  *
- * <p>Off unless {@code settings.allow-mismatched-client-mods} is set in
- * spigot.yml, because it gives up a real diagnostic - a player missing something
- * they need now finds out when a feature does nothing rather than when they
- * connect. The reasons are logged either way.
+ * <p>The client's own channels are dropped before negotiating, rather than the
+ * result being forced to succeed afterwards. Forcing the result is the obvious
+ * shortcut and it does not work: a failed negotiation carries no components, so
+ * the connection is set up with nothing registered and dies moments later on
+ * NeoForge's own internal channels.
  *
- * <p>This is the server half of the same problem CardForge's companion client mod
- * solves from the other side. Both are needed: this one admits a client with
- * extra mods, that one lets a client cope with a server that has fewer.
+ * <pre>
+ * Payload neoforge:extensible_enum_data may not be sent to the client!
+ * </pre>
+ *
+ * <p>Removing the unmatched entries first leaves a negotiation that genuinely
+ * succeeds, with every mutual channel - NeoForge's included - intact. The mod
+ * whose channel was dropped simply has no server counterpart here, which is
+ * already true; its content is not on this server either.
+ *
+ * <p>Off unless {@code settings.allow-mismatched-client-mods} is set, because it
+ * gives up a real diagnostic: a player missing something they need finds out when
+ * a feature does nothing rather than when they connect.
  */
 @Mixin(NetworkRegistry.class)
 public class NetworkRegistryMixin {
@@ -38,13 +55,28 @@ public class NetworkRegistryMixin {
     @Redirect(
             method = "initializeNeoForgeConnection(Lnet/minecraft/network/protocol/configuration/ServerConfigurationPacketListener;Ljava/util/Map;)V",
             at = @At(value = "INVOKE",
-                    target = "Lnet/neoforged/neoforge/network/negotiation/NegotiationResult;success()Z"))
-    private static boolean cardboard$allowClientsWithExtraMods(NegotiationResult result) {
-        if (result.success() || !org.spigotmc.SpigotConfig.allowMismatchedClientMods) {
-            return result.success();
+                    target = "Lnet/neoforged/neoforge/network/negotiation/NetworkComponentNegotiator;"
+                            + "negotiate(Ljava/util/List;Ljava/util/List;)"
+                            + "Lnet/neoforged/neoforge/network/negotiation/NegotiationResult;"))
+    private static NegotiationResult cardboard$ignoreClientOnlyChannels(
+            List<NegotiableNetworkComponent> server, List<NegotiableNetworkComponent> client) {
+
+        if (!org.spigotmc.SpigotConfig.allowMismatchedClientMods) {
+            return NetworkComponentNegotiator.negotiate(server, client);
         }
-        org.cardboardpowered.CardboardMod.LOGGER.info(
-                "Admitting a client whose mods this server does not have: " + result.failureReasons().keySet());
-        return true;
+
+        Set<Identifier> known = server.stream()
+                .map(NegotiableNetworkComponent::id)
+                .collect(Collectors.toSet());
+        List<NegotiableNetworkComponent> mutual = client.stream()
+                .filter(component -> known.contains(component.id()))
+                .toList();
+
+        if (mutual.size() != client.size()) {
+            org.cardboardpowered.CardboardMod.LOGGER.info(
+                    "Ignoring " + (client.size() - mutual.size())
+                            + " client channel(s) this server does not have; the mods behind them are not here either");
+        }
+        return NetworkComponentNegotiator.negotiate(server, mutual);
     }
 }
