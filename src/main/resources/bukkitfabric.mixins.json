@@ -68,6 +68,7 @@
     "server.network.ServerCommonPacketListenerImplMixin_Brand",
     "server.network.ServerConnectionListenerMixin",
     "server.network.ServerGamePacketListenerImplMixin",
+    "server.network.ServerGamePacketListenerImplMixin_ProxyChatSession",
     "server.network.ServerGamePacketListenerImplMixin_ChatEvent",
     "server.network.ServerGamePacketListenerImplMixin_InventoryClickEvent",
     "server.network.ServerGamePacketListenerImplMixin_PlayerCommandPreprocessEvent",

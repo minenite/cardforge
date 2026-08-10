@@ -38,13 +38,21 @@ public final class VelocityForwarding {
     /**
      * Highest format version this implementation understands.
      *
-     * <p>1 is the original, 2 adds the signed player key, 3 adds the key's owner
-     * UUID, 4 carries the full signed key data. Requesting 1 keeps the payload to
-     * what is needed for identity, which is all a backend requires to place the
-     * player - the higher versions exist for chat signing, which the client
-     * negotiates with the proxy rather than with us.
+     * <p>Velocity names these 1 = default, 2 = with key, 3 = with key v2, 4 =
+     * lazy session. Its {@code findForwardingVersion} caps the request at 4 and
+     * then, for a client at 1.19.3 or newer, answers 4 if 4 was requested and
+     * otherwise falls back to 1 - so for a modern client, asking for 2 or 3 gets
+     * the same payload as asking for 1, and only 4 means anything different.
+     *
+     * <p>Version 4 writes no key fields at all: the key block is written only for
+     * versions 2 and 3, so the payload is laid out exactly as version 1 and the
+     * decoder below needs no extra cases. What it changes is responsibility -
+     * lazy session tells the proxy this backend defers chat session handling
+     * rather than validating the player's signing key itself, which a backend
+     * behind a proxy cannot do, being offline-mode and never in contact with the
+     * session server.
      */
-    public static final int MAX_SUPPORTED_VERSION = 1;
+    public static final int MAX_SUPPORTED_VERSION = 4;
 
     private static final int SIGNATURE_LENGTH = 32;
     private static final String HMAC_ALGORITHM = "HmacSHA256";
