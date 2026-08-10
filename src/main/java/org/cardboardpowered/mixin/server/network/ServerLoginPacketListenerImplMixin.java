@@ -351,6 +351,8 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 	// TODO: Overwrite can be replaced with something else.
 	@Overwrite
 	private void verifyLoginAndFinishConnectionSetup(GameProfile profile) {
+		org.minenite.cardforge.proxy.ProxyTrace.log("finishing login with profile=" + profile.id()
+				+ " props=" + profile.properties().size() + " keys=" + profile.properties().keySet());
 		PlayerList playerList = this.server.getPlayerList();
 		net.minecraft.network.chat.Component component = org.bukkit.craftbukkit.event.CraftEventFactory.handleLoginResult(((PlayerListBridge) (Object) playerList).cardboard$canPlayerLogin(this.connection.getRemoteAddress(), new NameAndId(profile)), this.paperLoginConnection(), this.connection, profile, this.server, true); // Paper
 		if (component != null) {

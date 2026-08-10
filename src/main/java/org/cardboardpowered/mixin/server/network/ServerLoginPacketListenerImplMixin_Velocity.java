@@ -142,7 +142,9 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
             this.connection.address = new java.net.InetSocketAddress(forwarded.address(), port);
 
             org.minenite.cardforge.proxy.ProxyTrace.log("verified: name=" + forwarded.profile().name()
-                    + " uuid=" + forwarded.profile().id() + " addr=" + forwarded.address());
+                    + " uuid=" + forwarded.profile().id() + " addr=" + forwarded.address()
+                    + " props=" + forwarded.profile().properties().size()
+                    + " keys=" + forwarded.profile().properties().keySet());
             this.requestedUsername = forwarded.profile().name();
             this.startClientVerification(forwarded.profile());
         } catch (Exception refused) {
