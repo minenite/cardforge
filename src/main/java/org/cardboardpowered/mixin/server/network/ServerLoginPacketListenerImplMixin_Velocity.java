@@ -80,12 +80,27 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
                 + " secretLen=" + org.spigotmc.SpigotConfig.velocitySecret.length());
     }
 
-    @Inject(method = "handleHello", at = @At("TAIL"), cancellable = true)
+    /**
+     * Asks the proxy who this is, before vanilla decides for itself.
+     *
+     * <p>At HEAD, not TAIL. Vanilla's offline branch builds a profile from the
+     * name and starts verification with it, and the inherited Spigot path then
+     * fires its login events from a thread that re-stores whatever profile it
+     * captured. Both would race the proxy's answer, and when they won the player
+     * entered the world under a name-hashed UUID with no skin - which is why the
+     * skin appeared on some joins and not others.
+     *
+     * <p>Cancelling here means neither runs: no stand-in profile is ever created,
+     * and the login resumes only when the forwarded identity arrives.
+     */
+    @Inject(method = "handleHello", at = @At("HEAD"), cancellable = true)
     private void cardboard$requestForwardedIdentity(ServerboundHelloPacket packet, CallbackInfo ci) {
-        org.minenite.cardforge.proxy.ProxyTrace.log("handleHello TAIL reached");
         if (!org.spigotmc.SpigotConfig.velocityModern) {
             return;
         }
+        // Vanilla sets this in the body being skipped, and everything downstream
+        // expects it to be populated.
+        this.requestedUsername = packet.name();
         // A fresh id per connection; the answer is matched against it so another
         // login plugin exchange cannot be mistaken for ours.
         this.cardboard$velocityTransactionId = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE);
@@ -93,19 +108,8 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
                 this.cardboard$velocityTransactionId,
                 new VelocityForwarding.Request(VelocityForwarding.MAX_SUPPORTED_VERSION)));
 
-        // Vanilla's offline branch has already run by this point: it built a profile
-        // from the name alone and moved to VERIFYING, so the next server tick would
-        // finish the login with a name-hashed UUID and no properties - no skin - if it
-        // beat the proxy's answer. That is a race, and on a quiet server the answer
-        // usually wins, which makes it look fixed.
-        //
-        // Discard that stand-in and step back to HELLO. The login resumes only when
-        // the forwarded identity arrives and calls startClientVerification itself.
-        this.authenticatedProfile = null;
-        this.state = ServerLoginPacketListenerImpl.State.HELLO;
-
-        org.minenite.cardforge.proxy.ProxyTrace.log("sent forwarding request, txn=" + this.cardboard$velocityTransactionId
-                + " (discarded vanilla offline profile, state reset to HELLO)");
+        org.minenite.cardforge.proxy.ProxyTrace.log("sent forwarding request, txn="
+                + this.cardboard$velocityTransactionId);
         ci.cancel();
     }
 
@@ -147,6 +151,22 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
                     + " keys=" + forwarded.profile().properties().keySet());
             this.requestedUsername = forwarded.profile().name();
             this.startClientVerification(forwarded.profile());
+
+            // The Bukkit login events normally fire from a thread started in
+            // handleHello, which is skipped under forwarding because no profile
+            // exists yet. Fire them here instead, with the identity the proxy
+            // vouched for, so plugins see the real player. On its own thread: the
+            // synchronous event is handed to the server thread and waited on.
+            final com.mojang.authlib.GameProfile verified = forwarded.profile();
+            new Thread(() -> ((org.cardboardpowered.bridge.network.LoginEventsBridge) this)
+                    .cardboard$fireLoginEvents(verified), "Forwarded Login Verifier").start();
+            // Confirm the call actually stored it: this mixin reaches
+            // startClientVerification through a shadow, and a shadow that failed to
+            // bind would silently do nothing.
+            org.minenite.cardforge.proxy.ProxyTrace.log("after startClientVerification: stored="
+                    + (this.authenticatedProfile == null ? "null"
+                            : this.authenticatedProfile.id() + " props=" + this.authenticatedProfile.properties().size())
+                    + " state=" + this.state);
         } catch (Exception refused) {
             org.minenite.cardforge.proxy.ProxyTrace.log("REJECTED: " + refused);
             org.cardboardpowered.CardboardMod.LOGGER.warning(

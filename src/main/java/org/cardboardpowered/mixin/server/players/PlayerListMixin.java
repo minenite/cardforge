@@ -112,6 +112,13 @@ public abstract class PlayerListMixin implements PlayerListBridge {
 
     @Inject(method = "placeNewPlayer", at = @At("HEAD"))
     public void onConnect(Connection connection, ServerPlayer player, CommonListenerCookie clientData, CallbackInfo ci) {
+        // The profile the player actually enters the world with. Everything the
+        // client renders comes from this, so a skin that never appears is either
+        // missing its textures property here or losing it downstream.
+        org.minenite.cardforge.proxy.ProxyTrace.log("placeNewPlayer: uuid=" + player.getGameProfile().id()
+                + " props=" + player.getGameProfile().properties().size()
+                + " keys=" + player.getGameProfile().properties().keySet()
+                + " cookieProfile=" + (clientData == null ? "null" : "present"));
         this.plr = (CraftPlayer) CraftServer.INSTANCE.getPlayer(player);
     }
 

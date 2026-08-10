@@ -68,7 +68,28 @@ import io.papermc.paper.connection.PaperPlayerLoginConnection;
 
 @SuppressWarnings("deprecation")
 @Mixin(value = ServerLoginPacketListenerImpl.class, priority = 999)
-public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginPacketListenerImplBridge {
+public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginPacketListenerImplBridge,
+		org.cardboardpowered.bridge.network.LoginEventsBridge {
+
+	/**
+	 * Fires the Bukkit login events for a profile established by proxy forwarding.
+	 *
+	 * <p>The inherited Spigot path fires these from a thread started at
+	 * handleHello, using whatever profile exists then. Under forwarding the real
+	 * profile has not arrived at that point, so the forwarding code calls this
+	 * once it has, and the events see the player's actual identity.
+	 */
+	@Override
+	public void cardboard$fireLoginEvents(GameProfile profile) {
+		try {
+			fireEvents(profile);
+		} catch(Exception failed) {
+			disconnect("Failed to verify username!");
+			CraftServer.INSTANCE.getLogger()
+					.log(java.util.logging.Level.WARNING, "Exception verifying " + profile.name(), failed);
+		}
+	}
+
 
 	private static Logger LOGGER_BF = LoggerFactory.getLogger("PaperMC|ServerLoginNetworkHandler"); // LogManager.getLogger("Bukkit|ServerLoginNetworkHandler");
 	
@@ -330,6 +351,13 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 			}
 		}
 		LOGGER_BF.info("UUID of player {} is {}", profile.name(), profile.id());
+		if(org.spigotmc.SpigotConfig.velocityModern) {
+			// The forwarding path already started verification with the profile the
+			// proxy vouched for. Repeating it here would store whatever profile this
+			// thread happened to capture, which under forwarding is the offline
+			// stand-in - overwriting the real identity and dropping the skin.
+			return;
+		}
 		startClientVerification(profile);
 	}
 
