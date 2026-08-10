@@ -704,3 +704,51 @@ now runs first and may veto.
 **Running total: 6 defects of the one pattern, all fixed.** Every one had the
 same signature - correct visible behaviour, the mod half of the contract silently
 skipped, nothing in any log.
+
+
+### `ShearsDispenseItemBehavior#tryShearEntity` / `isShearable` / `onSheared` - SAFE
+
+The last two flagged targets, and both are the same class. NeoForge does not
+patch `tryShearEntity`'s body at all; the flag comes from Cardboard hooking
+NeoForge's own `IShearable#isShearable` and `#onSheared` at `INVOKE` points
+inside it, which is the replacement subsystem doing exactly what it should.
+Cancellation is decided on `isShearable`, drops are captured on `onSheared`, and
+the `forceDrops` window is cleared at RETURN of `tryShearEntity` rather than
+inside the redirect - which is what fixed the dispenser dropping no wool.
+
+This was reworked and playtested earlier in the port. Recording it by method name
+so the audit list closes cleanly.
+
+---
+
+## Audit closed
+
+All **35 flagged targets** across the 114 overlapping classes are now reviewed
+against NeoForge 26.2.0 stable.
+
+| Outcome | Count |
+| --- | --- |
+| Defects found and fixed | 6 |
+| Reviewed and sound | 29 |
+
+The six were one pattern repeating: `@Inject(at = HEAD, cancellable = true)`
+followed by `ci.cancel()`, which is an `@Overwrite` wearing a different
+annotation. Every one discarded a NeoForge event living in the replaced method,
+and every one was invisible in play - blocks broke, mobs dropped loot, healing
+healed, spawn points moved.
+
+The distinction that separates the six from the twenty-nine is simple enough to
+use as a review rule:
+
+**A hook that sits inside a method composes. A hook that replaces the method
+does not.** `@Redirect` on a call, `@Inject` at `INVOKE`/`RETURN`/`TAIL`, and
+`ModifyVariable` all leave NeoForge's additions running. HEAD-plus-cancel does
+not, and needs the NeoForge event bridged explicitly.
+
+### What this audit still cannot tell you
+
+It compares Cardboard's hooks against NeoForge's patches. It says nothing about
+hooks that are wrong on their own terms - the respawn hang, the CraftPlayer not
+surviving death, `Player#getHealth()` returning a constant, `/reload` wiping the
+plugin layer, and the op field never being seeded were all found by other means.
+Five of the session's defects were in that category, against six here.
