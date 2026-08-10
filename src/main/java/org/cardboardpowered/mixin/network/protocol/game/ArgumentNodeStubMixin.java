@@ -41,8 +41,11 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * themselves still work, and the server still parses them with the real type,
  * because only the wire representation changes.
  *
- * <p>Only active when {@code settings.bungeecord} is enabled in spigot.yml, so a
- * server that is not proxied sends its command tree exactly as before.
+ * <p>Active whenever a proxy is configured - either forwarding scheme - so a
+ * server that is not proxied sends its command tree exactly as before. Gating
+ * this on the legacy bungeecord flag alone left it switched off under modern
+ * forwarding, where the connection reaches PLAY and then dies on the first
+ * command tree.
  */
 @Mixin(targets = "net.minecraft.network.protocol.game.ClientboundCommandsPacket$ArgumentNodeStub")
 public class ArgumentNodeStubMixin {
@@ -67,7 +70,7 @@ public class ArgumentNodeStubMixin {
     private static void cardboard$substituteUnknownArgumentTypes(FriendlyByteBuf buffer,
                                                                  ArgumentTypeInfo.Template<?> template) {
         ArgumentTypeInfo.Template<?> toWrite = template;
-        if (org.spigotmc.SpigotConfig.bungee && !cardboard$isProxySafe(template.type())) {
+        if (org.spigotmc.SpigotConfig.proxied() && !cardboard$isProxySafe(template.type())) {
             // greedyString rather than word: a substituted argument may legitimately
             // contain spaces, and the server parses with the real type regardless.
             toWrite = ArgumentTypeInfos.unpack(StringArgumentType.greedyString());

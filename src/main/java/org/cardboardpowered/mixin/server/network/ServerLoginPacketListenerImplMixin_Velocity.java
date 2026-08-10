@@ -65,10 +65,18 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
      * backend must not attempt its own session authentication, because the session
      * was established between the client and the proxy.
      */
+    @Inject(method = "handleHello", at = @At("HEAD"))
+    private void cardboard$traceHello(ServerboundHelloPacket packet, CallbackInfo ci) {
+        // At HEAD, not TAIL: TAIL injects at the final return only, so a method
+        // with an early branch traces nothing and reads as "never called".
+        org.minenite.cardforge.proxy.ProxyTrace.log("handleHello HEAD: name=" + packet.name()
+                + " velocityModern=" + org.spigotmc.SpigotConfig.velocityModern
+                + " secretLen=" + org.spigotmc.SpigotConfig.velocitySecret.length());
+    }
+
     @Inject(method = "handleHello", at = @At("TAIL"), cancellable = true)
     private void cardboard$requestForwardedIdentity(ServerboundHelloPacket packet, CallbackInfo ci) {
-        org.minenite.cardforge.proxy.ProxyTrace.log("handleHello: velocityModern=" + org.spigotmc.SpigotConfig.velocityModern
-                + " secretLen=" + org.spigotmc.SpigotConfig.velocitySecret.length());
+        org.minenite.cardforge.proxy.ProxyTrace.log("handleHello TAIL reached");
         if (!org.spigotmc.SpigotConfig.velocityModern) {
             return;
         }

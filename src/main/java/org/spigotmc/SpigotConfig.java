@@ -189,6 +189,19 @@ public class SpigotConfig {
      * handshake hostname already carries a loader marker.
      */
     public static boolean velocityModern;
+
+    /**
+     * Whether a proxy sits in front of this server, by either forwarding scheme.
+     *
+     * <p>Anything that has to hold back non-vanilla data from the wire cares about
+     * the presence of a proxy, not which scheme forwards the player - a proxy
+     * decoding the command tree chokes on NeoForge's argument types regardless of
+     * how identity reaches us.
+     */
+    public static boolean proxied() {
+        return bungee || velocityModern;
+    }
+
     public static String velocitySecret = "";
 
     private static void velocityModern() {

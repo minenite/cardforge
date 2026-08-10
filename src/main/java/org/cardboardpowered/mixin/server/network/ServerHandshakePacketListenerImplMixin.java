@@ -25,6 +25,16 @@ public class ServerHandshakePacketListenerImplMixin {
     @Shadow
     public Connection connection;
 
+    @Inject(at = @At("HEAD"), method = "handleIntention")
+    public void cardboard$traceHandshake(ClientIntentionPacket packet, CallbackInfo ci) {
+        // At HEAD as well as TAIL: handleIntention returns early for several
+        // intents, and TAIL injects at the final return only - so a connection
+        // taking an early path traces nothing and looks like it never arrived.
+        org.minenite.cardforge.proxy.ProxyTrace.log("handshake HEAD: intent=" + packet.intention()
+                + " proto=" + packet.protocolVersion()
+                + " host=" + packet.hostName().replace("\0", "<NUL>"));
+    }
+
     @Inject(at = @At("TAIL"), method = "handleIntention")
     public void onHandshake_Bungee(ClientIntentionPacket packet, CallbackInfo ci) {
     	org.cardboardpowered.CardboardMod.LOGGER.info("[bungee] handshake hook ran: intent=" + packet.intention()
