@@ -388,6 +388,12 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 				public void run() {
 					try {
 						initUUID();
+						if(authenticatedProfile == null) {
+							// Under modern forwarding the profile comes from the proxy;
+							// if it never arrived the connection is already being closed,
+							// and firing login events with no profile would only NPE.
+							return;
+						}
 						fireEvents(authenticatedProfile);
 					} catch(Exception ex) {
 						disconnect("Failed to verify username!");
@@ -402,6 +408,26 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 
 	// Spigot start
 	public void initUUID() {
+		// Modern forwarding has already established who this is, and the profile it
+		// produced carries the player's real UUID and their skin properties. Rebuilding
+		// it from the name alone would replace both with an offline-mode stand-in:
+		// the UUID becomes a hash of the name, and properties - textures included -
+		// are dropped entirely, which is why proxied players appeared as Steve.
+		//
+		// The forwarding answer arrives on the network thread while this runs on its
+		// own, so wait briefly for it rather than racing it.
+		if(org.spigotmc.SpigotConfig.velocityModern) {
+			for(int waited = 0; this.authenticatedProfile == null && waited < 100; waited++) {
+				try {
+					Thread.sleep(10L);
+				} catch(InterruptedException interrupted) {
+					Thread.currentThread().interrupt();
+					return;
+				}
+			}
+			return;
+		}
+
 		UUID uuid;
 		if(((ConnectionBridge) (Object) connection).getSpoofedUUID() != null)
 			uuid = ((ConnectionBridge) (Object) connection).getSpoofedUUID();
