@@ -119,6 +119,28 @@ client-side tab completion for those arguments falls back to free text — the
 commands still work, and the server still parses them with the real type,
 because only the wire representation changes.
 
+### Skins, and the profile the login finishes with
+
+A proxied player showing the default skin means the login completed with an
+offline-mode profile rather than the forwarded one. The forwarded profile is the
+only source of the player's `textures` property, so losing it loses the skin and
+gives the player a name-hashed UUID - which also means plugin data keyed by UUID
+is stored under the wrong identity.
+
+Two things caused this, and both are fixed; they are recorded because the
+symptom is intermittent and easy to misread:
+
+- Vanilla's offline branch runs during `handleHello` and starts verification
+  with a profile built from the name alone. If the server tick beats the proxy's
+  answer, that stand-in finishes the login. Whether it does is a race, so the
+  skin appears on one server and not the next.
+- `initUUID`, inherited from the legacy Spigot path, rebuilds the profile from
+  the name later, dropping every property.
+
+The trace settles it in one line: `props=1 keys=[textures]` on both the
+`verified:` and `finishing login with` lines means the skin arrived and was used.
+`props=0` means it was not.
+
 ### Forwarding version
 
 CardForge requests version 4, `MODERN_LAZY_SESSION`. Velocity's
@@ -161,6 +183,8 @@ Read it in order — each line rules out a layer:
 | Stops after `sent forwarding request` | The proxy never answered. Usually `player-info-forwarding-mode` is not `MODERN`. |
 | `REJECTED: ...` | The answer arrived but did not verify. Usually mismatched secrets. |
 | `verified:` then a kick | Login succeeded; the fault is later — the command tree or chat session traps above. |
+| `verified: ... props=0` | The proxy sent no skin data. Check the proxy is in online mode. |
+| `finishing login with ... props=0` after a good `verified:` | The forwarded profile was replaced between verification and login. |
 
 Check the forwarded UUID against the account's real one
 (`https://api.mojang.com/users/profiles/minecraft/<name>`). If it matches, the
