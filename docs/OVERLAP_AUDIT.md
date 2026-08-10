@@ -586,3 +586,66 @@ back to the previous statement boundary made the output substantially noisier,
 so it was reverted; the checker keeps the depth fix, which removed four genuine
 false positives from anonymous inner classes. Comparing full parameter types
 rather than arity is the right next improvement, and is not attempted here.
+
+---
+
+## Second pass: a systemic pattern, not isolated defects
+
+Re-running the audit against 26.2.0 stable, with the declaration parser fixed,
+reports **47 injections landing on NeoForge-patched methods across 35 distinct
+targets** - not the 8 an earlier, narrower parse suggested. Reviewing the
+high-traffic ones surfaced the same defect three more times, and it is worth
+naming as a category rather than a list.
+
+**Cardboard implements a Bukkit event by replacing the vanilla method**: inject
+at HEAD, reimplement the body, `ci.cancel()`. On Fabric that is harmless, since
+vanilla had nothing else in there. On NeoForge those same methods now contain
+NeoForge's own events, and replacing the method discards them.
+
+| Method | NeoForge event lost | State |
+| --- | --- | --- |
+| `LivingEntity#dropAllDeathLoot` | `LivingDropsEvent` | **FIXED** |
+| `LivingEntity#heal` | `EventHooks.onLivingHeal` | open |
+| `Mob#setTarget` | `LivingChangeTargetEvent` | open |
+| `ServerPlayerGameMode#destroyBlock` | `BreakBlockEvent` | fixed earlier |
+| `ServerGamePacketListenerImpl#handleSetCarriedItem` | hotbar switch events | fixed earlier |
+
+In every case the visible behaviour is correct - mobs drop loot, healing heals,
+mobs acquire targets - while the mod half of the contract is silently skipped.
+
+### `dropAllDeathLoot` - FIXED
+
+`cardboard_doDrop` cancels the method and does its own drop collection, so
+`CommonHooks.onLivingDrops` never fired and no mod could add or remove mob
+drops. The list is now handed to NeoForge as `ItemEntity`s, its event fires
+first, and whatever survives is read back into the Bukkit `EntityDeathEvent`.
+Cancellation from either side is honoured. Spawning is unchanged.
+
+Verified: `EntityDeathEvent#getDrops()` still carries drops, suite at 69 passed.
+
+### Reviewed and sound
+
+- `PlayerList#op` / `#deop` - NeoForge added a cancellable
+  `onPermissionChanged` early return; Cardboard injects at TAIL, so a cancelled
+  permission change correctly skips the recalculation.
+- `ExperienceOrb#playerTouch` - Bukkit's pickup event runs first and cancels the
+  method; when it does not, NeoForge's `PickupXp` fires normally.
+- `MappedRegistry#freeze` - Cardboard only clears its own map at HEAD.
+- `ServerCommonPacketListenerImpl#handleCustomPayload` - Cardboard's hook is a
+  non-cancelling HEAD inject for the client brand.
+- `ServerPlayer#die` - Cardboard's hooks are all at `INVOKE` points inside the
+  method, so NeoForge's `onLivingDeath` early return correctly prevents them.
+
+### Noted, minor
+
+`handlePlayerAbilities` - NeoForge changed the flight check from the `mayfly`
+field to `player.mayFly()`, which can account for mod-granted flight. Cardboard's
+TAIL hook still reads the field, so `PlayerToggleFlightEvent` may not fire for a
+player whose flight comes from a mod.
+
+### Still unread
+
+Roughly 20 of the 35 targets, including `ItemEntity#tick`,
+`LivingEntity#finishUsingItem`, `ServerPlayerGameMode#handleBlockBreakAction`,
+`ServerPlayer#teleport` / `newLevel`, `setRespawnPosition`, `CocoaBlock#randomTick`,
+`TntBlock#onCaughtFire` and `ServerConnectionListener#startTcpServerListener`.

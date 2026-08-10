@@ -103,7 +103,44 @@ public abstract class LivingEntityMixin extends EntityMixin implements LivingEnt
             this.dropCustomDeathLoot((ServerLevel) world, damagesource, flag);
         }
 
-        CraftEventFactory.callEntityDeathEvent(get(), damagesource, ((EntityBridge) (Object) this).cardboard_getDrops());
+        // NeoForge fires LivingDropsEvent inside dropAllDeathLoot, and this hook
+        // cancels that method to run Bukkit's own drop handling instead - so the mod
+        // event was never firing at all. Any mod adding or removing mob drops did
+        // nothing, silently, because the drops still appeared: Cardboard spawns them
+        // itself further down.
+        //
+        // Both ecosystems get a say now, mods first. The drop list is handed to
+        // NeoForge as ItemEntities, since that is what its event expects, and read
+        // back afterwards so anything a mod added or removed survives into the Bukkit
+        // event. Nothing is spawned here; callEntityDeathEvent still owns that.
+        java.util.List<org.bukkit.inventory.ItemStack> drops = ((EntityBridge) (Object) this).cardboard_getDrops();
+        try {
+            java.util.Collection<net.minecraft.world.entity.item.ItemEntity> asEntities = new ArrayList<>();
+            for (org.bukkit.inventory.ItemStack stack : drops) {
+                if (stack == null || stack.getType() == org.bukkit.Material.AIR || stack.getAmount() == 0) {
+                    continue;
+                }
+                asEntities.add(new net.minecraft.world.entity.item.ItemEntity(world,
+                        get().getX(), get().getY(), get().getZ(),
+                        org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(stack)));
+            }
+
+            if (net.neoforged.neoforge.common.CommonHooks.onLivingDrops(get(), damagesource, asEntities, flag)) {
+                // A mod cancelled the drops outright.
+                drops = new ArrayList<>();
+            } else {
+                drops = new ArrayList<>();
+                for (net.minecraft.world.entity.item.ItemEntity item : asEntities) {
+                    drops.add(org.bukkit.craftbukkit.inventory.CraftItemStack.asBukkitCopy(item.getItem()));
+                }
+            }
+        } catch (Throwable t) {
+            // Never let the bridge cost the drops themselves; fall back to the list as
+            // collected, which is the pre-existing behaviour.
+            org.cardboardpowered.CardboardMod.LOGGER.warning("Could not fire LivingDropsEvent for a death: " + t);
+        }
+
+        CraftEventFactory.callEntityDeathEvent(get(), damagesource, drops);
         ((EntityBridge) (Object) this).cardboard_setDrops(new ArrayList<>());
         this.dropExperience(world, damagesource.getEntity());
         ci.cancel();
