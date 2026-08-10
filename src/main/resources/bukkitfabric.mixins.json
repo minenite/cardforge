@@ -26,6 +26,8 @@
     "core.dispenser.ShearsDispenseItemBehaviorMixin",
     "core.registries.BuiltInRegistriesMixin",
     "network.ConnectionMixin",
+    "network.protocol.login.ServerboundCustomQueryAnswerPacketMixin",
+    "server.network.ServerLoginPacketListenerImplMixin_Velocity",
     "network.protocol.game.ArgumentNodeStubMixin",
     "network.FriendlyByteBufMixin",
     "network.chat.StyleMixin",

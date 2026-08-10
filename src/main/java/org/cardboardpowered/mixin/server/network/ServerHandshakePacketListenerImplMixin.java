@@ -27,6 +27,10 @@ public class ServerHandshakePacketListenerImplMixin {
 
     @Inject(at = @At("TAIL"), method = "handleIntention")
     public void onHandshake_Bungee(ClientIntentionPacket packet, CallbackInfo ci) {
+    	org.cardboardpowered.CardboardMod.LOGGER.info("[bungee] handshake hook ran: intent=" + packet.intention()
+    			+ " proto=" + packet.protocolVersion() + " serverProto=" + net.minecraft.SharedConstants.getProtocolVersion()
+    			+ " bungeeFlag=" + org.spigotmc.SpigotConfig.bungee
+    			+ " host=" + packet.hostName().replace("\0", "<NUL>"));
     	if (packet.intention() == ClientIntent.LOGIN) {
             // Ask Minecraft, not iCommonLib. GameVersion.INSTANCE is only ever
             // populated by FabricServer.getGameVersion(), a Fabric-only class that
@@ -41,6 +45,8 @@ public class ServerHandshakePacketListenerImplMixin {
             } else {
                 if (org.spigotmc.SpigotConfig.bungee) {
                     String[] split = packet.hostName().split("\00");
+                    // Temporary: the connection dies inside this handshake with nothing
+                    // logged on either side, so log what actually arrived.
                     // Spigot requires exactly 3 or 4 segments - host, ip, uuid and
                     // optionally the signed properties - and silently returns otherwise.
                     // A modded server never satisfies that: NeoForge appends its own
@@ -74,10 +80,16 @@ public class ServerHandshakePacketListenerImplMixin {
                         return;
                     }
                 }
-                ((ServerLoginPacketListenerImplBridge)((ServerLoginPacketListenerImpl) this.connection.getPacketListener())).setHostname(packet.hostName() + ":" + packet.port()); // Bukkit - set hostname
+                try {
+                    ((ServerLoginPacketListenerImplBridge)((ServerLoginPacketListenerImpl) this.connection.getPacketListener())).setHostname(packet.hostName() + ":" + packet.port()); // Bukkit - set hostname
+                } catch (Throwable t) {
+                    org.cardboardpowered.CardboardMod.LOGGER.warning("[bungee] setHostname failed: " + t);
+                    throw t;
+                }
             }
         }
     }
+
 
     private UUID fromString(final String input) {
         return UUID.fromString(input.replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5"));

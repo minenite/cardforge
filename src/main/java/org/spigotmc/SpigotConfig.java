@@ -182,6 +182,24 @@ public class SpigotConfig {
         WatchdogThread.doStart( timeoutTime, restartOnCrash );
     }
 
+    /**
+     * Velocity's modern forwarding. Unlike the bungeecord flag below it does not
+     * touch the handshake: the identity is negotiated during login and
+     * authenticated with a shared secret, so it works on a modded server where the
+     * handshake hostname already carries a loader marker.
+     */
+    public static boolean velocityModern;
+    public static String velocitySecret = "";
+
+    private static void velocityModern() {
+        velocityModern = getBoolean( "settings.velocity.enabled", false );
+        velocitySecret = getString( "settings.velocity.secret", "" );
+        if ( velocityModern && velocitySecret.isEmpty() ) {
+            Bukkit.getLogger().severe( "settings.velocity.enabled is on but settings.velocity.secret is empty. "
+                    + "Copy the contents of the proxy's forwarding.secret into it, or logins will be refused." );
+        }
+    }
+
     public static boolean bungee;
     private static void bungee() {
         if ( version < 4 ) {
