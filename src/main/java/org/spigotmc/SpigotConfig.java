@@ -188,6 +188,16 @@ public class SpigotConfig {
      * authenticated with a shared secret, so it works on a modded server where the
      * handshake hostname already carries a loader marker.
      */
+    /**
+     * Whether a client may join carrying mods this server does not have.
+     *
+     * <p>NeoForge refuses such a client by default, which is right for a single
+     * server and wrong for a network: one client connection visits several
+     * servers, so a lobby kept free of content mods always sees clients carrying
+     * the modpack the rest of the network needs.
+     */
+    public static boolean allowMismatchedClientMods;
+
     public static boolean velocityModern;
 
     /**
@@ -203,6 +213,10 @@ public class SpigotConfig {
     }
 
     public static String velocitySecret = "";
+
+    private static void allowMismatchedClientMods() {
+        allowMismatchedClientMods = getBoolean( "settings.allow-mismatched-client-mods", false );
+    }
 
     private static void velocityModern() {
         velocityModern = getBoolean( "settings.velocity.enabled", false );
