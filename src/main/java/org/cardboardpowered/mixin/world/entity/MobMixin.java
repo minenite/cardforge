@@ -32,8 +32,13 @@ public abstract class MobMixin extends LivingEntity implements MobBridge, Entity
 
     @Inject(method = "setTarget", at = @At("HEAD"), cancellable = true)
     public void setTargetCraftBukkit(LivingEntity livingEntity, CallbackInfo ci) {
-        // CraftBukkit start - fire event
-        boolean set = this.cardboard$setTarget(target, EntityTargetEvent.TargetReason.UNKNOWN);
+        // Was passing the shadow field `target` - the mob's *current* target - rather
+        // than `livingEntity`, the one being set. cardboard$setTarget opens with
+        // `if (this.getTarget() == target) return false`, so it compared the field to
+        // itself, returned immediately every time, and EntityTargetLivingEntityEvent
+        // never fired at all. Vanilla targeting still ran, so mobs behaved normally
+        // and nothing looked wrong; plugins simply could not see or veto targeting.
+        boolean set = this.cardboard$setTarget(livingEntity, EntityTargetEvent.TargetReason.UNKNOWN);
         if (set) { // Let the other mods call their @Inject if set is false.
             ci.cancel();
         }
