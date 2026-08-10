@@ -31,6 +31,9 @@ public class ServerHandshakePacketListenerImplMixin {
     			+ " proto=" + packet.protocolVersion() + " serverProto=" + net.minecraft.SharedConstants.getProtocolVersion()
     			+ " bungeeFlag=" + org.spigotmc.SpigotConfig.bungee
     			+ " host=" + packet.hostName().replace("\0", "<NUL>"));
+    	org.minenite.cardforge.proxy.ProxyTrace.log("handshake: intent=" + packet.intention()
+    			+ " proto=" + packet.protocolVersion() + " server=" + net.minecraft.SharedConstants.getProtocolVersion()
+    			+ " host=" + packet.hostName().replace("\0", "<NUL>"));
     	if (packet.intention() == ClientIntent.LOGIN) {
             // Ask Minecraft, not iCommonLib. GameVersion.INSTANCE is only ever
             // populated by FabricServer.getGameVersion(), a Fabric-only class that

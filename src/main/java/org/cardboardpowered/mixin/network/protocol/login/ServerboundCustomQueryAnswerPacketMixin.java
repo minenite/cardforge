@@ -32,10 +32,15 @@ public class ServerboundCustomQueryAnswerPacketMixin {
             at = @At("HEAD"), cancellable = true)
     private static void cardboard$retainPayload(int transactionId, FriendlyByteBuf buffer,
                                                 CallbackInfoReturnable<CustomQueryAnswerPayload> cir) {
+        // The frame is a boolean followed by the body. Vanilla skips both together
+        // as one blob, so reading the blob as data treats the flag as the payload's
+        // first byte - which is how a 32-byte signature ended up being read from a
+        // 1-byte buffer when a vanilla client answered "channel not understood".
+        boolean understood = buffer.readableBytes() > 0 && buffer.readBoolean();
+        byte[] data = new byte[buffer.readableBytes()];
         // Copy rather than retain the buffer: the packet's buffer is released once
         // decoding finishes, and holding a reference past that is a use-after-free.
-        byte[] data = new byte[buffer.readableBytes()];
         buffer.readBytes(data);
-        cir.setReturnValue(new RetainedQueryAnswerPayload(data));
+        cir.setReturnValue(new RetainedQueryAnswerPayload(understood, data));
     }
 }

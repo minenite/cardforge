@@ -57,6 +57,7 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
     @Unique
     private int cardboard$velocityTransactionId = -1;
 
+
     /**
      * Asks the proxy who this is, instead of proceeding with the vanilla login.
      *
@@ -66,6 +67,8 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
      */
     @Inject(method = "handleHello", at = @At("TAIL"), cancellable = true)
     private void cardboard$requestForwardedIdentity(ServerboundHelloPacket packet, CallbackInfo ci) {
+        org.minenite.cardforge.proxy.ProxyTrace.log("handleHello: velocityModern=" + org.spigotmc.SpigotConfig.velocityModern
+                + " secretLen=" + org.spigotmc.SpigotConfig.velocitySecret.length());
         if (!org.spigotmc.SpigotConfig.velocityModern) {
             return;
         }
@@ -75,11 +78,15 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
         this.connection.send(new ClientboundCustomQueryPacket(
                 this.cardboard$velocityTransactionId,
                 new VelocityForwarding.Request(VelocityForwarding.MAX_SUPPORTED_VERSION)));
+        org.minenite.cardforge.proxy.ProxyTrace.log("sent forwarding request, txn=" + this.cardboard$velocityTransactionId);
         ci.cancel();
     }
 
     @Inject(method = "handleCustomQueryPacket", at = @At("HEAD"), cancellable = true)
     private void cardboard$acceptForwardedIdentity(ServerboundCustomQueryAnswerPacket packet, CallbackInfo ci) {
+        org.minenite.cardforge.proxy.ProxyTrace.log("answer received: txn=" + packet.transactionId()
+                + " expected=" + this.cardboard$velocityTransactionId
+                + " payload=" + packet.payload().getClass().getSimpleName());
         if (!org.spigotmc.SpigotConfig.velocityModern
                 || packet.transactionId() != this.cardboard$velocityTransactionId) {
             return;
@@ -107,9 +114,12 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
             int port = remote instanceof java.net.InetSocketAddress inet ? inet.getPort() : 0;
             this.connection.address = new java.net.InetSocketAddress(forwarded.address(), port);
 
+            org.minenite.cardforge.proxy.ProxyTrace.log("verified: name=" + forwarded.profile().name()
+                    + " uuid=" + forwarded.profile().id() + " addr=" + forwarded.address());
             this.requestedUsername = forwarded.profile().name();
             this.startClientVerification(forwarded.profile());
         } catch (Exception refused) {
+            org.minenite.cardforge.proxy.ProxyTrace.log("REJECTED: " + refused);
             org.cardboardpowered.CardboardMod.LOGGER.warning(
                     "Rejected a forwarded login: " + refused.getMessage());
             this.disconnect(Component.literal("Invalid proxy forwarding data."));
