@@ -416,6 +416,10 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 		//
 		// The forwarding answer arrives on the network thread while this runs on its
 		// own, so wait briefly for it rather than racing it.
+		org.minenite.cardforge.proxy.ProxyTrace.log("initUUID entry: velocityModern="
+				+ org.spigotmc.SpigotConfig.velocityModern
+				+ " profile=" + (this.authenticatedProfile == null ? "null"
+						: this.authenticatedProfile.id() + " props=" + this.authenticatedProfile.properties().size()));
 		if(org.spigotmc.SpigotConfig.velocityModern) {
 			for(int waited = 0; this.authenticatedProfile == null && waited < 100; waited++) {
 				try {
@@ -425,9 +429,13 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 					return;
 				}
 			}
+			org.minenite.cardforge.proxy.ProxyTrace.log("initUUID kept forwarded profile: "
+					+ (this.authenticatedProfile == null ? "null"
+							: this.authenticatedProfile.id() + " props=" + this.authenticatedProfile.properties().size()));
 			return;
 		}
 
+		org.minenite.cardforge.proxy.ProxyTrace.log("initUUID REWRITING to offline profile");
 		UUID uuid;
 		if(((ConnectionBridge) (Object) connection).getSpoofedUUID() != null)
 			uuid = ((ConnectionBridge) (Object) connection).getSpoofedUUID();

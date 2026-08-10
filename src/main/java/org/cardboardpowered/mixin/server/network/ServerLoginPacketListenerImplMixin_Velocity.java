@@ -54,6 +54,12 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
     private void startClientVerification(GameProfile profile) {
     }
 
+    @Shadow
+    private com.mojang.authlib.GameProfile authenticatedProfile;
+
+    @Shadow
+    private ServerLoginPacketListenerImpl.State state;
+
     @Unique
     private int cardboard$velocityTransactionId = -1;
 
@@ -86,7 +92,20 @@ public abstract class ServerLoginPacketListenerImplMixin_Velocity {
         this.connection.send(new ClientboundCustomQueryPacket(
                 this.cardboard$velocityTransactionId,
                 new VelocityForwarding.Request(VelocityForwarding.MAX_SUPPORTED_VERSION)));
-        org.minenite.cardforge.proxy.ProxyTrace.log("sent forwarding request, txn=" + this.cardboard$velocityTransactionId);
+
+        // Vanilla's offline branch has already run by this point: it built a profile
+        // from the name alone and moved to VERIFYING, so the next server tick would
+        // finish the login with a name-hashed UUID and no properties - no skin - if it
+        // beat the proxy's answer. That is a race, and on a quiet server the answer
+        // usually wins, which makes it look fixed.
+        //
+        // Discard that stand-in and step back to HELLO. The login resumes only when
+        // the forwarded identity arrives and calls startClientVerification itself.
+        this.authenticatedProfile = null;
+        this.state = ServerLoginPacketListenerImpl.State.HELLO;
+
+        org.minenite.cardforge.proxy.ProxyTrace.log("sent forwarding request, txn=" + this.cardboard$velocityTransactionId
+                + " (discarded vanilla offline profile, state reset to HELLO)");
         ci.cancel();
     }
 
