@@ -114,3 +114,4 @@ tools/cycle_test.sh <server-dir> 3
 - [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) — installing and running
 - [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) — what works, what does not, how it was established
 - [docs/PORTING.md](docs/PORTING.md) — how the Fabric implementation was moved onto NeoForge
+- [docs/PROXY.md](docs/PROXY.md) — running behind Velocity, with the traps that look like CardForge bugs
