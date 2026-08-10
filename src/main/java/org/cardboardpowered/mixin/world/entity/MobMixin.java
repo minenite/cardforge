@@ -73,6 +73,26 @@ public abstract class MobMixin extends LivingEntity implements MobBridge, Entity
                 target = null;
             }
         }
+
+        // NeoForge fires LivingChangeTargetEvent inside setTarget and lets a mod
+        // redirect or veto the new target. The hook above cancels that method to run
+        // this instead, so the mod event never fired and no mod could influence
+        // targeting - invisibly, since mobs still acquired targets normally.
+        //
+        // The plugin has already had its say; the mod now gets the same chance on the
+        // resulting target, which keeps both able to veto.
+        try {
+            net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent changeTarget =
+                    net.neoforged.neoforge.common.CommonHooks.onLivingChangeTarget((Mob) (Object) this, target,
+                            net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent.LivingTargetType.MOB_TARGET);
+            if (changeTarget.isCanceled()) {
+                return false;
+            }
+            target = changeTarget.getNewAboutToBeSetTarget();
+        } catch (Throwable t) {
+            org.cardboardpowered.CardboardMod.LOGGER.warning("Could not fire LivingChangeTargetEvent: " + t);
+        }
+
         this.target = target;
         return true;
         // CraftBukkit end

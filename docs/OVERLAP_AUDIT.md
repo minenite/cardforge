@@ -605,8 +605,8 @@ NeoForge's own events, and replacing the method discards them.
 | Method | NeoForge event lost | State |
 | --- | --- | --- |
 | `LivingEntity#dropAllDeathLoot` | `LivingDropsEvent` | **FIXED** |
-| `LivingEntity#heal` | `EventHooks.onLivingHeal` | open |
-| `Mob#setTarget` | `LivingChangeTargetEvent` | open |
+| `LivingEntity#heal` | `EventHooks.onLivingHeal` | **FIXED** |
+| `Mob#setTarget` | `LivingChangeTargetEvent` | **FIXED** |
 | `ServerPlayerGameMode#destroyBlock` | `BreakBlockEvent` | fixed earlier |
 | `ServerGamePacketListenerImpl#handleSetCarriedItem` | hotbar switch events | fixed earlier |
 
@@ -649,3 +649,23 @@ Roughly 20 of the 35 targets, including `ItemEntity#tick`,
 `LivingEntity#finishUsingItem`, `ServerPlayerGameMode#handleBlockBreakAction`,
 `ServerPlayer#teleport` / `newLevel`, `setRespawnPosition`, `CocoaBlock#randomTick`,
 `TntBlock#onCaughtFire` and `ServerConnectionListener#startTcpServerListener`.
+
+
+### `LivingEntity#heal` - FIXED
+
+The HEAD hook cancelled the method and delegated to Cardboard's own
+`heal(float, RegainReason)`, so `EventHooks.onLivingHeal` never fired: a mod
+scaling or blocking healing did nothing, and the entity still healed, so nothing
+looked wrong. The mod event now runs first and can scale the amount to zero to
+veto it; the plugin's `EntityRegainHealthEvent` then sees the result.
+
+### `Mob#setTarget` - FIXED
+
+Same shape. `cardboard$setTarget` fired Bukkit's `EntityTargetLivingEntityEvent`
+and assigned `this.target` directly, so `LivingChangeTargetEvent` never fired and
+no mod could redirect or veto targeting. Mobs still acquired targets, so it was
+invisible. The mod event now runs on the target the plugin settled on, and either
+side can veto.
+
+Both bridges fall back to the previous behaviour if the mod event throws, rather
+than costing the heal or the target.

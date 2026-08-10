@@ -231,7 +231,24 @@ public abstract class LivingEntityMixin extends EntityMixin implements LivingEnt
 
     public void heal(float f, EntityRegainHealthEvent.RegainReason regainReason) {
         if (get().getHealth() > 0.0F) {
-            EntityRegainHealthEvent event = new EntityRegainHealthEvent(this.getBukkitEntity(), f, regainReason);
+            // NeoForge fires onLivingHeal at the top of heal() and lets a mod scale or
+            // veto the amount. The hook above cancels that method to run this instead,
+            // so the mod event was never firing: a mod halving or blocking healing did
+            // nothing, and nothing looked wrong because the entity still healed.
+            //
+            // Mods decide the amount first, then the plugin sees the result, which is
+            // the same order used for block breaking and death drops.
+            float amount = f;
+            try {
+                amount = net.neoforged.neoforge.event.EventHooks.onLivingHeal(get(), amount);
+            } catch (Throwable t) {
+                org.cardboardpowered.CardboardMod.LOGGER.warning("Could not fire onLivingHeal: " + t);
+            }
+            if (amount <= 0.0F) {
+                return;
+            }
+
+            EntityRegainHealthEvent event = new EntityRegainHealthEvent(this.getBukkitEntity(), amount, regainReason);
             if (this.isValidBF()) {
                 Bukkit.getPluginManager().callEvent(event);
                 if (!event.isCancelled()) get().setHealth((float) (get().getHealth() + event.getAmount()));
