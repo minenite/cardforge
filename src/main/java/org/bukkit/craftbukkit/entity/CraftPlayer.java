@@ -581,14 +581,27 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
         if (name == null) {
             name = this.getName();
         }
-        /*this.getHandle().listName = name.equals(this.getName()) ? null : CraftChatMessage.fromStringOrNull(name);
-        if (this.getHandle().connection == null) return; // Paper - Updates are possible before the player has fully joined
-        for (ServerPlayer player : this.server.getHandle().players) {
-            if (player.getBukkitEntity().canSee(this)) {
-                player.connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME, this.getHandle()));
+        // The name lives in a private field on ServerPlayer, reached through the
+        // bridge. This used to do nothing at all: a plugin could set a tab list
+        // name and the list would carry on showing the plain one.
+        ((org.cardboardpowered.bridge.server.level.ServerPlayerBridge) (Object) this.getHandle())
+                .cardboard$setTabListName(CraftChatMessage.fromStringOrNull(name));
+
+        if (this.getHandle().connection == null) {
+            // Updates are possible before the player has fully joined; the name is
+            // stored and goes out with the rest of their info when they do.
+            return;
+        }
+        // Everyone online is told, rather than filtering by who can see whom:
+        // visibility here is a Bukkit concept layered on top, and a tab list entry
+        // for a hidden player is already handled elsewhere.
+        for (org.bukkit.entity.Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+            ServerPlayer handle = ((CraftPlayer) online).getHandle();
+            if (handle.connection != null) {
+                handle.connection.send(new ClientboundPlayerInfoUpdatePacket(
+                        ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME, this.getHandle()));
             }
-        }*/
-        // TODO
+        }
     }
 
     @Override

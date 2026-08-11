@@ -99,6 +99,25 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(value = ServerPlayer.class, priority = 999)
 public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSourceBridge, ServerPlayerBridge {
 
+    @org.spongepowered.asm.mixin.Shadow
+    private net.minecraft.network.chat.Component tabListDisplayName;
+
+    @org.spongepowered.asm.mixin.Shadow
+    private boolean hasTabListName;
+
+    /**
+     * Sets the tab list name, which lives in two private fields on ServerPlayer.
+     *
+     * <p>The flag matters as much as the name: without it vanilla recomputes the
+     * name from the scoreboard and the assignment is undone.
+     */
+    @Override
+    public void cardboard$setTabListName(net.minecraft.network.chat.Component name) {
+        this.tabListDisplayName = name;
+        this.hasTabListName = true;
+    }
+
+
 	@Shadow
 	private CommandSource commandSource;
 

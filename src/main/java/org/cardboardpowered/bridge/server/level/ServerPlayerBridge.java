@@ -43,6 +43,15 @@ import java.util.Optional;
 
 public interface ServerPlayerBridge extends EntityBridge {
 
+    /**
+     * Sets the name this player shows as in the tab list, or null for their own.
+     *
+     * <p>The field behind it is private to ServerPlayer, and CraftPlayer has no
+     * way to reach it - which is why setPlayerListName did nothing at all.
+     */
+    void cardboard$setTabListName(net.minecraft.network.chat.Component name);
+
+
     void reset();
 
     BlockPos getSpawnPoint(Level world);
