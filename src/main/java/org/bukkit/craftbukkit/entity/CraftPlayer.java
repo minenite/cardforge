@@ -3168,8 +3168,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     // Paper start - brand support
     @Override
     public String getClientBrandName() {
-        //return getHandle().connection.playerBrand; // TODO
-        return "Vanilla";
+        // Captured from the minecraft:brand payload by
+        // ServerCommonPacketListenerImplMixin_Brand. This used to answer "Vanilla"
+        // for everyone, which is worse than answering nothing: a plugin asking what
+        // client someone runs was told a confident falsehood, and gating on it -
+        // deciding whether a player can reach a modded server, say - would keep out
+        // exactly the people it should let through.
+        if (this.getHandle().connection == null) {
+            return null;
+        }
+        return ((org.cardboardpowered.bridge.server.network.ClientBrandBridge)
+                this.getHandle().connection).cardboard_getClientBrand();
     }
     // Paper end
 
