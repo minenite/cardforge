@@ -148,6 +148,9 @@ public abstract class PlayerListMixin implements PlayerListBridge {
         }
 
         joinMessage = playerJoinEvent.getJoinMessage();
+        org.minenite.cardforge.proxy.ProxyTrace.log("join message after event: "
+                + (joinMessage == null ? "null" : "'" + joinMessage + "'")
+                + " lines=" + (joinMessage == null ? 0 : CraftChatMessage.fromString(joinMessage).length));
 
         if (joinMessage != null && !joinMessage.isEmpty()) {
             for (Component line : CraftChatMessage.fromString(joinMessage)) {
@@ -163,6 +166,20 @@ public abstract class PlayerListMixin implements PlayerListBridge {
 
         PlayerQuitEvent playerQuitEvent = new PlayerQuitEvent(CraftServer.INSTANCE.getPlayer(player), "\u00A7e" + player.getDisplayName().getString() + " left the game");
         CraftServer.INSTANCE.getPluginManager().callEvent(playerQuitEvent);
+
+        // The event's message was fired and then thrown away: a plugin could change
+        // it or clear it and nothing happened, because vanilla had already
+        // broadcast its own line from removePlayerFromWorld before this ran. That
+        // broadcast is suppressed now, so this is the one that reaches players.
+        String quitMessage = playerQuitEvent.getQuitMessage();
+        org.minenite.cardforge.proxy.ProxyTrace.log("quit message after event: "
+                + (quitMessage == null ? "null" : "'" + quitMessage + "'"));
+        if (quitMessage != null && !quitMessage.isEmpty()) {
+            for (Component line : CraftChatMessage.fromString(quitMessage)) {
+                broadcastSystemMessage(line, entityplayer -> line, false);
+            }
+        }
+
         player.doTick();
     }
     
