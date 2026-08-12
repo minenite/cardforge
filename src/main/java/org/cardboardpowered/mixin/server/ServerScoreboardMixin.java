@@ -10,12 +10,15 @@ import org.bukkit.craftbukkit.CraftServer;
 import org.cardboardpowered.bridge.world.entity.EntityBridge;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.List;
 import java.util.Set;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 
@@ -140,14 +143,27 @@ public abstract class ServerScoreboardMixin extends Scoreboard implements Server
     }
     // Paper end - Multiple Entries with Scoreboards
 
-    // CraftBukkit start - Send to players
+    // CraftBukkit start - Send to players on THIS scoreboard only.
+    // Vanilla ServerScoreboard uses PlayerList.broadcastAll, which leaks every
+    // plugin sidebar update to every client. Same objective name (e.g. warz_vitals)
+    // then stacks Survivor + Bandit lines on everyone's HUD.
     @Unique
     private void broadcastAll(Packet<?> packet) {
         for (ServerPlayer serverPlayer : this.server.getPlayerList().players) {
-            if (((CraftPlayer)((EntityBridge) (Object) serverPlayer).getBukkitEntity()).getScoreboard().getHandle() == this) {
+            if (((CraftPlayer) ((EntityBridge) (Object) serverPlayer).getBukkitEntity())
+                    .getScoreboard().getHandle() == this) {
                 serverPlayer.connection.send(packet);
             }
         }
+    }
+
+    @Redirect(
+            method = "*",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/players/PlayerList;broadcastAll(Lnet/minecraft/network/protocol/Packet;)V"))
+    private void cardboard$filterScoreboardBroadcast(PlayerList playerList, Packet<?> packet) {
+        this.broadcastAll(packet);
     }
     // CraftBukkit end
 }
