@@ -45,6 +45,16 @@ public final class MapViewImpl implements MapView {
         return renderers.size() > 0 && !(renderers.get(0) instanceof MapRendererImpl);
     }
 
+    /** True when a plugin {@link MapRenderer} replaced (or sits beside) the vanilla one. */
+    public boolean hasCustomRenderers() {
+        for (MapRenderer renderer : renderers) {
+            if (!(renderer instanceof MapRendererImpl)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     @Deprecated
     public Scale getScale() {
