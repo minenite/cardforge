@@ -797,10 +797,24 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     public MapView createMap(World world) {
         Validate.notNull(world, "World cannot be null");
 
-        net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(Items.MAP, 1);
-        // MapState worldmap = FilledMapItem.getOrCreateMapState(stack, ((CraftWorld) world).getHandle());
-        MapItemSavedData worldmap = MapItem.getSavedData(stack, ((CraftWorld) world).getHandle());
-        return ((MapItemSavedDataBridge) (Object) worldmap).getMapViewBF();
+        ServerLevel worldServer = ((CraftWorld) world).getHandle();
+        // Create a real filled map + MapItemSavedData (empty MAP stack has no data → NPE).
+        // Scale 3, no player tracking — same defaults as modern Paper createMap.
+        net.minecraft.world.item.ItemStack stack = MapItem.create(worldServer, 0, 0, (byte) 3, false, false);
+        MapItemSavedData worldmap = MapItem.getSavedData(stack, worldServer);
+        if (worldmap == null) {
+            throw new IllegalStateException("MapItem.create produced no MapItemSavedData");
+        }
+
+        net.minecraft.world.level.saveddata.maps.MapId mapId =
+                stack.get(net.minecraft.core.component.DataComponents.MAP_ID);
+        MapViewImpl view = ((MapItemSavedDataBridge) (Object) worldmap).getMapViewBF();
+        if (mapId != null) {
+            view.cardboard$setId(mapId.id());
+        }
+
+        org.bukkit.Bukkit.getPluginManager().callEvent(new org.bukkit.event.server.MapInitializeEvent(view));
+        return view;
     }
 
     @Override
@@ -1229,14 +1243,18 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public MapViewImpl getMap(int arg0) {
-    	ServerLevel overworld = server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
-    	me.isaiah.common.cmixin.IMixinWorld ic = (me.isaiah.common.cmixin.IMixinWorld) (Object) overworld;
-
-    	MapItemSavedData worldmap = ic.IC$get_map_state(arg0);
-        // MapState worldmap = server.getWorld(net.minecraft.world.World.OVERWORLD).getMapState("map_" + arg0);
-        if (worldmap == null)
-            return null;
-        return ((MapItemSavedDataBridge) (Object) worldmap).getMapViewBF();
+        net.minecraft.world.level.saveddata.maps.MapId mid =
+                new net.minecraft.world.level.saveddata.maps.MapId(arg0);
+        for (ServerLevel level : server.getAllLevels()) {
+            MapItemSavedData worldmap = level.getMapData(mid);
+            if (worldmap == null) {
+                continue;
+            }
+            MapViewImpl view = ((MapItemSavedDataBridge) (Object) worldmap).getMapViewBF();
+            view.cardboard$setId(arg0);
+            return view;
+        }
+        return null;
     }
 
     @Override

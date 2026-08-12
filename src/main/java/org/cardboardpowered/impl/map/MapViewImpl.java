@@ -20,22 +20,24 @@ public final class MapViewImpl implements MapView {
     private final List<MapRenderer> renderers = new ArrayList<>();
     private final Map<MapRenderer, Map<CraftPlayer, MapCanvasImpl>> canvases = new HashMap<>();
     protected final MapItemSavedData worldMap;
+    /** Bukkit map id ({@code MapId.id}); set when the map is registered or looked up. */
+    private int id = -1;
 
     public MapViewImpl(MapItemSavedData worldMap) {
         this.worldMap = worldMap;
         addRenderer(new MapRendererImpl(this, worldMap));
     }
 
+    public void cardboard$setId(int id) {
+        this.id = id;
+    }
+
     @Override
     public int getId() {
-        String text = worldMap.toString();//// TODO: 1.17ify //.getId();
-        if (text.startsWith("map_")) {
-            try {
-                return Integer.parseInt(text.substring("map_".length()));
-            } catch (NumberFormatException ex) {
-                throw new IllegalStateException("Map has non-numeric ID");
-            }
-        } else throw new IllegalStateException("Map has invalid ID");
+        if (this.id < 0) {
+            throw new IllegalStateException("Map view has no id yet");
+        }
+        return this.id;
     }
 
     @Override

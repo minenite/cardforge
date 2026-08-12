@@ -6,4 +6,6 @@ public interface MapItemSavedDataBridge {
 
     MapViewImpl getMapViewBF();
 
+    void cardboard$setMapView(MapViewImpl view);
+
 }

@@ -1,17 +1,17 @@
 /**
  * CardboardPowered - Bukkit/Spigot for Fabric
  * Copyright (C) CardboardPowered.org and contributors
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
- * License as published by the Free Software Foundation; either 
+ * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -19,33 +19,39 @@
 package org.cardboardpowered.mixin.world.level.saveddata.maps;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
-import org.cardboardpowered.impl.map.MapViewImpl;
+
 import org.cardboardpowered.bridge.world.level.saveddata.maps.MapItemSavedDataBridge;
+import org.cardboardpowered.impl.map.MapViewImpl;
 
 @Mixin(MapItemSavedData.class)
 public class MapItemSavedDataMixin implements MapItemSavedDataBridge {
 
-    public MapViewImpl mapView;
+    @Unique
+    private MapViewImpl cardboard$mapView;
 
-    //@Inject(at = @At("TAIL"), method="<init>*")
-    //public void setMapView(String s, CallbackInfo ci) {
-    //    mapView = new MapViewImpl((MapState)(Object)this);
-    //}
-
-    @Inject(at = @At("TAIL"), method="<init>*")
-    public void setMapView(int a, int b, byte c, boolean d, boolean e, boolean f, ResourceKey key, CallbackInfo ci) {
-        mapView = new MapViewImpl((MapItemSavedData)(Object)this);
+    @Inject(at = @At("TAIL"), method = "<init>(IIBZZZLnet/minecraft/resources/ResourceKey;)V")
+    private void cardboard$initMapView(int centerX, int centerZ, byte scale, boolean trackingPosition,
+            boolean unlimitedTracking, boolean locked, ResourceKey<?> dimension, CallbackInfo ci) {
+        this.cardboard$mapView = new MapViewImpl((MapItemSavedData) (Object) this);
     }
-
 
     @Override
     public MapViewImpl getMapViewBF() {
-        return mapView;
+        if (this.cardboard$mapView == null) {
+            this.cardboard$mapView = new MapViewImpl((MapItemSavedData) (Object) this);
+        }
+        return this.cardboard$mapView;
     }
 
+    @Override
+    public void cardboard$setMapView(MapViewImpl view) {
+        this.cardboard$mapView = view;
+    }
 }
