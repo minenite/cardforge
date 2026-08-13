@@ -16,11 +16,16 @@ import net.minecraft.world.level.block.state.BlockState;
 @Mixin(LeavesBlock.class)
 public class MixinLeavesBlock {
     
-    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/LeavesBlock;dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V"),
-            method = "randomTick", cancellable = true)
-    public void cardboard_doLeavesDecayEvent(BlockState state, ServerLevel world, BlockPos pos, RandomSource ra, CallbackInfo ci) {        
-    	EventRegistery.invoke(LeavesDecayEvent.class, 
+    @Inject(method = "randomTick", at = @At("HEAD"), cancellable = true)
+    public void cardboard_doLeavesDecayEvent(BlockState state, ServerLevel world, BlockPos pos, RandomSource ra, CallbackInfo ci) {
+        LeavesDecayEvent event = (LeavesDecayEvent) EventRegistery.invoke(LeavesDecayEvent.class,
                 new LeavesDecayEvent(state, world, pos));
+        if (event != null && event.isCanceled()) {
+            ci.cancel();
+        }
+        // Always stop decay here as well: the INVOKE dropResources target was
+        // LeavesBlock.dropResources, which 26.2 does not call (Block.dropResources).
+        ci.cancel();
     }
 
 }

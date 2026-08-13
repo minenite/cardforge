@@ -250,7 +250,8 @@ public class CraftInventory implements Inventory {
     public int firstEmpty() {
         ItemStack[] inventory = this.getStorageContents();
         for (int i = 0; i < inventory.length; i++) {
-            if (inventory[i] == null) {
+            ItemStack stack = inventory[i];
+            if (stack == null || stack.getType().isAir() || stack.getAmount() <= 0 || stack.isEmpty()) {
                 return i;
             }
         }

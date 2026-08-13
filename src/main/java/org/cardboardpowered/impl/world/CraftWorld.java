@@ -2873,8 +2873,9 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	public <T extends Entity> @NotNull T spawn(@NotNull Location location, @NotNull Class<T> clazz,
 			java.util.function.@Nullable Consumer<? super T> function, @NotNull SpawnReason reason)
 			throws IllegalArgumentException {
-		// TODO Auto-generated method stub
-        return (T)((LivingEntity)this.spawn(location, clazz, function, reason));
+		net.minecraft.world.entity.Entity entity = createEntity_Old(location, clazz);
+		org.bukkit.util.Consumer<T> adapted = function == null ? null : function::accept;
+		return addEntity(entity, reason, adapted);
 	}
 
 	@Override
@@ -3008,8 +3009,9 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	public <T extends LivingEntity> @NotNull T spawn(@NotNull Location location, @NotNull Class<T> clazz,
 			@NotNull SpawnReason reason, boolean randomizeData,
 			java.util.function.@Nullable Consumer<? super T> function) throws IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return (T)((LivingEntity)this.spawn(location, clazz, function, reason));
+		net.minecraft.world.entity.Entity entity = createEntity_Old(location, clazz);
+		org.bukkit.util.Consumer<T> adapted = function == null ? null : function::accept;
+		return addEntity(entity, reason, adapted);
 	}
 
 	@Override

@@ -122,14 +122,31 @@ public abstract class ServerPlayerMixin_DeathEvent extends Player {
     @Inject(method = "die", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/server/level/ServerPlayer;isSpectator()Z"))
     private void cardboard$check_event_drops(DamageSource damageSource, CallbackInfo ci) {
-        // SPIGOT-5478 must be called manually now
-    	// cb$this().dropXp(damageSource.getAttacker());
-    	
-    	this.dropExperience(cb$this().level(), damageSource.getEntity());
-    	
-        // we clean the player's inventory after the EntityDeathEvent is called so plugins can get the exact state of the inventory.
-        if (!cardboard$deathEvent.get().getKeepInventory()) {
-        	cb$this().getInventory().clearContent();
+        // Honour PlayerDeathEvent XP controls (plugins set dropped exp / shouldDrop).
+        // Calling LivingEntity.dropExperience ignores the event and always awards orbs.
+        PlayerDeathEvent deathEvent = cardboard$deathEvent.get();
+        if (deathEvent != null) {
+            keepLevel = deathEvent.getKeepLevel();
+            if (deathEvent.shouldDropExperience()) {
+                int exp = deathEvent.getDroppedExp();
+                if (exp > 0) {
+                    net.minecraft.world.entity.ExperienceOrb.award(
+                            cb$this().level(), cb$this().position(), exp);
+                }
+            }
+        }
+
+        // Clean inventory after EntityDeathEvent so plugins saw the pre-clear state.
+        if (deathEvent != null && !deathEvent.getKeepInventory()) {
+            cb$this().getInventory().clearContent();
+            // 26.2 client HUD needs SetPlayerInventory packets or items ghost after /kill.
+            try {
+                org.bukkit.craftbukkit.entity.CraftPlayer craft =
+                        (org.bukkit.craftbukkit.entity.CraftPlayer) ((EntityBridge) (Object) this).getBukkitEntity();
+                ((org.bukkit.craftbukkit.inventory.CraftInventoryPlayer) craft.getInventory()).resyncEntireInventory();
+            } catch (Throwable ignored) {
+                // best-effort; death must not fail on sync
+            }
         }
     }
 

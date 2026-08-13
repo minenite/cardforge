@@ -1369,7 +1369,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     @Deprecated
     @Override
     public void updateInventory() {
-        this.getHandle().containerMenu.sendAllDataToRemote();
+        // Full 26.2 player-inv resync — sendAllDataToRemote alone is not enough
+        // after /clear (client keeps ghost hotbar/map stacks).
+        org.bukkit.craftbukkit.inventory.CraftInventoryPlayer inv =
+                (org.bukkit.craftbukkit.inventory.CraftInventoryPlayer) this.getInventory();
+        inv.resyncEntireInventory();
     }
 
     @Override

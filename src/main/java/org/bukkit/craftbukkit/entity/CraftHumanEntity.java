@@ -83,7 +83,7 @@ import org.jetbrains.annotations.Nullable;
 public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
 
     private CraftInventoryPlayer inventory;
-    private final CraftInventory enderChest;
+    private CraftInventory enderChest;
     protected final PermissibleBase perm = new PermissibleBase(this);
     private boolean op;
     private GameMode mode;
@@ -121,9 +121,23 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         return (Player) this.entity;
     }
 
-    public void setHandle(final Player entity) {
+    /**
+     * Respawns go through {@code setHandle(Entity)} (see ServerPlayer.restoreFrom
+     * rebind). The Player overload alone is never hit from that path, so without
+     * this override the cached {@link CraftInventoryPlayer} kept pointing at the
+     * dead entity's inventory and kit/give calls silently mutated the wrong one.
+     */
+    @Override
+    public void setHandle(final net.minecraft.world.entity.Entity entity) {
         super.setHandle(entity);
-        this.inventory = new CraftInventoryPlayer(entity.getInventory());
+        if (entity instanceof Player player) {
+            this.inventory = new CraftInventoryPlayer(player.getInventory());
+            this.enderChest = new CraftInventory(player.getEnderChestInventory());
+        }
+    }
+
+    public void setHandle(final Player entity) {
+        this.setHandle((net.minecraft.world.entity.Entity) entity);
     }
 
     @Override

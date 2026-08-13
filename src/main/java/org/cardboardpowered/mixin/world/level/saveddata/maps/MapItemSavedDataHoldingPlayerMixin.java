@@ -1,7 +1,7 @@
 package org.cardboardpowered.mixin.world.level.saveddata.maps;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.map.CraftMapCursor;
@@ -58,12 +58,8 @@ public abstract class MapItemSavedDataHoldingPlayerMixin {
             return;
         }
 
-        // Custom maps: refresh on a short interval even when vanilla colors are clean.
-        if (!this.dirtyData && this.tick % 5 != 0) {
-            this.tick++;
-            cir.setReturnValue(null);
-            return;
-        }
+        // Every tick: re-render plugin pixels and push. Vanilla only re-sends when
+        // SavedData.colors is dirty; plugin canvases are a separate buffer.
         this.tick++;
         this.dirtyData = false;
         this.dirtyDecorations = false;
@@ -71,15 +67,28 @@ public abstract class MapItemSavedDataHoldingPlayerMixin {
         CraftPlayer craftPlayer = (CraftPlayer) ((EntityBridge) this.player).getBukkitEntity();
         RenderData render = view.render(craftPlayer);
 
-        Collection<MapDecoration> icons = new ArrayList<>();
-        for (MapCursor cursor : render.cursors) {
-            if (cursor.isVisible()) {
-                icons.add(new MapDecoration(
-                        CraftMapCursor.CraftType.bukkitToMinecraftHolder(cursor.getType()),
-                        cursor.getX(),
-                        cursor.getY(),
-                        cursor.getDirection(),
-                        CraftChatMessage.fromStringOrOptional(cursor.getCaption())));
+        // Keep vanilla color array in sync so exploration / other readers see us.
+        byte[] colors = this.this$0.colors;
+        if (colors != null && render.buffer != null && colors.length == render.buffer.length) {
+            System.arraycopy(render.buffer, 0, colors, 0, colors.length);
+        }
+
+        // null decorations = "do not replace decoration list" (empty list would clear).
+        Collection<MapDecoration> icons = null;
+        if (render.cursors != null && !render.cursors.isEmpty()) {
+            icons = new java.util.ArrayList<>(render.cursors.size());
+            for (MapCursor cursor : render.cursors) {
+                if (cursor.isVisible()) {
+                    icons.add(new MapDecoration(
+                            CraftMapCursor.CraftType.bukkitToMinecraftHolder(cursor.getType()),
+                            cursor.getX(),
+                            cursor.getY(),
+                            cursor.getDirection(),
+                            CraftChatMessage.fromStringOrOptional(cursor.getCaption())));
+                }
+            }
+            if (icons.isEmpty()) {
+                icons = Collections.emptyList();
             }
         }
 

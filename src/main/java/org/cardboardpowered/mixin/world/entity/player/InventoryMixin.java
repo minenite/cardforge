@@ -1,6 +1,8 @@
 package org.cardboardpowered.mixin.world.entity.player;
 
 import net.minecraft.core.NonNullList;
+import net.minecraft.network.protocol.game.ClientboundSetPlayerInventoryPacket;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EntityEquipment;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -13,6 +15,9 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
@@ -36,6 +41,48 @@ public abstract class InventoryMixin implements Container, ContainerBridge, Inve
 
     @Shadow
     public abstract boolean hasRemainingSpaceForItem(ItemStack itemStack, ItemStack itemStack2);
+
+    @Shadow
+    public abstract ItemStack getItem(int slot);
+
+    @Shadow
+    public abstract ClientboundSetPlayerInventoryPacket createInventoryUpdatePacket(int slot);
+
+    /** Slot contents before {@code add} — used to emit 26.2 HUD packets. */
+    @Unique
+    private ItemStack[] cardboard$preAddItems;
+
+    /**
+     * Vanilla {@code /give} and item pickup only {@code broadcastChanges()} on the
+     * inventory menu. In 26.2 the hotbar HUD listens to
+     * {@link ClientboundSetPlayerInventoryPacket}; without those packets the client
+     * predicts into occupied hotbar slots and looks like it "overrides" the knife/map.
+     */
+    @Inject(method = "add(ILnet/minecraft/world/item/ItemStack;)Z", at = @At("HEAD"))
+    private void cardboard$snapshotBeforeAdd(int slot, ItemStack itemStack, CallbackInfoReturnable<Boolean> cir) {
+        this.cardboard$preAddItems = new ItemStack[this.items.size()];
+        for (int i = 0; i < this.items.size(); i++) {
+            this.cardboard$preAddItems[i] = this.items.get(i).copy();
+        }
+    }
+
+    @Inject(method = "add(ILnet/minecraft/world/item/ItemStack;)Z", at = @At("RETURN"))
+    private void cardboard$syncAfterAdd(int slot, ItemStack itemStack, CallbackInfoReturnable<Boolean> cir) {
+        ItemStack[] before = this.cardboard$preAddItems;
+        this.cardboard$preAddItems = null;
+        if (before == null || !(this.player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        if (serverPlayer.connection == null) {
+            return;
+        }
+        for (int i = 0; i < this.items.size(); i++) {
+            ItemStack now = this.items.get(i);
+            if (!ItemStack.matches(before[i], now)) {
+                serverPlayer.connection.send(this.createInventoryUpdatePacket(i));
+            }
+        }
+    }
 
     // Paper start - add fields and methods
     @Unique

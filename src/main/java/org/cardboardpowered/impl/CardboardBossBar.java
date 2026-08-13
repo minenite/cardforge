@@ -120,8 +120,9 @@ public class CardboardBossBar implements BossBar, KeyedBossBar {
 
     @Override
     public void setTitle(String title) {
-        handle.name = CraftChatMessage.fromString(title, true)[0];
-     // TODO 1.17ify   ((IMixinServerBossBar) (Object) handle).sendPacketBF(BossBarS2CPacket.Type.UPDATE_NAME);
+        // Must use setName() so ServerBossEvent broadcasts UPDATE_NAME to viewers.
+        // Assigning handle.name alone leaves the client stuck on the first title.
+        this.handle.setName(CraftChatMessage.fromString(title, true)[0]);
     }
 
     @Override
@@ -131,8 +132,7 @@ public class CardboardBossBar implements BossBar, KeyedBossBar {
 
     @Override
     public void setColor(BarColor color) {
-        handle.color = convertColor(color);
-     // TODO 1.17ify   ((IMixinServerBossBar) (Object) handle).sendPacketBF(BossBarS2CPacket.Type.UPDATE_STYLE);
+        this.handle.setColor(this.convertColor(color));
     }
 
     @Override
@@ -142,8 +142,7 @@ public class CardboardBossBar implements BossBar, KeyedBossBar {
 
     @Override
     public void setStyle(BarStyle style) {
-        handle.overlay = convertStyle(style);
-     // TODO 1.17ify ((IMixinServerBossBar) (Object) handle).sendPacketBF(BossBarS2CPacket.Type.UPDATE_STYLE);
+        this.handle.setOverlay(this.convertStyle(style));
     }
 
     @Override

@@ -412,6 +412,35 @@ public abstract class PlayerListMixin implements PlayerListBridge {
                 respawnReason
         ).callEvent();
         // Paper end
+
+        // After death respawn the client often still shows pre-death hotbar ghosts
+        // until something sends ClientboundSetPlayerInventoryPacket for every slot.
+        // Delay past WarzPlugin's starter kit (same-tick + 2/5) so an empty push
+        // does not wipe the wooden knife / map.
+        ServerPlayer alive = cir.getReturnValue();
+        if (alive != null && alive.connection != null && !keepInventory) {
+            final java.util.UUID uuid = alive.getUUID();
+            org.bukkit.plugin.Plugin warz = org.bukkit.Bukkit.getPluginManager().getPlugin("WarzPlugin");
+            org.bukkit.plugin.Plugin schedulerOwner = warz != null
+                    ? warz
+                    : org.bukkit.Bukkit.getPluginManager().getPlugins().length > 0
+                            ? org.bukkit.Bukkit.getPluginManager().getPlugins()[0]
+                            : null;
+            if (schedulerOwner != null) {
+                org.bukkit.Bukkit.getScheduler().runTaskLater(schedulerOwner, () -> {
+                    org.bukkit.entity.Player bukkit = org.bukkit.Bukkit.getPlayer(uuid);
+                    if (bukkit == null || !bukkit.isOnline()) {
+                        return;
+                    }
+                    try {
+                        ((org.bukkit.craftbukkit.inventory.CraftInventoryPlayer) bukkit.getInventory())
+                                .resyncEntireInventory();
+                    } catch (Throwable ignored) {
+                        // best-effort
+                    }
+                }, 6L);
+            }
+        }
     }
 
     @Override

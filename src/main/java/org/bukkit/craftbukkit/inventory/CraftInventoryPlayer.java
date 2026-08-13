@@ -2,9 +2,7 @@ package org.bukkit.craftbukkit.inventory;
 
 import com.google.common.base.Preconditions;
 import java.util.List;
-import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
-import net.minecraft.network.protocol.game.ClientboundSetPlayerInventoryPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import org.bukkit.craftbukkit.CraftEquipmentSlot;
@@ -83,52 +81,51 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
 
         ServerPlayer player = ((CraftPlayer) this.getHolder()).getHandle();
         if (player.connection == null) return;
-        // Of course, these are not part of the player inventory "menu" because these slots are not accessible.
-        // However they are technically part of the player inventory.
-        // This is a poor representation by this API, but basically instead send a player inventory update packet.
-        // This will allow updates to the player inventory rather than through the menu.
-        // TODO: This could be something worth cleaning up in the future.
-        if (index > 40) {
-            player.connection.send(new ClientboundSetPlayerInventoryPacket(index, CraftItemStack.asNMSCopy(item)));
+
+        // Minecraft 26.2 tracks the player's own inventory with
+        // ClientboundSetPlayerInventoryPacket. The old inventoryMenu SetSlot
+        // remapping leaves ghost items after /clear and desyncs container GUIs.
+        player.connection.send(this.getInventory().createInventoryUpdatePacket(index));
+
+        // Keep inventoryMenu remote-slot cache aligned. Skipping this left remotes
+        // stale after Bukkit setItem; the next /give or pickup broadcastChanges
+        // then pushed wrong ContainerSetSlot data and looked like hotbar overrides.
+        if (player.inventoryMenu != null) {
+            player.inventoryMenu.broadcastChanges();
+        }
+        if (player.containerMenu != null && player.containerMenu != player.inventoryMenu) {
+            player.containerMenu.broadcastChanges();
+        }
+    }
+
+    @Override
+    public void clear() {
+        super.clear();
+        resyncEntireInventory();
+    }
+
+    @Override
+    public void clear(int index) {
+        this.setItem(index, null);
+    }
+
+    /** Push every player-inventory slot to the client (fixes /clear ghosts). */
+    public void resyncEntireInventory() {
+        if (this.getHolder() == null) {
             return;
         }
-
-        // PacketPlayOutSetSlot places the items differently than setItem()
-        //
-        // Between, and including, index 9 (the first index outside of the hotbar) and index 35 (the last index before
-        // armor slots) both PacketPlayOutSetSlot and setItem() places the items in the player's inventory the same way.
-        // Index 9 starts at the upper left corner of the inventory and moves to the right as it increases. When it
-        // reaches the end of the line it goes back to the left side of the new line in the inventory. Basically, it
-        // follows the path your eyes would follow as you read a book.
-        //
-        // The player's hotbar is indexed 0-8 in setItem(). The order goes: 0-8 hotbar, 9-35 normal inventory, 36 boots,
-        // 37 leggings, 38 chestplate, and 39 helmet. For indexes > 39 an ArrayIndexOutOfBoundsException will be thrown.
-        //
-        // PacketPlayOutSetSlot works very differently. Slots 0-8 are as follows: 0 crafting output, 1-4 crafting input,
-        // 5 helmet, 6 chestplate, 7 leggings, and 8 boots. Then, 9-35 work exactly the same as setItem(). The hotbar
-        // for PacketPlayOutSetSlot starts at index 36, and continues to index 44. Items placed where index is < 0 or
-        // > 44 have no action. Basically, the upper part of the player's inventory (crafting area and armor slots) is
-        // the first "row" of 9 slots for PacketPlayOutSetSlot. From there the rows work as normal, from left to right
-        // all the way down, including the hotbar.
-        //
-        // With this in mind, we have to modify the index we give PacketPlayOutSetSlot to match the index we intended
-        // with setItem(). First, if the index is 0-8, we need to add 36, or 4 rows worth of slots, to the index. This
-        // will push the item down to the correct spot in the hotbar.
-        //
-        // Now when index is > 35 (if index > 39 an ArrayIndexOutOfBoundsException will be thrown, so we need not worry
-        // about it) then we need to reset the index, and then count backwards  from the "top" of the inventory. That is
-        // to say, we first find (index - 36), which will give us the index required for the armor slots. Now, we need
-        // to reverse the order of the index from 8. That means we need 0 to correspond to 8, 1 to correspond to 7,
-        // 2 to correspond to 6, and 3 to correspond to 5. We do this simply by taking the result of (index - 36) and
-        // subtracting that value from 8.
-        if (index < Inventory.getSelectionSize()) {
-            index += 36;
-        } else if (index > 39) {
-            index += 5; // Off hand
-        } else if (index > 35) {
-            index = 8 - (index - 36);
+        ServerPlayer player = ((CraftPlayer) this.getHolder()).getHandle();
+        if (player.connection == null) {
+            return;
         }
-        player.connection.send(new ClientboundContainerSetSlotPacket(player.inventoryMenu.containerId, player.inventoryMenu.incrementStateId(), index, CraftItemStack.asNMSCopy(item)));
+        Inventory inv = this.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            player.connection.send(inv.createInventoryUpdatePacket(i));
+        }
+        player.inventoryMenu.sendAllDataToRemote();
+        if (player.containerMenu != null) {
+            player.containerMenu.sendAllDataToRemote();
+        }
     }
 
     @Override

@@ -411,6 +411,29 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
         return allowed;
     }
 
+    /**
+     * After NeoForge finishes opening a menu (open packet + initMenu), force a
+     * full slot resync. Without this, Bukkit's InventoryOpenEvent firing inside
+     * createMenu can leave the client with an empty hotbar/player-inv strip
+     * inside furnaces and other containers.
+     */
+    @Inject(
+            method = "openMenu(Lnet/minecraft/world/MenuProvider;Ljava/util/function/Consumer;)Ljava/util/OptionalInt;",
+            at = @At("RETURN"))
+    private void cardforge$resyncInventoryAfterOpen(
+            MenuProvider provider,
+            java.util.function.Consumer<?> writer,
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<OptionalInt> cir) {
+        OptionalInt opened = cir.getReturnValue();
+        if (opened == null || opened.isEmpty()) {
+            return;
+        }
+        ServerPlayer self = (ServerPlayer) (Object) this;
+        if (self.containerMenu != null && self.connection != null) {
+            self.containerMenu.sendAllDataToRemote();
+        }
+    }
+
     // TODO: 1.19
     /*@Inject(at = @At("HEAD"), method = "onDeath", cancellable = true)
     public void bukkitizeDeath(DamageSource damagesource, CallbackInfo ci) {

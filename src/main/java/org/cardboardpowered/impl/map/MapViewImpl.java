@@ -203,7 +203,8 @@ public final class MapViewImpl implements MapView {
 
     @Override
     public void setLocked(boolean locked) {
-       // worldMap.locked = locked;
+        // MapItemSavedData.locked is final in 26.2 — recreate isn't worth it here.
+        // Exploration is suppressed by our HoldingPlayer mixin overriding packets.
     }
 
 }
