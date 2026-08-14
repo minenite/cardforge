@@ -624,8 +624,9 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public DragonBattle getEnderDragonBattle() {
-		// TODO Auto-generated method stub
-		return null;
+		// Only the end has a fight attached; every other world legitimately has none.
+		net.minecraft.world.level.dimension.end.EnderDragonFight fight = this.world.getDragonFight();
+		return fight == null ? null : new org.bukkit.craftbukkit.boss.CraftDragonBattle(fight);
 	}
 
 	@Override
@@ -1583,11 +1584,6 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setBiome(int x, int y, int z, Biome bio) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
 	public void setChunkForceLoaded(int x, int z, boolean forced) {
 		this.world.setChunkForced(x, z, forced);
 	}
@@ -2384,23 +2380,12 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	public <T> void spawnParticle(Particle particle, double x, double y, double z, int count, double offsetX, double offsetY, double offsetZ, double extra, T data, boolean force) {
 		if(data != null && !particle.getDataType().isInstance(data))
 			throw new IllegalArgumentException("data should be " + particle.getDataType() + " got " + data.getClass());
-		// TODO Bukkit4Fabric: method
-		/*
-		getHandle().addParticle(
-				// null, // Sender
-				CraftParticle.createParticleParam(particle, data), // Particle
-				x, y, z, // Position
-				(double) count,  // Count
-				offsetX, offsetY//, offsetZ // Random offset
-				// extra // Speed?
-				// force
-		);
-		*/
-		
-		// TODO: 1.21.8
-		
-        // this.getHandle().spawnParticles(this.getHandle().getPlayers(), null, CraftParticle.createParticleParam(particle, data), force, false, x, y, z, count, offsetX, offsetY, offsetZ);
-
+		// Every spawnParticle overload funnels through here, and none of them drew
+		// anything: the call was commented out across three ports.
+		this.world.sendParticles(
+				org.bukkit.craftbukkit.CraftParticle.createParticleParam(particle, data),
+				force, false,
+				x, y, z, count, offsetX, offsetY, offsetZ, extra);
 	}
 
 	@Override
@@ -2412,9 +2397,8 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public LightningStrike strikeLightningEffect(Location arg0) {
-		// TODO Auto-generated method stub
-		return strikeLightning0(arg0, true);
+	public LightningStrike strikeLightningEffect(Location loc) {
+		return strikeLightning0(loc, true);
 	}
 	
 	private LightningStrike strikeLightning0(Location loc, boolean isVisual) {
@@ -2516,9 +2500,8 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public boolean createExplosion(Entity arg0, Location arg1, float arg2, boolean arg3, boolean arg4) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean createExplosion(Entity source, Location loc, float power, boolean setFire, boolean breakBlocks) {
+		return this.createExplosion(source, loc, power, setFire, breakBlocks, true);
 	}
 
 	@Override
@@ -2613,9 +2596,12 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setNoTickViewDistance(int arg0) {
-		// TODO Auto-generated method stub
-
+	public void setNoTickViewDistance(int distance) {
+		// The no-tick distance is the band of chunks sent but not simulated, so it
+		// is set by holding the view distance and pulling simulation in behind it.
+		Preconditions.checkArgument(distance >= 0, "No-tick view distance %s cannot be negative", distance);
+		int simulation = Math.max(2, this.getViewDistance() - distance);
+		this.setSimulationDistance(Math.min(simulation, 32));
 	}
 
 	@Override
@@ -2626,9 +2612,24 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public <T> void spawnParticle(Particle arg0, List<Player> arg1, Player arg2, double arg3, double arg4, double arg5,
-	                              int arg6, double arg7, double arg8, double arg9, double arg10, T arg11, boolean arg12) {
-		// TODO Auto-generated method stub
+	public <T> void spawnParticle(Particle particle, List<Player> receivers, Player source, double x, double y, double z,
+	                              int count, double offsetX, double offsetY, double offsetZ, double extra, T data, boolean force) {
+		if (data != null && !particle.getDataType().isInstance(data))
+			throw new IllegalArgumentException("data should be " + particle.getDataType() + " got " + data.getClass());
+
+		net.minecraft.core.particles.ParticleOptions param =
+				org.bukkit.craftbukkit.CraftParticle.createParticleParam(particle, data);
+		// A null receiver list means everyone in the world; otherwise the packet
+		// goes only to the listed players, which is what makes per-player effects
+		// possible at all.
+		Iterable<Player> targets = receivers != null ? receivers
+				: (Iterable) this.getPlayers();
+		for (Player player : targets) {
+			if (player == null) continue;
+			if (source != null && !player.canSee(source)) continue;
+			this.world.sendParticles(((org.bukkit.craftbukkit.entity.CraftPlayer) player).getHandle(),
+					param, force, false, x, y, z, count, offsetX, offsetY, offsetZ, extra);
+		}
 	}
 
 	// @Override
@@ -2660,10 +2661,15 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public @NotNull Item dropItemNaturally(@NotNull Location arg0, @NotNull ItemStack arg1,
-	                                       @Nullable java.util.function.Consumer<? super Item> arg2) {
-		// TODO Auto-generated method stub
-		return null;
+	public @NotNull Item dropItemNaturally(@NotNull Location loc, @NotNull ItemStack item,
+	                                       @Nullable java.util.function.Consumer<? super Item> function) {
+		// Same scatter vanilla applies to natural drops, then the consumer runs
+		// before the entity is added so plugins can set velocity or metadata.
+		double xs = (this.world.getRandom().nextFloat() * 0.5F) + 0.25D;
+		double ys = (this.world.getRandom().nextFloat() * 0.5F) + 0.25D;
+		double zs = (this.world.getRandom().nextFloat() * 0.5F) + 0.25D;
+		Location at = loc.clone().add(xs, ys, zs);
+		return this.dropItem(at, item, function);
 	}
 
 	@Override
@@ -2686,7 +2692,6 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public @NotNull NamespacedKey getKey() {
-		// TODO Auto-generated method stub
 		return CraftNamespacedKey.fromMinecraft(this.world.dimension().identifier());
 		// return NamespacedKey.minecraft(this.getName());
 	}
@@ -2881,9 +2886,9 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setBiome(@NotNull Location arg0, @NotNull Biome arg1) {
-		// TODO Auto-generated method stub
-
+	public void setBiome(@NotNull Location location, @NotNull Biome biome) {
+		Preconditions.checkArgument(location != null, "Location cannot be null");
+		this.setBiome(location.getBlockX(), location.getBlockY(), location.getBlockZ(), biome);
 	}
 
 	@Override
@@ -3021,14 +3026,12 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public void setTicksPerWaterUndergroundCreatureSpawns(int i) {
-		// TODO Auto-generated method stub
-
+		this.setTicksPerSpawns(SpawnCategory.WATER_UNDERGROUND_CREATURE, i);
 	}
 
 	@Override
 	public void setWaterUndergroundCreatureSpawnLimit(int i) {
-		// TODO Auto-generated method stub
-
+		this.setSpawnLimit(SpawnCategory.WATER_UNDERGROUND_CREATURE, i);
 	}
 
 	// 1.18.2 API:
@@ -3160,22 +3163,23 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	private StructureSearchResult locateNearestStructure(Location origin, List<Structure> structures, int radius, boolean findUnexplored) {
-		// Cardboard: TODO
-		return null;
-		/*
-		Pair<BlockPos, Holder<net.minecraft.world.level.levelgen.structure.Structure>> found = this.getHandle().getChunkSource().getGenerator().findNearestMapStructure(
-				this.getHandle(),
-				HolderSet.direct(CraftStructure::bukkitToMinecraftHolder, structures),
-				CraftLocation.toBlockPosition(origin),
-				radius,
-				findUnexplored
-				);
+		Preconditions.checkArgument(origin != null, "Location origin cannot be null");
+		Preconditions.checkArgument(structures != null && !structures.isEmpty(), "At least one Structure must be provided");
+
+		com.mojang.datafixers.util.Pair<BlockPos, Holder<net.minecraft.world.level.levelgen.structure.Structure>> found =
+				this.getHandle().getChunkSource().getGenerator().findNearestMapStructure(
+						this.getHandle(),
+						net.minecraft.core.HolderSet.direct(CraftStructure::bukkitToMinecraftHolder, structures),
+						CraftLocation.toBlockPosition(origin),
+						radius,
+						findUnexplored);
 		if (found == null) {
 			return null;
 		}
 
-		return new CraftStructureSearchResult(CraftStructure.minecraftHolderToBukkit(found.getSecond()), CraftLocation.toBukkit(found.getFirst(), this));
-		*/
+		return new org.bukkit.craftbukkit.util.CraftStructureSearchResult(
+				CraftStructure.minecraftHolderToBukkit(found.getSecond()),
+				CraftLocation.toBukkit(found.getFirst(), this));
 	}
 
 	// 1.19.4
@@ -3206,7 +3210,6 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public boolean hasStructureAt(@NotNull Position position, @NotNull Structure structure) {
-		// TODO Auto-generated method stub
         net.minecraft.world.level.levelgen.structure.Structure stru =
         		this.getHandle().registryAccess().lookupOrThrow(Registries.STRUCTURE)
         		.get(
@@ -3247,8 +3250,15 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public void playNote(@NotNull Location loc, @NotNull Instrument instrument, @NotNull Note note) {
-		// TODO Auto-generated method stub
-		
+		Preconditions.checkArgument(loc != null, "Location cannot be null");
+		Preconditions.checkArgument(instrument != null, "Instrument cannot be null");
+		Preconditions.checkArgument(note != null, "Note cannot be null");
+
+		// Note blocks encode pitch as the packet's data value, and vanilla plays
+		// them through the level event rather than a sound so the particle above
+		// the block comes along with it.
+		this.getHandle().levelEvent(null, 1010 + instrument.getType(),
+				CraftLocation.toBlockPosition(loc), note.getId());
 	}
 
 	@Override
@@ -3273,9 +3283,27 @@ public class CraftWorld extends CraftRegionAccessor implements World {
     }
 
 	@Override
-	public void setBiome(int var1, int var2, int var3, Holder<net.minecraft.world.level.biome.Biome> var4) {
-		// TODO Auto-generated method stub
-		
+	public void setBiome(int x, int y, int z, Holder<net.minecraft.world.level.biome.Biome> biome) {
+		// Every setBiome overload lands here, and none of them wrote anything.
+		// Biomes live per quart (4x4x4) in the section's palette, so block
+		// coordinates have to be scaled down before indexing.
+		net.minecraft.world.level.chunk.ChunkAccess chunk =
+				this.world.getChunk(x >> 4, z >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
+		if (chunk == null) return;
+
+		int sectionIndex = chunk.getSectionIndex(y);
+		if (sectionIndex < 0 || sectionIndex >= chunk.getSections().length) return;
+
+		net.minecraft.world.level.chunk.PalettedContainerRO<Holder<net.minecraft.world.level.biome.Biome>> container =
+				chunk.getSection(sectionIndex).getBiomes();
+		if (!(container instanceof net.minecraft.world.level.chunk.PalettedContainer<Holder<net.minecraft.world.level.biome.Biome>> writable)) {
+			// A read-only container means the chunk was loaded from network data,
+			// which cannot happen server side; refusing beats corrupting it.
+			return;
+		}
+
+		writable.set((x >> 2) & 3, (y >> 2) & 3, (z >> 2) & 3, biome);
+		chunk.markUnsaved();
 	}
 
 	@Override
@@ -3444,7 +3472,6 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	@Override
 	public boolean createExplosion(@Nullable Entity source, @NotNull Location loc, float power, boolean setFire,
 			boolean breakBlocks, boolean excludeSourceFromDamage) {
-		// TODO Auto-generated method stub
         this.world.explode(
         		(net.minecraft.world.entity.Entity)(source != null ? ((CraftEntity)source).getHandle() : null),
         		(double)loc.getX(), (double)loc.getY(), (double)loc.getZ(),
@@ -3472,8 +3499,17 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public void getChunksAtAsync(int minX, int minZ, int maxX, int maxZ, boolean urgent, @NotNull Runnable cb) {
-		// TODO Auto-generated method stub
-		// this.getHandle().loadChunks(minX, minZ, maxX, maxZ, urgent ? Priority.HIGHER : Priority.NORMAL, chunks -> cb.run());
+		Preconditions.checkArgument(cb != null, "Callback cannot be null");
+		// The callback used to be dropped on the floor, leaving callers waiting
+		// forever. Chunk loading here is synchronous, so every chunk in the box is
+		// requested and the callback fires once they are all present.
+		java.util.List<CompletableFuture<Chunk>> pending = new java.util.ArrayList<>();
+		for (int x = minX; x <= maxX; x++) {
+			for (int z = minZ; z <= maxZ; z++) {
+				pending.add(this.getChunkAtAsync(x, z, true, urgent));
+			}
+		}
+		CompletableFuture.allOf(pending.toArray(new CompletableFuture[0])).thenRun(cb);
 	}
 
 	@Override
@@ -3508,15 +3544,45 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	@Override
 	public @Nullable Location locateNearestPoi(@NotNull Location origin, @NotNull PoiType poiType, @Positive int radius,
 			@NotNull Occupancy occupancy) {
-		// TODO Auto-generated method stub
-		return null;
+		Preconditions.checkArgument(origin != null, "Location origin cannot be null");
+		Preconditions.checkArgument(poiType != null, "PoiType cannot be null");
+		Preconditions.checkArgument(radius > 0, "Radius must be positive");
+
+		Holder<net.minecraft.world.entity.ai.village.poi.PoiType> target =
+				io.papermc.paper.entity.poi.PaperPoiType.bukkitToMinecraftHolder(poiType);
+		return this.getHandle().getPoiManager()
+				.findClosest(holder -> holder.value() == target.value(),
+						CraftLocation.toBlockPosition(origin), radius, toNMSOccupancy(occupancy))
+				.map(pos -> CraftLocation.toBukkit(pos, this))
+				.orElse(null);
+	}
+
+	/**
+	 * Paper's Occupancy is its own interface with the same three constants, so the
+	 * mapping is by identity against the API's fields rather than by enum ordinal.
+	 */
+	private static net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy toNMSOccupancy(Occupancy occupancy) {
+		if (occupancy == Occupancy.HAS_SPACE) return net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy.HAS_SPACE;
+		if (occupancy == Occupancy.IS_OCCUPIED) return net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy.IS_OCCUPIED;
+		return net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy.ANY;
 	}
 
 	@Override
 	public @NotNull List<PoiSearchResult> locateAllPoiInRange(@NotNull Location origin,
 			@NotNull Predicate<PoiType> poiTypePredicate, @Positive int radius, @NotNull Occupancy occupancy) {
-		// TODO Auto-generated method stub
-		return null;
+		Preconditions.checkArgument(origin != null, "Location origin cannot be null");
+		Preconditions.checkArgument(poiTypePredicate != null, "PoiType predicate cannot be null");
+		Preconditions.checkArgument(radius > 0, "Radius must be positive");
+
+		return this.getHandle().getPoiManager()
+				.findAllClosestFirstWithType(
+						holder -> poiTypePredicate.test(io.papermc.paper.entity.poi.PaperPoiType.minecraftHolderToBukkit(holder)),
+						pos -> true,
+						CraftLocation.toBlockPosition(origin), radius, toNMSOccupancy(occupancy))
+				.map(pair -> (PoiSearchResult) new io.papermc.paper.entity.poi.CraftPoiSearchResult(
+						io.papermc.paper.entity.poi.PaperPoiType.minecraftHolderToBukkit(pair.getFirst()),
+						CraftLocation.toBukkit(pair.getSecond(), this)))
+				.collect(Collectors.toList());
 	}
 	
 
