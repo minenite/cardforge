@@ -2104,9 +2104,17 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     }
 
     @Override
-    public OfflinePlayer getOfflinePlayerIfCached(String arg0) {
-        // TODO Auto-generated method stub
-        return null;
+    public OfflinePlayer getOfflinePlayerIfCached(String name) {
+        Preconditions.checkArgument(name != null, "name cannot be null");
+        Preconditions.checkArgument(!name.isBlank(), "name cannot be empty");
+        // Only what is already known: this must never reach out to the session
+        // servers, which is the whole difference between it and getOfflinePlayer.
+        Player online = this.getPlayerExact(name);
+        if (online != null) {
+            return online;
+        }
+        NameAndId cached = this.console.services().nameToIdCache().get(name).orElse(null);
+        return cached == null ? null : this.getOfflinePlayer(cached);
     }
 
     /** Bukkit's stock permission-denied text, overridable via bukkit.yml. */
@@ -2184,15 +2192,21 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     }
 
     @Override
-    public int broadcast(@NotNull Component arg0) {
-        // TODO Auto-generated method stub
-        return 0;
+    public int broadcast(@NotNull Component message) {
+        return this.broadcast(message, BROADCAST_CHANNEL_USERS);
     }
 
     @Override
-    public int broadcast(@NotNull Component arg0, @NotNull String arg1) {
-        // TODO Auto-generated method stub
-        return 0;
+    public int broadcast(@NotNull Component message, @NotNull String permission) {
+        Preconditions.checkArgument(message != null, "message cannot be null");
+        int reached = 0;
+        for (Permissible permissible : this.getPluginManager().getPermissionSubscriptions(permission)) {
+            if (permissible instanceof CommandSender sender && permissible.hasPermission(permission)) {
+                sender.sendMessage(message);
+                reached++;
+            }
+        }
+        return reached;
     }
 
     @Override
@@ -2236,8 +2250,8 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public @NotNull Component motd() {
-        // TODO Auto-generated method stub
-        return null;
+        return net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
+                .deserialize(this.getMotd());
     }
 
     @Override
@@ -2330,9 +2344,31 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     }
 
 	@Override
-	public @NotNull CommandSender createCommandSender(@NotNull Consumer<? super Component> arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public @NotNull CommandSender createCommandSender(@NotNull Consumer<? super Component> feedback) {
+		Preconditions.checkArgument(feedback != null, "feedback cannot be null");
+		// A sender with console authority that hands whatever it would have printed
+		// to the caller instead of the log.
+		final ConsoleCommandSender console = this.getConsoleSender();
+		return (CommandSender) java.lang.reflect.Proxy.newProxyInstance(
+				CommandSender.class.getClassLoader(),
+				new Class<?>[] { CommandSender.class },
+				(proxy, method, args) -> {
+					if ("sendMessage".equals(method.getName()) && args != null && args.length > 0) {
+						for (Object arg : args) {
+							if (arg instanceof Component component) {
+								feedback.accept(component);
+							} else if (arg instanceof String text) {
+								feedback.accept(net.kyori.adventure.text.Component.text(text));
+							} else if (arg instanceof String[] lines) {
+								for (String line : lines) {
+									feedback.accept(net.kyori.adventure.text.Component.text(line));
+								}
+							}
+						}
+						return null;
+					}
+					return method.invoke(console, args);
+				});
 	}
 
 	@Override
@@ -2351,16 +2387,18 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 	}
 
 	@Override
-	public com.destroystokyo.paper.profile.@NotNull PlayerProfile createProfileExact(@Nullable UUID arg0,
-			@Nullable String arg1) {
-		// TODO Auto-generated method stub
-		return null;
+	public com.destroystokyo.paper.profile.@NotNull PlayerProfile createProfileExact(@Nullable UUID uuid,
+			@Nullable String name) {
+		// Exactly what was asked for, with nothing filled in from the cache - that
+		// being the difference from createPlayerProfile.
+		return new CraftPlayerProfile(uuid, name);
 	}
 
 	@Override
 	public @NotNull WorldBorder createWorldBorder() {
-		// TODO Auto-generated method stub
-		return null;
+		// A border of its own, not attached to any world: what a plugin uses to show
+		// one player a different boundary.
+		return new CraftWorldBorder(new net.minecraft.world.level.border.WorldBorder());
 	}
 
 	@Override
@@ -2376,20 +2414,21 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
 	@Override
 	public @NotNull String getResourcePack() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.getProperties().serverResourcePackInfo
+				.map(net.minecraft.server.MinecraftServer.ServerResourcePackInfo::url).orElse("");
 	}
 
 	@Override
 	public @NotNull String getResourcePackHash() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.getProperties().serverResourcePackInfo
+				.map(net.minecraft.server.MinecraftServer.ServerResourcePackInfo::hash).orElse("");
 	}
 
 	@Override
 	public @NotNull String getResourcePackPrompt() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.getProperties().serverResourcePackInfo
+				.map(info -> info.prompt() == null ? "" : info.prompt().getString())
+				.orElse("");
 	}
 
 	@Override
@@ -2440,8 +2479,9 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
 	@Override
 	public boolean isTickingWorlds() {
-		// TODO Auto-generated method stub
-		return true; // todo: paper api
+		// This server ticks its worlds on the main thread and nowhere else, so the
+		// question reduces to whether the caller is on it.
+		return this.isPrimaryThread();
 	}
 
 	@Override
@@ -2661,14 +2701,14 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 	@Override
 	public boolean isOwnedByCurrentRegion(@NotNull World world, int minChunkX, int minChunkZ, int maxChunkX,
 			int maxChunkZ) {
-		// TODO Auto-generated method stub
-		return true;
+		// This server ticks everything on one thread, so the answer is simply
+		// whether the caller is on it.
+		return this.isPrimaryThread();
 	}
 
 	@Override
 	public boolean isGlobalTickThread() {
-		// TODO Auto-generated method stub
-		return true;
+		return this.isPrimaryThread();
 	}
 
 	@Override
