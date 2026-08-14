@@ -237,18 +237,48 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public boolean addPluginChunkTicket(int arg0, int arg1, Plugin arg2) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean addPluginChunkTicket(int x, int z, Plugin plugin) {
+		Preconditions.checkArgument(plugin != null, "null plugin");
+		Preconditions.checkArgument(plugin.isEnabled(), "plugin is not enabled");
+		synchronized (this.pluginChunkTickets) {
+			java.util.Set<Plugin> holders = this.pluginChunkTickets
+					.computeIfAbsent(net.minecraft.world.level.ChunkPos.pack(x, z), key -> new java.util.HashSet<>());
+			if (!holders.add(plugin)) {
+				return false;
+			}
+			if (holders.size() == 1) {
+				// First holder of this chunk, so the chunk is actually pinned. Later
+				// holders only join the set: the ticket is dropped when the last one
+				// lets go, which is what makes these safe to nest.
+				this.world.getChunkSource().addTicketWithRadius(
+						net.minecraft.server.level.TicketType.UNKNOWN,
+						new net.minecraft.world.level.ChunkPos(x, z), 2);
+			}
+			return true;
+		}
+	}
+
+	/**
+	 * Chunks pinned by plugins, and who is holding each one.
+	 *
+	 * <p>Tracked here because the server's own tickets carry no notion of which
+	 * plugin asked, and the API is defined in terms of that: a plugin can drop all
+	 * of its own without disturbing anybody else's.
+	 */
+	private final java.util.Map<Long, java.util.Set<Plugin>> pluginChunkTickets = new java.util.HashMap<>();
+
+	private void releasePluginChunkTicket(long chunkKey) {
+		net.minecraft.world.level.ChunkPos pos = net.minecraft.world.level.ChunkPos.unpack(chunkKey);
+		this.world.getChunkSource().removeTicketWithRadius(
+				net.minecraft.server.level.TicketType.UNKNOWN, pos, 2);
 	}
 
 	@Override
 	public boolean canGenerateStructures() {
-		return true; // TODO
-		/*
-		return world.getLevelData() instanceof PrimaryLevelData prop
-				&& prop.worldGenOptions().generateStructures();
-				*/
+		// The generator decides: one with no structure sets places none, which is
+		// what a superflat void world looks like. 26.2 no longer keeps a plain
+		// "generate structures" flag on the level data to read instead.
+		return !this.world.getChunkSource().getGeneratorState().possibleStructureSets().isEmpty();
 	}
 
 	@Override
@@ -912,12 +942,28 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public Map<Plugin, Collection<Chunk>> getPluginChunkTickets() {
-		return Collections.emptyMap();
+		Map<Plugin, Collection<Chunk>> out = new java.util.HashMap<>();
+		synchronized (this.pluginChunkTickets) {
+			for (Map.Entry<Long, java.util.Set<Plugin>> entry : this.pluginChunkTickets.entrySet()) {
+				net.minecraft.world.level.ChunkPos pos = net.minecraft.world.level.ChunkPos.unpack(entry.getKey());
+				for (Plugin plugin : entry.getValue()) {
+					out.computeIfAbsent(plugin, key -> new java.util.ArrayList<>())
+							.add(this.getChunkAt(pos.x(), pos.z()));
+				}
+			}
+		}
+		out.replaceAll((plugin, chunks) -> Collections.unmodifiableCollection(chunks));
+		return Collections.unmodifiableMap(out);
 	}
 
 	@Override
-	public Collection<Plugin> getPluginChunkTickets(int arg0, int arg1) {
-		return Collections.emptySet();
+	public Collection<Plugin> getPluginChunkTickets(int x, int z) {
+		synchronized (this.pluginChunkTickets) {
+			java.util.Set<Plugin> holders =
+					this.pluginChunkTickets.get(net.minecraft.world.level.ChunkPos.pack(x, z));
+			return holders == null ? Collections.emptySet()
+					: Collections.unmodifiableCollection(new java.util.ArrayList<>(holders));
+		}
 	}
 
 	@Override
@@ -1402,14 +1448,36 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public boolean removePluginChunkTicket(int arg0, int arg1, Plugin arg2) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean removePluginChunkTicket(int x, int z, Plugin plugin) {
+		Preconditions.checkArgument(plugin != null, "null plugin");
+		long key = net.minecraft.world.level.ChunkPos.pack(x, z);
+		synchronized (this.pluginChunkTickets) {
+			java.util.Set<Plugin> holders = this.pluginChunkTickets.get(key);
+			if (holders == null || !holders.remove(plugin)) {
+				return false;
+			}
+			if (holders.isEmpty()) {
+				this.pluginChunkTickets.remove(key);
+				releasePluginChunkTicket(key);
+			}
+			return true;
+		}
 	}
 
 	@Override
-	public void removePluginChunkTickets(Plugin arg0) {
-		// TODO Auto-generated method stub
+	public void removePluginChunkTickets(Plugin plugin) {
+		Preconditions.checkArgument(plugin != null, "null plugin");
+		synchronized (this.pluginChunkTickets) {
+			java.util.Iterator<java.util.Map.Entry<Long, java.util.Set<Plugin>>> it =
+					this.pluginChunkTickets.entrySet().iterator();
+			while (it.hasNext()) {
+				java.util.Map.Entry<Long, java.util.Set<Plugin>> entry = it.next();
+				if (entry.getValue().remove(plugin) && entry.getValue().isEmpty()) {
+					releasePluginChunkTicket(entry.getKey());
+					it.remove();
+				}
+			}
+		}
 	}
 	
 	@Override
@@ -1452,8 +1520,8 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setChunkForceLoaded(int arg0, int arg1, boolean arg2) {
-		// TODO Auto-generated method stub
+	public void setChunkForceLoaded(int x, int z, boolean forced) {
+		this.world.setChunkForced(x, z, forced);
 	}
 
 	@Override
@@ -2291,9 +2359,15 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public boolean unloadChunkRequest(int arg0, int arg1) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean unloadChunkRequest(int x, int z) {
+		// A request rather than a command: the ticket holding the chunk is dropped
+		// and the server unloads it when nothing else wants it.
+		if (this.isChunkLoaded(x, z)) {
+			this.world.getChunkSource().removeTicketWithRadius(
+					net.minecraft.server.level.TicketType.UNKNOWN,
+					new net.minecraft.world.level.ChunkPos(x, z), 1);
+		}
+		return true;
 	}
 
 	public ServerLevel getHandle() {
@@ -2302,8 +2376,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public int getViewDistance() {
-		// TODO Auto-generated method stub
-		return 8;
+		return this.world.getServer().getPlayerList().getViewDistance();
 	}
 
 	public void setWaterAmbientSpawnLimit(int i) {
@@ -2361,8 +2434,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public int getClearWeatherDuration() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.world.getWeatherData().getClearWeatherTime();
 	}
 
 	@Override
@@ -2405,12 +2477,19 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public int getTickableTileEntityCount() {
-		return 0; // TODO: 1.17ify return nms.tickingBlockEntities.size();
+		// Counted from the loaded chunks rather than the level's ticker list, which
+		// is not reachable from here. A block entity in a loaded chunk is one the
+		// server is ticking, which is what a caller is asking about.
+		return getTileEntityCount();
 	}
 
 	@Override
 	public int getTileEntityCount() {
-		return 0; // TODO: 1.17ify return nms.blockEntities.size();
+		int count = 0;
+		for (Chunk chunk : this.getLoadedChunks()) {
+			count += chunk.getTileEntities().length;
+		}
+		return count;
 	}
 
 	@Override
@@ -2435,8 +2514,10 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setViewDistance(int arg0) {
-		// TODO Auto-generated method stub
+	public void setViewDistance(int distance) {
+		Preconditions.checkArgument(distance >= 2 && distance <= 32,
+				"View distance %s is out of range of [2, 32]", distance);
+		this.world.getChunkSource().setViewDistance(distance);
 	}
 
 	@Override
@@ -2812,8 +2893,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public int getSimulationDistance() {
-		// TODO Auto-generated method stub
-		return 8;
+		return this.world.getServer().getPlayerList().getSimulationDistance();
 	}
 
 	@Override
@@ -2829,9 +2909,10 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setSimulationDistance(int arg0) {
-		// TODO Auto-generated method stub
-
+	public void setSimulationDistance(int distance) {
+		Preconditions.checkArgument(distance >= 2 && distance <= 32,
+				"Simulation distance %s is out of range of [2, 32]", distance);
+		this.world.getChunkSource().setSimulationDistance(distance);
 	}
 
 	@Override

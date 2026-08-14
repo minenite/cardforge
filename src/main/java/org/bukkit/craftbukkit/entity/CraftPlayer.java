@@ -211,6 +211,17 @@ import org.jspecify.annotations.Nullable;
 @DelegateDeserialization(CraftOfflinePlayer.class)
 public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessageBridgeImpl {
     private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
+
+    /**
+     * Personal time and weather.
+     *
+     * <p>Held here rather than on the server player: 26.2 keeps time in a world
+     * clock shared by everyone, and weather is a property of the level, so a
+     * per-player view of either exists only as packets sent to one client.
+     */
+    private long timeOffset;
+    private boolean relativeTime = true;
+    private WeatherType weatherType;
     private static final PointersSupplier<Player> POINTERS_SUPPLIER = PointersSupplier.<Player>builder()
             .parent(CraftEntity.POINTERS_SUPPLIER)
             .resolving(Identity.NAME, Player::getName)
@@ -546,19 +557,19 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     // Paper start
     @Override
     public void playerListName(net.kyori.adventure.text.Component name) {
-       /* getHandle().listName = name == null ? null : io.papermc.paper.adventure.PaperAdventure.asVanilla(name);
-        if (getHandle().connection == null) return; // Updates are possible before the player has fully joined
-        for (ServerPlayer player : server.getHandle().players) {
-            if (player.getBukkitEntity().canSee(this)) {
-                player.connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME, getHandle()));
-            }
-        }*/ // TODO
+        // Same path as the string form, so both APIs agree on what the tab list
+        // shows rather than one of them quietly doing nothing.
+        this.setPlayerListName(name == null ? null
+                : net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+                        .legacySection().serialize(name));
     }
     @Override
     public net.kyori.adventure.text.Component playerListName() {
-        // TODO
-        //return getHandle().listName == null ? net.kyori.adventure.text.Component.text(getName()) : io.papermc.paper.adventure.PaperAdventure.asAdventure(getHandle().listName);
-        return null;
+        net.minecraft.network.chat.Component listName = this.getHandle().getTabListDisplayName();
+        return listName == null
+                ? net.kyori.adventure.text.Component.text(this.getName())
+                : net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
+                        .deserialize(listName.getString());
     }
     @Override
     public net.kyori.adventure.text.Component playerListHeader() {

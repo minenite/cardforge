@@ -337,6 +337,10 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         configuration = YamlConfiguration.loadConfiguration(new File("bukkit.yml"));
         configuration.options().copyDefaults(true);
         configuration.setDefaults(YamlConfiguration.loadConfiguration(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("configurations/bukkit.yml"), Charsets.UTF_8)));
+        // commands.yml was never read, so getCommandAliases returned nothing and
+        // every alias defined there was silently ignored.
+        this.commandsConfiguration = YamlConfiguration.loadConfiguration(new File("commands.yml"));
+        this.commandsConfiguration.options().copyDefaults(true);
         saveConfig();
 
         this.playerView = Collections.unmodifiableList(Lists.transform(server.playerList.players, new Function<ServerPlayer, CraftPlayer>() {
@@ -1161,8 +1165,25 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public Map<String, String[]> getCommandAliases() {
-        return new HashMap<String, String[]>();
+        ConfigurationSection section = this.commandsConfiguration.getConfigurationSection("aliases");
+        Map<String, String[]> result = new LinkedHashMap<String, String[]>();
+        if (section == null) {
+            return result;
+        }
+        for (String key : section.getKeys(false)) {
+            List<String> commands;
+            if (section.isList(key)) {
+                commands = section.getStringList(key);
+            } else {
+                commands = ImmutableList.of(section.getString(key));
+            }
+            result.put(key, commands.toArray(new String[0]));
+        }
+        return result;
     }
+
+    /** Aliases from commands.yml, which the server reads at startup and on reload. */
+    private YamlConfiguration commandsConfiguration = new YamlConfiguration();
 
     @Override
     public long getConnectionThrottle() {
@@ -2123,8 +2144,22 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public boolean reloadCommandAliases() {
-        // TODO Auto-generated method stub
-        return false;
+        Set<String> removed = getCommandAliases().keySet();
+        for (String alias : removed) {
+            this.commandMap.getCommand(alias);
+        }
+        // Re-read the file, then register what it now says. Existing aliases are
+        // left in place rather than torn down first: a failed reload should not
+        // take working commands with it.
+        this.commandsConfiguration = YamlConfiguration.loadConfiguration(new File("commands.yml"));
+        this.commandsConfiguration.options().copyDefaults(true);
+        try {
+            this.commandMap.registerServerAliases();
+            return true;
+        } catch (Throwable failed) {
+            getLogger().log(java.util.logging.Level.WARNING, "Could not reload command aliases", failed);
+            return false;
+        }
     }
 
     @Override
@@ -2133,14 +2168,20 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     }
 
     @Override
-    public void setMaxPlayers(int arg0) {
-        // TODO Auto-generated method stub
+    public void setMaxPlayers(int maxPlayers) {
+        // Not implemented: the limit lives in the dedicated server's properties as
+        // an immutable value, so changing it means rebuilding those properties.
+        // Left refusing rather than accepting the call and doing nothing, which is
+        // the more expensive kind of wrong to debug.
+        throw new UnsupportedOperationException(
+                "Changing the player limit at runtime is not supported; set max-players in server.properties");
     }
 
     @Override
     public boolean suggestPlayerNamesWhenNullTabCompletions() {
-        // TODO Auto-generated method stub
-        return false;
+        // Matches the server's own behaviour: when a command offers no completions
+        // of its own, the client is given player names.
+        return this.configuration.getBoolean("settings.suggest-player-names-when-null-tab-completions", true);
     }
     // PaperAPI - end
 
@@ -2332,8 +2373,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
 	@Override
 	public boolean getHideOnlinePlayers() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.configuration.getBoolean("settings.hide-online-players", false);
 	}
 
 	@Override
@@ -2502,8 +2542,9 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
 	@Override
 	public void motd(@NotNull Component motd) {
-		// TODO Auto-generated method stub
-
+		Preconditions.checkArgument(motd != null, "motd cannot be null");
+		this.console.setMotd(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+				.legacySection().serialize(motd));
 	}
 
 	// 1.20.2 API:
