@@ -22,8 +22,8 @@ public class CraftIllager extends CraftRaider implements Illager {
 
 	@Override
 	public boolean isCelebrating() {
-		// TODO Auto-generated method stub
-		return false;
+		// Raiders track this themselves; the API just never asked.
+		return this.getHandle().isCelebrating();
 	}
 
 	@Override

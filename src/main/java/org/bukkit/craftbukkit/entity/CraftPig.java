@@ -115,12 +115,16 @@ public class CraftPig extends CraftAnimals implements Pig {
 
 	@Override
 	public SoundVariant getSoundVariant() {
-		return SoundVariant.CLASSIC;
+		// Always claimed CLASSIC, so a pig with any other sound set read back
+		// wrong and setSoundVariant could not be verified at all.
+		return CraftSoundVariant.minecraftHolderToBukkit(
+				((org.minenite.cardforge.mixin.invoker.PigSoundVariantInvoker) this.getHandle()).cardforge$getSoundVariant());
 	}
 
 	@Override
 	public void setSoundVariant(SoundVariant variant) {
-		// TODO Auto-generated method stub
-		
+		Preconditions.checkArgument(variant != null, "variant cannot be null");
+		((org.minenite.cardforge.mixin.invoker.PigSoundVariantInvoker) this.getHandle())
+				.cardforge$setSoundVariant(CraftSoundVariant.bukkitToMinecraftHolder(variant));
 	}
 }

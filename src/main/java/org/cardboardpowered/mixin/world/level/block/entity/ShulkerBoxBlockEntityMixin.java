@@ -53,7 +53,25 @@ public abstract class ShulkerBoxBlockEntityMixin implements Container, Container
         return maxStack;
     }
 
-    @Override public Location getLocation(){return null;}
-    @Override public InventoryHolder getOwner(){return null;}
+    @Override
+    public Location getLocation() {
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity =
+                (net.minecraft.world.level.block.entity.BlockEntity) (Object) this;
+        if (blockEntity.getLevel() == null) return null;
+        net.minecraft.core.BlockPos pos = blockEntity.getBlockPos();
+        return new Location(((org.cardboardpowered.bridge.world.level.LevelBridge) blockEntity.getLevel())
+                .cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public InventoryHolder getOwner() {
+        // Both of these returned null. For the brewing stand that also meant
+        // BrewEvent never fired, because the event handler bails when the owner
+        // is null.
+        Location location = this.getLocation();
+        if (location == null) return null;
+        org.bukkit.block.BlockState state = location.getBlock().getState();
+        return state instanceof InventoryHolder holder ? holder : null;
+    }
 
 }

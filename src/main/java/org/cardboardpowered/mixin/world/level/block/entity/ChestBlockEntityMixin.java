@@ -3,6 +3,7 @@ package org.cardboardpowered.mixin.world.level.block.entity;
 import java.util.List;
 
 import net.minecraft.world.Container;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
@@ -71,8 +72,12 @@ public abstract class ChestBlockEntityMixin implements Container, ContainerBridg
 
     @Override
     public InventoryHolder getOwner() {
-        // TODO Auto-generated method stub
-        return null;
+        // Returned null for every container, so InventoryHolder-based lookups -
+        // "which chest is this inventory in" - answered nothing.
+        Location location = this.getLocation();
+        if (location == null) return null;
+        org.bukkit.block.BlockState state = location.getBlock().getState();
+        return state instanceof InventoryHolder holder ? holder : null;
     }
 
     @Override

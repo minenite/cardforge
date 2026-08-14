@@ -11,6 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.InventoryHolder;
+import org.minenite.cardforge.mixin.invoker.BarrelBlockEntityAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 
 import org.cardboardpowered.bridge.world.ContainerBridge;
@@ -24,14 +25,19 @@ public abstract class BarrelBlockEntityMixin implements Container, ContainerBrid
 
     @Override
     public List<ItemStack> getContents() {
-        // TODO Auto-generated method stub
-        return null;
+        // Returned null, so anything reading a barrel through this bridge - the
+        // inventory snapshot among them - failed on the first element.
+        return ((BarrelBlockEntityAccessor) this).cardforge$getItems();
     }
 
     @Override
     public InventoryHolder getOwner() {
-        // TODO Auto-generated method stub
-        return null;
+        // Returned null for every container, so InventoryHolder-based lookups -
+        // "which chest is this inventory in" - answered nothing.
+        Location location = this.getLocation();
+        if (location == null) return null;
+        org.bukkit.block.BlockState state = location.getBlock().getState();
+        return state instanceof InventoryHolder holder ? holder : null;
     }
 
     @Override

@@ -5,7 +5,11 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "invoker.AbstractArrowInvoker",
+    "invoker.BarrelBlockEntityAccessor",
     "invoker.CombatTrackerAccessor",
+    "invoker.CowSoundVariantInvoker",
+    "invoker.ChickenSoundVariantInvoker",
+    "invoker.PigSoundVariantInvoker",
     "invoker.EnderDragonFightAccessor",
     "invoker.EnderDragonFightMutator",
     "invoker.StructureTemplateAccessor",

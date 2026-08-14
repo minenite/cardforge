@@ -2,7 +2,9 @@ package org.cardboardpowered.mixin.world.level.block.entity;
 
 import java.util.List;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import org.bukkit.Location;
@@ -13,6 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import org.cardboardpowered.bridge.world.ContainerBridge;
+import org.cardboardpowered.bridge.world.level.LevelBridge;
 
 @Mixin(DispenserBlockEntity.class)
 public abstract class DispenserBlockEntityMixin implements Container, ContainerBridge {
@@ -54,14 +57,20 @@ public abstract class DispenserBlockEntityMixin implements Container, ContainerB
 
     @Override
     public InventoryHolder getOwner() {
-        // TODO Auto-generated method stub
-        return null;
+        // Returned null for every container, so InventoryHolder-based lookups -
+        // "which chest is this inventory in" - answered nothing.
+        Location location = this.getLocation();
+        if (location == null) return null;
+        org.bukkit.block.BlockState state = location.getBlock().getState();
+        return state instanceof InventoryHolder holder ? holder : null;
     }
 
     @Override
     public Location getLocation() {
-        // TODO Auto-generated method stub
-        return null;
+        BlockEntity blockEntity = (BlockEntity) (Object) this;
+        if (blockEntity.getLevel() == null) return null;
+        BlockPos pos = blockEntity.getBlockPos();
+        return new Location(((LevelBridge) blockEntity.getLevel()).cardboard$getWorld(), pos.getX(), pos.getY(), pos.getZ());
     }
 
 }
