@@ -226,6 +226,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     private Location compassTarget;
     private final long loginTime = System.currentTimeMillis();
     private TriState flyingFallDamage = TriState.NOT_SET;
+    /** The name plugins show for this player, which is not the entity's custom name. */
+    private net.kyori.adventure.text.Component adventureDisplayName;
+    /** Read by SleepStatusMixin when it counts who is holding up the night. */
+    private boolean sleepingIgnored;
+    private boolean affectsSpawning = true;
     /** Plugin message channels this client has registered for. */
     private final Set<String> pluginMessageChannels = new java.util.concurrent.ConcurrentHashMap<String, Boolean>()
             .keySet(Boolean.TRUE);
@@ -548,17 +553,18 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public String getDisplayName() {
-        //if (true) return io.papermc.paper.adventure.DisplayNames.getLegacy(this); // Paper
-        //return this.getHandle().displayName; // TODO
-        return (null == this.getHandle().getCustomName()) ? this.getName() : this.getHandle().getCustomName().getString();
+        return net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
+                .serialize(this.displayName());
     }
 
     @Override
     public void setDisplayName(final String name) {
-        //this.getHandle().adventure$displayName = name != null ? net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(name) : net.kyori.adventure.text.Component.text(this.getName()); // Paper
-        //this.getHandle().displayName = name == null ? this.getName() : name; // TODO
-        this.getHandle().setCustomNameVisible(true);
-        this.getHandle().setCustomName(net.minecraft.network.chat.Component.literal(name));
+        // Kept on the wrapper. It used to set the entity's custom name, which is a
+        // different thing entirely: that floats a nameplate above the player and
+        // follows them into the world, which a display name is not meant to do.
+        this.displayName(name == null ? null
+                : net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
+                        .deserialize(name));
     }
 
     // Paper start
@@ -1398,15 +1404,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public void setSleepingIgnored(boolean isSleeping) {
-        //this.getHandle().fauxSleeping = isSleeping;
-        //((CraftWorld) this.getWorld()).getHandle().updateSleepingPlayerList();
-        // TODO
+        this.sleepingIgnored = isSleeping;
+        // Recount now, so the night can pass the moment the last player who was
+        // holding it up steps out of the tally.
+        ((org.cardboardpowered.impl.world.CraftWorld) this.getWorld()).getHandle().updateSleepingPlayerList();
     }
 
     @Override
     public boolean isSleepingIgnored() {
-        //return this.getHandle().fauxSleeping; // TODO
-        return false;
+        return this.sleepingIgnored;
     }
 
     @Override
@@ -2803,13 +2809,14 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     // Paper start
     public void setAffectsSpawning(boolean affects) {
-        //this.getHandle().affectsSpawning = affects; // TODO
+        // Read by EntityGetterMixin_AffectsSpawning when the game looks for a
+        // player to spawn mobs near, rather than stored and ignored.
+        this.affectsSpawning = affects;
     }
 
     @Override
     public boolean getAffectsSpawning() {
-       // return this.getHandle().affectsSpawning; // TODO
-        return false;
+        return this.affectsSpawning;
     }
     // Paper end
 
@@ -2847,18 +2854,16 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     // Paper start
     @Override
     public net.kyori.adventure.text.Component displayName() {
-       // return this.getHandle().adventure$displayName; // TODO
-        return net.kyori.adventure.text.Component.text(this.getDisplayName());
+        return this.adventureDisplayName != null
+                ? this.adventureDisplayName
+                : net.kyori.adventure.text.Component.text(this.getName());
     }
 
     @Override
     public void displayName(final net.kyori.adventure.text.Component displayName) {
-        //this.getHandle().adventure$displayName = displayName != null ? displayName : net.kyori.adventure.text.Component.text(this.getName());
-        //this.getHandle().displayName = null;
-        // TODO
-        if (displayName instanceof TextComponent) {
-            this.setDisplayName(((TextComponent)displayName).content());
-        }
+        // Any component, not only plain text: the old version silently dropped
+        // anything with colour, formatting or children, which is most of them.
+        this.adventureDisplayName = displayName;
     }
 
     @Override
@@ -3326,14 +3331,19 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public int getViewDistance() {
-        //return ca.spottedleaf.moonrise.common.PlatformHooks.get().getViewDistance(this.getHandle()); // TODO
-        throw new NotImplementedException("Was Removed from Paper");
+        // What this client is actually being served: its own request, capped by the
+        // server. It used to refuse to answer a question that has an answer.
+        int requested = this.getHandle().requestedViewDistance();
+        int server = this.server.getHandle().getViewDistance();
+        return requested <= 0 ? server : Math.min(requested, server);
     }
 
     @Override
     public void setViewDistance(final int viewDistance) {
-        //FeatureHooks.setViewDistance(this.getHandle(), viewDistance); // Paper - chunk system // TODO
-        throw new NotImplementedException("Was Removed from Paper");
+        // The client asks for its own view distance and the server caps it; there
+        // is no per-player setting to push the other way.
+        throw new UnsupportedOperationException(
+                "A player's view distance is requested by their client; set the server's instead");
     }
 
     @Override
@@ -3345,7 +3355,10 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public void setSimulationDistance(final int simulationDistance) {
-        //FeatureHooks.setSimulationDistance(this.getHandle(), simulationDistance); // Paper - chunk system // TODO
+        // Refused rather than silently ignored: simulation distance is a server
+        // setting, and pretending otherwise hides the fact that nothing happened.
+        throw new UnsupportedOperationException(
+                "Simulation distance is a server setting, not a per-player one");
     }
 
     @Override
@@ -3359,7 +3372,8 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public void setSendViewDistance(final int viewDistance) {
-        //FeatureHooks.setSendViewDistance(this.getHandle(), viewDistance); // Paper - chunk system // TODO
+        throw new UnsupportedOperationException(
+                "Send view distance is a server setting, not a per-player one");
     }
 
     // Paper start - entity effect API

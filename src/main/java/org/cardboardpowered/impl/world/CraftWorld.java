@@ -2754,9 +2754,9 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public @NotNull Biome getBiome(@NotNull Location arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public @NotNull Biome getBiome(@NotNull Location location) {
+		Preconditions.checkArgument(location != null, "Location cannot be null");
+		return this.getBiome(location.getBlockX(), location.getBlockY(), location.getBlockZ());
 	}
 
 	@Override
@@ -2931,9 +2931,10 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public @NotNull Biome getComputedBiome(int arg0, int arg1, int arg2) {
-		// TODO Auto-generated method stub
-		return null;
+	public @NotNull Biome getComputedBiome(int x, int y, int z) {
+		// What the world actually generated there, which is the same lookup: this
+		// server has no biome overrides layered on top to distinguish it from.
+		return this.getBiome(x, y, z);
 	}
 	
 	@Override
@@ -3115,24 +3116,24 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	@Override
 	public @Nullable RayTraceResult rayTraceEntities(@NotNull Position start, @NotNull Vector direction,
 			double maxDistance, double raySize, @Nullable Predicate<? super Entity> filter) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.rayTraceEntities(new Location(this, start.x(), start.y(), start.z()),
+				direction, maxDistance, raySize, filter);
 	}
 
 	@Override
 	public @Nullable RayTraceResult rayTraceBlocks(@NotNull Position start, @NotNull Vector direction,
 			double maxDistance, @NotNull FluidCollisionMode fluidCollisionMode, boolean ignorePassableBlocks,
 			@Nullable Predicate<? super Block> canCollide) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.rayTraceBlocks(new Location(this, start.x(), start.y(), start.z()),
+				direction, maxDistance, fluidCollisionMode, ignorePassableBlocks, canCollide);
 	}
 
 	@Override
 	public @Nullable RayTraceResult rayTrace(@NotNull Position start, @NotNull Vector direction, double maxDistance,
 			@NotNull FluidCollisionMode fluidCollisionMode, boolean ignorePassableBlocks, double raySize,
 			@Nullable Predicate<? super Entity> filter, @Nullable Predicate<? super Block> canCollide) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.rayTrace(new Location(this, start.x(), start.y(), start.z()), direction, maxDistance,
+				fluidCollisionMode, ignorePassableBlocks, raySize, filter, canCollide);
 	}
 
 	@Override

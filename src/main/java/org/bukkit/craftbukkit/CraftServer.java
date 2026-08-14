@@ -1115,10 +1115,8 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public boolean getAllowNether() {
-
-    	return true; // TODO
-
-    	// return this.server.getProperties().allowNether;
+    	// 26.2 has no allow-nether property; the dimension exists or it does not.
+    	return this.console.getLevel(net.minecraft.world.level.Level.NETHER) != null;
 
         // return getServer().isNetherAllowed();
     }
@@ -1129,14 +1127,12 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public int getAmbientSpawnLimit() {
-        // TODO Auto-generated method stub
-        return 0;
+    	return this.getSpawnLimit(SpawnCategory.AMBIENT);
     }
 
     @Override
     public int getAnimalSpawnLimit() {
-        // TODO Auto-generated method stub
-        return 0;
+    	return this.getSpawnLimit(SpawnCategory.ANIMAL);
     }
 
     @Override
@@ -1290,8 +1286,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public int getMonsterSpawnLimit() {
-        // TODO Auto-generated method stub
-        return 0;
+    	return this.getSpawnLimit(SpawnCategory.MONSTER);
     }
 
     @Override
@@ -1595,8 +1590,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public int getWaterAnimalSpawnLimit() {
-        // TODO Auto-generated method stub
-        return 0;
+    	return this.getSpawnLimit(SpawnCategory.WATER_ANIMAL);
     }
 
     @Override
@@ -2020,8 +2014,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public int getTicksPerWaterAmbientSpawns() {
-        // TODO Auto-generated method stub
-        return 0;
+    	return (int) this.getTicksPerSpawns(SpawnCategory.WATER_AMBIENT);
     }
 
     @Override
@@ -2096,8 +2089,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public int getMaxWorldSize() {
-        // TODO Auto-generated method stub
-        return ServerLevel.MAX_LEVEL_SIZE;
+    	return this.getProperties().maxWorldSize;
     }
 
     @Override
@@ -2250,8 +2242,10 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public @Nullable Component shutdownMessage() {
-        // TODO Auto-generated method stub
-        return null;
+        String message = this.getShutdownMessage();
+        return message == null ? null
+                : net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
+                        .deserialize(message);
     }
 
     @Override
@@ -2317,14 +2311,12 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public int getTicksPerWaterUndergroundCreatureSpawns() {
-        // TODO Auto-generated method stub
-        return 0;
+    	return (int) this.getTicksPerSpawns(SpawnCategory.WATER_UNDERGROUND_CREATURE);
     }
 
     @Override
     public int getWaterUndergroundCreatureSpawnLimit() {
-        // TODO Auto-generated method stub
-        return 0;
+    	return this.getSpawnLimit(SpawnCategory.WATER_UNDERGROUND_CREATURE);
     }
 
     @Override
@@ -2402,20 +2394,21 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
 	@Override
 	public int getSimulationDistance() {
-		// TODO Auto-generated method stub
-		return 8;
+		return this.getHandle().getSimulationDistance();
 	}
 
 	@Override
-	public int getSpawnLimit(@NotNull SpawnCategory arg0) {
-		// TODO Auto-generated method stub
-		return 0;
+	public int getSpawnLimit(@NotNull SpawnCategory category) {
+		// The server's figure is the default world's: there is no separate
+		// server-wide cap, and this is what asking without a world means.
+		List<World> worlds = this.getWorlds();
+		return worlds.isEmpty() ? 0 : worlds.get(0).getSpawnLimit(category);
 	}
 
 	@Override
-	public int getTicksPerSpawns(@NotNull SpawnCategory arg0) {
-		// TODO Auto-generated method stub
-		return 0;
+	public int getTicksPerSpawns(@NotNull SpawnCategory category) {
+		List<World> worlds = this.getWorlds();
+		return worlds.isEmpty() ? 1 : (int) worlds.get(0).getTicksPerSpawns(category);
 	}
 
 	@Override
@@ -2459,7 +2452,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
 	@Override
 	public boolean shouldSendChatPreviews() {
-		// TODO Auto-generated method stub
+		// Chat preview was removed from the game; nothing can send them.
 		return false;
 	}
 
@@ -2471,14 +2464,12 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
 	@Override
 	public @NotNull List<String> getInitialDisabledPacks() {
-		// TODO Auto-generated method stub
-		return null;
+		return List.copyOf(this.getProperties().initialDataPackConfiguration.getDisabled());
 	}
 
 	@Override
 	public @NotNull List<String> getInitialEnabledPacks() {
-		// TODO Auto-generated method stub
-		return null;
+		return List.copyOf(this.getProperties().initialDataPackConfiguration.getEnabled());
 	}
 
     public void setMotd(String motd) {
@@ -2661,8 +2652,10 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public void setPauseWhenEmptyTime(int seconds) {
-        // TODO
-    	// this.getProperties().pauseWhenEmptySeconds = seconds;
+        // Not supported: an immutable server property, so this would otherwise
+        // accept the call and change nothing.
+        throw new UnsupportedOperationException(
+                "Changing pause-when-empty-seconds at runtime is not supported; set it in server.properties");
     }
 
 	@Override
