@@ -76,6 +76,39 @@ public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
         this.cardboard$collidable = collidable;
     }
 
+    /** Bukkit-only state with no vanilla home, kept per entity. */
+    @org.spongepowered.asm.mixin.Unique
+    private final java.util.Set<java.util.UUID> cardboard$collidableExemptions = new java.util.HashSet<>();
+    @org.spongepowered.asm.mixin.Unique
+    private org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason cardboard$spawnReason;
+    @org.spongepowered.asm.mixin.Unique
+    private net.kyori.adventure.util.TriState cardboard$frictionState = net.kyori.adventure.util.TriState.NOT_SET;
+
+    @Override
+    public java.util.Set<java.util.UUID> cardboard$getCollidableExemptions() {
+        return this.cardboard$collidableExemptions;
+    }
+
+    @Override
+    public org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason cardboard$getSpawnReason() {
+        return this.cardboard$spawnReason;
+    }
+
+    @Override
+    public void cardboard$setSpawnReason(org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason reason) {
+        this.cardboard$spawnReason = reason;
+    }
+
+    @Override
+    public net.kyori.adventure.util.TriState cardboard$getFrictionState() {
+        return this.cardboard$frictionState;
+    }
+
+    @Override
+    public void cardboard$setFrictionState(net.kyori.adventure.util.TriState state) {
+        this.cardboard$frictionState = state;
+    }
+
     @Override
     public void cardboard$setMaxAirSupply(int ticks) {
         this.cardboard$maxAirSupply = ticks;

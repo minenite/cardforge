@@ -2243,7 +2243,10 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		if(function != null)
 			function.accept((T) ((EntityBridge) (Object) entity).getBukkitEntity());
 
-		world.addEntity(entity); // TODO spawn reason
+		// Recorded before the entity goes in, so listeners on the add path and any
+		// later getEntitySpawnReason both see why it appeared.
+		((EntityBridge) (Object) entity).cardboard$setSpawnReason(reason);
+		world.addEntity(entity);
 		return (T) ((EntityBridge) (Object) entity).getBukkitEntity();
 	}
 
@@ -3314,11 +3317,16 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public void addEntityToWorld(net.minecraft.world.entity.Entity entity, SpawnReason reason) {
+		((EntityBridge) (Object) entity).cardboard$setSpawnReason(reason);
 		this.getHandle().addFreshEntity(entity);
 	}
 
 	@Override
 	public void addEntityWithPassengers(net.minecraft.world.entity.Entity entity, SpawnReason reason) {
+		((EntityBridge) (Object) entity).cardboard$setSpawnReason(reason);
+		for (net.minecraft.world.entity.Entity passenger : entity.getSelfAndPassengers().toList()) {
+			((EntityBridge) (Object) passenger).cardboard$setSpawnReason(reason);
+		}
 		this.getHandle().tryAddFreshEntityWithPassengers(entity);
 	}
 

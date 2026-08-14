@@ -22,6 +22,40 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Mob.class)
 public abstract class MobMixin extends LivingEntity implements MobBridge, EntityBridge {
+
+    /**
+     * Records why a mob appeared. Bukkit's SpawnReason has no vanilla counterpart,
+     * but finalizeSpawn carries the NMS reason for everything the game spawns
+     * itself - natural, spawner, structure, breeding and the rest - which is
+     * exactly what getEntitySpawnReason and fromMobSpawner need.
+     */
+    @org.spongepowered.asm.mixin.injection.Inject(method = "finalizeSpawn", at = @org.spongepowered.asm.mixin.injection.At("HEAD"))
+    private void cardboard$recordSpawnReason(net.minecraft.world.level.ServerLevelAccessor level,
+            net.minecraft.world.DifficultyInstance difficulty, net.minecraft.world.entity.EntitySpawnReason reason,
+            net.minecraft.world.entity.SpawnGroupData data,
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<net.minecraft.world.entity.SpawnGroupData> cir) {
+        ((EntityBridge) (Object) this).cardboard$setSpawnReason(cardboard$toBukkitReason(reason));
+    }
+
+    @org.spongepowered.asm.mixin.Unique
+    private static org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason cardboard$toBukkitReason(
+            net.minecraft.world.entity.EntitySpawnReason reason) {
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.NATURAL) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.NATURAL;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.CHUNK_GENERATION) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CHUNK_GEN;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.SPAWNER) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.TRIAL_SPAWNER) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.TRIAL_SPAWNER;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.STRUCTURE) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CHUNK_GEN;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.BREEDING) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BREEDING;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.JOCKEY) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.JOCKEY;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.CONVERSION) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.INFECTION;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.REINFORCEMENT) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.REINFORCEMENTS;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.BUCKET) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.BUCKET;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.SPAWN_ITEM_USE) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER_EGG;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.COMMAND) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.COMMAND;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.DISPENSER) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DISPENSE_EGG;
+        if (reason == net.minecraft.world.entity.EntitySpawnReason.PATROL) return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.PATROL;
+        return org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DEFAULT;
+    }
     @Shadow
     @Nullable
     public LivingEntity target;

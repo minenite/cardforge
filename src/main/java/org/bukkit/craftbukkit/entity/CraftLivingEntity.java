@@ -539,8 +539,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public <T> void setMemory(MemoryKey<T> arg0, T arg1) {
-        // TODO Auto-generated method stub
+    public <T> void setMemory(MemoryKey<T> memoryKey, T memoryValue) {
+        // The read side already worked; writing was missing entirely, so brain
+        // memories set by plugins never reached the mob.
+        this.getHandle().getBrain().setMemory(Utils.fromMemoryKey(memoryKey),
+                memoryValue == null ? null : org.bukkit.craftbukkit.entity.memory.CraftMemoryMapper.toNms(memoryValue));
     }
 
     @Override
@@ -583,8 +586,10 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public Set<UUID> getCollidableExemptions() {
-        // TODO Auto-generated method stub
-        return null;
+        // Returned null, so the documented "add a UUID to this set" usage threw a
+        // NullPointerException instead of exempting anything.
+        return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle())
+                .cardboard$getCollidableExemptions();
     }
 
     @Override
@@ -636,8 +641,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public boolean fromMobSpawner() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.getEntitySpawnReason() == SpawnReason.SPAWNER;
     }
 
     @Override
@@ -647,8 +651,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public SpawnReason getEntitySpawnReason() {
-        // TODO Auto-generated method stub
-        return null;
+        // Recorded when the entity is added to the world; DEFAULT covers anything
+        // that predates the tracking, which is better than the null this returned.
+        SpawnReason reason = ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle())
+                .cardboard$getSpawnReason();
+        return reason == null ? SpawnReason.DEFAULT : reason;
     }
 
     @Override
@@ -703,8 +710,15 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public int getShieldBlockingDelay() {
-        // TODO Auto-generated method stub
-        return 0;
+        // Modern Minecraft keeps this on the item's blocks_attacks component
+        // rather than on the entity, so it is read from whatever is being raised.
+        net.minecraft.world.item.component.BlocksAttacks blocks =
+                this.getHandle().getUseItem().get(net.minecraft.core.component.DataComponents.BLOCKS_ATTACKS);
+        if (blocks == null) {
+            blocks = this.getHandle().getItemInHand(InteractionHand.OFF_HAND)
+                    .get(net.minecraft.core.component.DataComponents.BLOCKS_ATTACKS);
+        }
+        return blocks == null ? 0 : Math.round(blocks.blockDelaySeconds() * 20.0F);
     }
 
     @Override
@@ -718,21 +732,35 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public TargetBlockInfo getTargetBlockInfo(int arg0, FluidMode arg1) {
-        // TODO Auto-generated method stub
-        return null;
+    public TargetBlockInfo getTargetBlockInfo(int maxDistance, FluidMode fluidMode) {
+        RayTraceResult hit = this.rayTraceBlocks(maxDistance, fluidMode.bukkit);
+        return (hit == null || hit.getHitBlock() == null) ? null
+                : new TargetBlockInfo(hit.getHitBlock(), hit.getHitBlockFace());
     }
 
     @Override
-    public Entity getTargetEntity(int arg0, boolean arg1) {
-        // TODO Auto-generated method stub
-        return null;
+    public Entity getTargetEntity(int maxDistance, boolean ignoreBlocks) {
+        TargetEntityInfo info = this.getTargetEntityInfo(maxDistance, ignoreBlocks);
+        return info == null ? null : info.getEntity();
     }
 
     @Override
-    public TargetEntityInfo getTargetEntityInfo(int arg0, boolean arg1) {
-        // TODO Auto-generated method stub
-        return null;
+    public TargetEntityInfo getTargetEntityInfo(int maxDistance, boolean ignoreBlocks) {
+        // Trace along the look vector, stopping at the first block unless the
+        // caller asked to see through them.
+        Location eye = this.getEyeLocation();
+        double distance = maxDistance;
+        if (!ignoreBlocks) {
+            RayTraceResult blocks = this.rayTraceBlocks(maxDistance);
+            if (blocks != null) {
+                distance = eye.toVector().distance(blocks.getHitPosition());
+            }
+        }
+
+        RayTraceResult hit = this.getWorld().rayTraceEntities(eye, eye.getDirection(), distance,
+                entity -> entity != this);
+        return (hit == null || hit.getHitEntity() == null) ? null
+                : new TargetEntityInfo(hit.getHitEntity(), hit.getHitPosition());
     }
 
     @Override
@@ -741,9 +769,11 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public void playPickupItemAnimation(Item arg0, int arg1) {
-        // TODO Auto-generated method stub
-        
+    public void playPickupItemAnimation(Item item, int quantity) {
+        // The animation of the item flying into this entity, which every viewer
+        // in range sees. Nothing was sent before, so scripted pickups looked like
+        // items simply vanishing.
+        this.getHandle().take(((CraftEntity) item).getHandle(), quantity);
     }
 
     @Override
@@ -752,8 +782,12 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public void setHurtDirection(float arg0) {
-        // TODO Auto-generated method stub
+    public void setHurtDirection(float hurtDirection) {
+        // Only players carry a hurt direction; on anything else getHurtDir is a
+        // hardcoded zero, so there is nothing to write.
+        if (this.getHandle() instanceof net.minecraft.world.entity.player.Player) {
+            ((org.cardboardpowered.bridge.world.entity.player.PlayerBridge) this.getHandle()).cardboard$setHurtDir(hurtDirection);
+        }
     }
 
     @Override
@@ -774,9 +808,20 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public boolean hasLineOfSight(@NotNull Location arg0) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean hasLineOfSight(@NotNull Location location) {
+        Preconditions.checkArgument(location != null, "Location cannot be null");
+        // Said "no" for every location, including one directly in front of the
+        // entity. A clip from the eyes answers it the way vanilla sight checks do.
+        if (!this.getWorld().equals(location.getWorld())) return false;
+
+        net.minecraft.world.phys.Vec3 eyes = this.getHandle().getEyePosition();
+        net.minecraft.world.phys.Vec3 target =
+                new net.minecraft.world.phys.Vec3(location.getX(), location.getY(), location.getZ());
+        return this.getHandle().level().clip(new net.minecraft.world.level.ClipContext(
+                eyes, target,
+                net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE,
+                this.getHandle())).getType() == net.minecraft.world.phys.HitResult.Type.MISS;
     }
 
     // 1.17 API START
@@ -787,33 +832,31 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public int getBeeStingerCooldown() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.getHandle().removeStingerTime;
     }
 
     @Override
     public int getBeeStingersInBody() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.getHandle().getStingerCount();
     }
 
     @Override
-    public void setBeeStingerCooldown(int i) {
-        // TODO Auto-generated method stub
+    public void setBeeStingerCooldown(int ticks) {
+        this.getHandle().removeStingerTime = ticks;
     }
 
     @Override
-    public void setBeeStingersInBody(int i) {
-        // TODO Auto-generated method stub
+    public void setBeeStingersInBody(int count) {
+        Preconditions.checkArgument(count >= 0, "New bee stinger amount must be >= 0");
+        this.getHandle().setStingerCount(count);
     }
     
     // 1.19.2
 
 	// @Override
-	public <T extends Projectile> @NotNull T launchProjectile_old(@NotNull Class<? extends T> arg0, @Nullable Vector arg1,
-			@Nullable Consumer<T> arg2) {
-		// TODO Auto-generated method stub
-		return null;
+	public <T extends Projectile> @NotNull T launchProjectile_old(@NotNull Class<? extends T> projectile, @Nullable Vector velocity,
+			@Nullable Consumer<T> function) {
+		return this.launchProjectile(projectile, velocity, function);
 	}
 	
 	// @Override
@@ -920,14 +963,17 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
 	@Override
 	public @NotNull TriState getFrictionState() {
-		// TODO Auto-generated method stub
-		return null;
+		// Returned null where the API promises a TriState, so callers that
+		// switched on it hit a NullPointerException.
+		return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle())
+				.cardboard$getFrictionState();
 	}
 
 	@Override
-	public void setFrictionState(@NotNull TriState arg0) {
-		// TODO Auto-generated method stub
-		
+	public void setFrictionState(@NotNull TriState state) {
+		Preconditions.checkArgument(state != null, "Friction state cannot be null");
+		((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle())
+				.cardboard$setFrictionState(state);
 	}
 
 	public void broadcastSlotBreak(EquipmentSlot slot) {
@@ -983,44 +1029,55 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 	
 	@Override
 	public @Nullable Sound getDeathSound() {
-		// TODO Auto-generated method stub
-		return Sound.ENTITY_GENERIC_DEATH;
+		// Every one of these answered with the generic sound no matter what the
+		// entity was, so a plugin asking a creeper for its death sound got the
+		// player one.
+		net.minecraft.sounds.SoundEvent sound =
+				((org.minenite.cardforge.mixin.invoker.LivingEntityInvoker) (Object) this.getHandle()).cardforge$getDeathSound();
+		return sound == null ? null : org.bukkit.craftbukkit.CraftSound.minecraftToBukkit(sound);
 	}
 
 	@Override
-	public @NotNull Sound getDrinkingSound(@NotNull ItemStack arg0) {
-		// TODO Auto-generated method stub
-		return Sound.ENTITY_GENERIC_DRINK;
+	public @NotNull Sound getDrinkingSound(@NotNull ItemStack item) {
+		return consumeSound(item, Sound.ENTITY_GENERIC_DRINK);
 	}
 
 	@Override
-	public @NotNull Sound getEatingSound(@NotNull ItemStack arg0) {
-		// TODO Auto-generated method stub
-		return Sound.ENTITY_GENERIC_EAT;
+	public @NotNull Sound getEatingSound(@NotNull ItemStack item) {
+		return consumeSound(item, Sound.ENTITY_GENERIC_EAT);
 	}
 
 	@Override
-	public @NotNull Sound getFallDamageSound(int arg0) {
-		// TODO Auto-generated method stub
-		return Sound.ENTITY_GENERIC_BIG_FALL;
+	public @NotNull Sound getFallDamageSound(int fallHeight) {
+		// Vanilla splits fall sounds at four blocks.
+		return fallHeight > 4 ? this.getFallDamageSoundBig() : this.getFallDamageSoundSmall();
 	}
 
 	@Override
 	public @NotNull Sound getFallDamageSoundBig() {
-		// TODO Auto-generated method stub
-		return Sound.ENTITY_GENERIC_BIG_FALL;
+		return org.bukkit.craftbukkit.CraftSound.minecraftToBukkit(this.getHandle().getFallSounds().big());
 	}
 
 	@Override
 	public @NotNull Sound getFallDamageSoundSmall() {
-		// TODO Auto-generated method stub
-		return Sound.ENTITY_GENERIC_SMALL_FALL;
+		return org.bukkit.craftbukkit.CraftSound.minecraftToBukkit(this.getHandle().getFallSounds().small());
 	}
 
 	@Override
 	public @Nullable Sound getHurtSound() {
-		// TODO Auto-generated method stub
-		return Sound.ENTITY_GENERIC_HURT;
+		return this.getHurtSound(new CraftDamageSource(this.getHandle().damageSources().generic()));
+	}
+
+	/**
+	 * The sound an item makes when consumed, which lives on the item's consumable
+	 * component rather than on the entity.
+	 */
+	private Sound consumeSound(ItemStack item, Sound fallback) {
+		Preconditions.checkArgument(item != null, "ItemStack cannot be null");
+		net.minecraft.world.item.component.Consumable consumable =
+				org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(item)
+						.get(net.minecraft.core.component.DataComponents.CONSUMABLE);
+		return consumable == null ? fallback : org.bukkit.craftbukkit.CraftSound.minecraftHolderToBukkit(consumable.sound());
 	}
 
 	@Override
@@ -1088,26 +1145,30 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
 	@Override
 	public int getNoActionTicks() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getHandle().getNoActionTime();
 	}
 
 	@Override
 	public void setNoActionTicks(int ticks) {
-		// TODO Auto-generated method stub
-		
+		Preconditions.checkArgument(ticks >= 0, "ticks must be >= 0");
+		this.getHandle().setNoActionTime(ticks);
 	}
 
 	@Override
 	public boolean clearActivePotionEffects() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.getHandle().removeAllEffects();
 	}
 
 	@Override
 	public void playHurtAnimation(float yaw) {
-		// TODO Auto-generated method stub
-		
+		// The red flash and knockback tilt, sent to everyone tracking this entity.
+		net.minecraft.network.protocol.game.ClientboundHurtAnimationPacket packet =
+				new net.minecraft.network.protocol.game.ClientboundHurtAnimationPacket(this.getHandle().getId(), yaw);
+		for (Player player : this.getWorld().getPlayers()) {
+			if (player.canSee(this) || player == this) {
+				((CraftPlayer) player).getHandle().connection.send(packet);
+			}
+		}
 	}
 	
 	// 1.20.2 API:
@@ -1211,11 +1272,13 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
 	@Override
 	public void damage(double amount, org.bukkit.damage.@NotNull DamageSource damageSource) {
-		// TODO Auto-generated method stub
-		
-		
-
-		// TODO this.damage(amount, ((CraftDamageSource)damageSource).getHandle());
+		Preconditions.checkArgument(damageSource != null, "DamageSource cannot be null");
+		// Damage with an explicit source did nothing at all, so plugins using the
+		// modern API could not hurt anything.
+		DamageSource nms = damageSource instanceof CraftDamageSource craft
+				? craft.getHandle() : this.getHandle().damageSources().generic();
+		this.getHandle().hurtServer(
+				(net.minecraft.server.level.ServerLevel) this.getHandle().level(), nms, (float) amount);
 	}
 
 	@Override
@@ -1227,8 +1290,14 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
 	@Override
 	public void heal(double amount, @NotNull RegainReason reason) {
-		// TODO Auto-generated method stub
-		this.heal(amount);
+		Preconditions.checkArgument(reason != null, "RegainReason cannot be null");
+		// The reason was dropped, so every plugin heal reached EntityRegainHealthEvent
+		// as CUSTOM and listeners could not tell them apart.
+		org.bukkit.event.entity.EntityRegainHealthEvent event =
+				new org.bukkit.event.entity.EntityRegainHealthEvent(this, amount, reason);
+		this.getServer().getPluginManager().callEvent(event);
+		if (event.isCancelled()) return;
+		this.setHealth(Math.min(this.getHealth() + event.getAmount(), this.getMaxHealth()));
 	}
 
 	@Override
@@ -1253,9 +1322,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
 	@Override
 	public @NotNull CombatTracker getCombatTracker() {
-		// TODO Auto-generated method stub
-		// TODO: return this.getHandle().getDamageTracker().paperCombatTracker;
-		return null;
+		return new org.bukkit.craftbukkit.damage.CraftCombatTracker(this.getHandle().getCombatTracker());
 	}
 
 	@Override

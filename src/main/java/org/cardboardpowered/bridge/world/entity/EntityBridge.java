@@ -28,6 +28,27 @@ public interface EntityBridge {
     default void cardboard$setCollidable(boolean collidable) {
     }
 
+    /** Entities this one never collides with, by UUID. Bukkit-only concept. */
+    default java.util.Set<java.util.UUID> cardboard$getCollidableExemptions() {
+        return java.util.Collections.emptySet();
+    }
+
+    /** Why this entity was added to the world, recorded at spawn time. */
+    default org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason cardboard$getSpawnReason() {
+        return null;
+    }
+
+    default void cardboard$setSpawnReason(org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason reason) {
+    }
+
+    /** Per-entity override of whether friction applies; NOT_SET defers to vanilla. */
+    default net.kyori.adventure.util.TriState cardboard$getFrictionState() {
+        return net.kyori.adventure.util.TriState.NOT_SET;
+    }
+
+    default void cardboard$setFrictionState(net.kyori.adventure.util.TriState state) {
+    }
+
     default public CraftEntity getBukkitEntity() {
 		System.out.println("getBukkitEntity not implemented for " + this.getClass().getName());
     	return null;

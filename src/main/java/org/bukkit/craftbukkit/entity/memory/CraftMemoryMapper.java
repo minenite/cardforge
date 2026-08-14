@@ -63,8 +63,10 @@ public final class CraftMemoryMapper {
         return new Location((World) ((LevelBridge)((CraftServer)Bukkit.getServer()).getServer().getLevel((ResourceKey<net.minecraft.world.level.Level>) ipos.IC$get_dimension())).cardboard$getWorld(), (double)ipos.IC$get_pos().getX(), (double)ipos.IC$get_pos().getY(), (double)ipos.IC$get_pos().getZ());
     }
 
-   // public static GlobalPos toNms(Location location) {
-   //     return GlobalPos.create(((CraftWorld)location.getWorld()).getHandle().getRegistryKey(), BlockPos.ofFloored(location.getX(), location.getY(), location.getZ()));
-   // }
+    public static GlobalPos toNms(Location location) {
+        return new GlobalPos(
+                ((org.cardboardpowered.impl.world.CraftWorld) location.getWorld()).getHandle().dimension(),
+                net.minecraft.core.BlockPos.containing(location.getX(), location.getY(), location.getZ()));
+    }
 }
 

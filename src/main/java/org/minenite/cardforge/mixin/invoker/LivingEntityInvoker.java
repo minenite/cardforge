@@ -19,4 +19,7 @@ public interface LivingEntityInvoker {
 
     @Invoker("getSoundVolume")
     float cardforge$getSoundVolume();
+
+    @Invoker("getDeathSound")
+    net.minecraft.sounds.SoundEvent cardforge$getDeathSound();
 }

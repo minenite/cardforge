@@ -12,6 +12,14 @@ import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(Player.class)
 public abstract class PlayerMixin extends LivingEntityMixin implements EntityBridge, LivingEntityBridge, PlayerBridge {
+
+    @org.spongepowered.asm.mixin.Shadow
+    protected float hurtDir;
+
+    @Override
+    public void cardboard$setHurtDir(float hurtDir) {
+        this.hurtDir = hurtDir;
+    }
     @Shadow
     public abstract Inventory getInventory();
 

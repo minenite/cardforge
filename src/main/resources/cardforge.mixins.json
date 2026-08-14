@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "invoker.AbstractArrowInvoker",
+    "invoker.CombatTrackerAccessor",
     "invoker.ServerPlayerAccessor",
     "invoker.AbstractWindChargeInvoker",
     "invoker.BlockBehaviourInvoker",
