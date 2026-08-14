@@ -271,6 +271,10 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     public static CraftServer INSTANCE;
     public ApiVersion minimumAPI;
     public CraftScoreboardManager scoreboardManager;
+    private final io.papermc.paper.datapack.DatapackManager datapackManager;
+    private final MobGoals mobGoals = new com.destroystokyo.paper.entity.ai.PaperMobGoals();
+    private final PotionBrewer potionBrewer = new org.bukkit.craftbukkit.potion.CraftPotionBrewer();
+    private final org.bukkit.structure.StructureManager structureManager;
 
     private final MetadataStoreBase<Entity> entityMetadata = MetadataStoreImpl.newEntityMetadataStore();
     private final MetadataStoreBase<OfflinePlayer> playerMetadata = MetadataStoreImpl.newPlayerMetadataStore();
@@ -351,6 +355,9 @@ public class CraftServer extends CardboardAbstractServer implements Server {
         }));
 
         this.dataPackManager = new CraftDataPackManager(this.getServer().getPackRepository());
+        this.datapackManager = new io.papermc.paper.datapack.PaperDatapackManager(this.getServer().getPackRepository());
+        this.structureManager = new org.bukkit.craftbukkit.structure.CraftStructureManager(
+                this.getServer().getStructureManager(), this.getWorldContainer());
         this.serverTickManager = new CraftServerTickManager(console.tickRateManager());
         this.serverLinks = new CraftServerLinks(console);
         this.minimumAPI = ApiVersion.getOrCreateVersion(this.configuration.getString("settings.minimum-api"));
@@ -1253,9 +1260,17 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     }
 
     @Override
-    public LootTable getLootTable(NamespacedKey arg0) {
-        // TODO Auto-generated method stub
-        return null;
+    public LootTable getLootTable(NamespacedKey key) {
+        Preconditions.checkArgument(key != null, "NamespacedKey key cannot be null");
+        // Returned null for every key, which also broke CraftLootTable's
+        // minecraftToBukkit conversions - they route through here.
+        ResourceKey<net.minecraft.world.level.storage.loot.LootTable> nmsKey =
+                org.bukkit.craftbukkit.CraftLootTable.bukkitKeyToMinecraft(key);
+        net.minecraft.world.level.storage.loot.LootTable nms =
+                this.getServer().reloadableRegistries().getLootTable(nmsKey);
+        // An unknown key resolves to the empty table rather than throwing.
+        return nms == net.minecraft.world.level.storage.loot.LootTable.EMPTY
+                ? null : new org.bukkit.craftbukkit.CraftLootTable(key, nms);
     }
 
     @Override
@@ -1722,7 +1737,10 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public void reloadData() {
-        // TODO Auto-generated method stub
+        // Reloads datapacks: recipes, loot tables, advancements and tags. This did
+        // nothing, so /reload and resetRecipes both silently changed nothing.
+        this.getServer().reloadResources(
+                this.getServer().getPackRepository().getSelectedIds()).join();
     }
 
     @Override
@@ -1769,9 +1787,11 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     }
 
     @Override
-    public void setSpawnRadius(int arg0) {
-        // TODO Auto-generated method stub
-        // server.getProperties().spawnProtection = arg0;
+    public void setSpawnRadius(int value) {
+        // spawn-protection is read from properties on every check, so the change
+        // has to be written back to the file to take effect at all.
+        this.configuration.set("settings.spawn-radius", value);
+        this.saveConfig();
     }
 
     @Override
@@ -2099,8 +2119,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public MobGoals getMobGoals() {
-        // TODO Auto-generated method stub
-        return null;
+        return this.mobGoals;
     }
 
     @Override
@@ -2164,7 +2183,23 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public void reloadPermissions() {
-        // TODO Auto-generated method stub
+        // Rebuilds permissions from plugin.yml, which is what makes a permissions
+        // change visible without a restart.
+        this.pluginManager.clearPermissions();
+        for (Plugin plugin : this.pluginManager.getPlugins()) {
+            for (Permission perm : plugin.getDescription().getPermissions()) {
+                try {
+                    this.pluginManager.addPermission(perm);
+                } catch (IllegalArgumentException ex) {
+                    this.getLogger().log(java.util.logging.Level.WARNING,
+                            "Plugin " + plugin.getDescription().getFullName() + " tried to register permission '"
+                                    + perm.getName() + "' but it's already registered", ex);
+                }
+            }
+        }
+        for (Permission perm : this.pluginManager.getPermissions()) {
+            this.pluginManager.recalculatePermissionDefaults(perm);
+        }
     }
 
     @Override
@@ -2187,8 +2222,11 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public @NonNull Iterable<? extends Audience> audiences() {
-        // TODO Auto-generated method stub
-        return null;
+        // Returned null, so anything forwarding a message to the server as an
+        // Adventure audience threw instead of reaching the players and console.
+        List<Audience> audiences = new ArrayList<>(this.getOnlinePlayers());
+        audiences.add(this.getConsoleSender());
+        return audiences;
     }
 
     @Override
@@ -2231,8 +2269,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public @NotNull DatapackManager getDatapackManager() {
-        // TODO Auto-generated method stub
-        return null;
+        return this.datapackManager;
     }
 
     @Override
@@ -2264,8 +2301,27 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public @NotNull ItemStack craftItem(ItemStack[] craftingMatrix, World world, Player player) {
-        // TODO Auto-generated method stub
-        return null;
+        Preconditions.checkArgument(player != null, "player must not be null");
+        // Returned null where the API promises an ItemStack; the recipe lookup it
+        // needed already existed for getCraftingRecipe.
+        TransientCraftingContainer inventoryCrafting = new TransientCraftingContainer(
+                new AbstractContainerMenu(null, -1) {
+                    @Override
+                    public boolean stillValid(net.minecraft.world.entity.player.Player p) {
+                        return false;
+                    }
+
+                    @Override
+                    public net.minecraft.world.item.ItemStack quickMoveStack(net.minecraft.world.entity.player.Player p, int slot) {
+                        return net.minecraft.world.item.ItemStack.EMPTY;
+                    }
+                }, 3, 3);
+
+        Optional<RecipeHolder<CraftingRecipe>> recipe =
+                this.getNMSRecipe(craftingMatrix, inventoryCrafting, (CraftWorld) world);
+        if (recipe.isEmpty()) return new ItemStack(Material.AIR);
+
+        return CraftItemStack.asBukkitCopy(recipe.get().value().assemble(inventoryCrafting.asCraftInput()));
     }
 
     @Override
@@ -2282,15 +2338,13 @@ public class CraftServer extends CardboardAbstractServer implements Server {
                 return false;
             }
 
-            public net.minecraft.world.item.ItemStack transferSlot(net.minecraft.world.entity.player.Player player, int index) {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-			// 1.19.4 @Override
+            // This menu exists only to host a crafting grid for a recipe lookup; it
+            // is never shown to anyone, so there is nothing to move. Returning
+            // EMPTY rather than null keeps it from being a null dereference if
+            // something ever does call it.
+            @Override
 			public net.minecraft.world.item.ItemStack quickMoveStack(net.minecraft.world.entity.player.Player player, int slot) {
-				// TODO Auto-generated method stub
-				return null;
+				return net.minecraft.world.item.ItemStack.EMPTY;
 			}
         };
         TransientCraftingContainer inventoryCrafting = new TransientCraftingContainer(container, 3, 3);
@@ -2319,8 +2373,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
     @Override
     public StructureManager getStructureManager() {
-        // TODO Auto-generated method stub
-        return null;
+        return this.structureManager;
     }
 
     @Override
@@ -2408,8 +2461,7 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
 	@Override
 	public @NotNull PotionBrewer getPotionBrewer() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.potionBrewer;
 	}
 
 	@Override
@@ -2557,8 +2609,42 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 	public @Nullable ItemStack createExplorerMap(@NotNull World world, @NotNull Location location,
 			org.bukkit.generator.structure.@NotNull StructureType structureType,
 			org.bukkit.map.MapCursor.@NotNull Type mapIcon, int radius, boolean findUnexplored) {
-		// TODO Auto-generated method stub
-		return null;
+		Preconditions.checkArgument(world != null, "World cannot be null");
+		Preconditions.checkArgument(location != null, "Location cannot be null");
+		Preconditions.checkArgument(structureType != null, "StructureType cannot be null");
+		Preconditions.checkArgument(mapIcon != null, "MapCursor.Type cannot be null");
+
+		// Returned null, so there was no way to make a treasure-style map at all.
+		// The search is the same one the cartographer villager runs.
+		ServerLevel level = ((CraftWorld) world).getHandle();
+		net.minecraft.world.level.levelgen.structure.StructureType<?> nmsType =
+				org.bukkit.craftbukkit.generator.structure.CraftStructureType.bukkitToMinecraft(structureType);
+
+		// The generator search takes concrete structures, so every structure of the
+		// requested type in this world's registry is offered to it.
+		List<net.minecraft.core.Holder<net.minecraft.world.level.levelgen.structure.Structure>> candidates =
+				new ArrayList<>();
+		level.registryAccess().lookupOrThrow(Registries.STRUCTURE).listElements().forEach(holder -> {
+			if (holder.value().type() == nmsType) candidates.add(holder);
+		});
+		if (candidates.isEmpty()) return null;
+
+		com.mojang.datafixers.util.Pair<BlockPos, net.minecraft.core.Holder<net.minecraft.world.level.levelgen.structure.Structure>> found =
+				level.getChunkSource().getGenerator().findNearestMapStructure(
+						level,
+						net.minecraft.core.HolderSet.direct(candidates),
+						org.bukkit.craftbukkit.util.CraftLocation.toBlockPosition(location),
+						radius, findUnexplored);
+		if (found == null) return null;
+
+		BlockPos pos = found.getFirst();
+		net.minecraft.world.item.ItemStack map = net.minecraft.world.item.MapItem.create(
+				level, pos.getX(), pos.getZ(), (byte) 2, true, true);
+		net.minecraft.world.item.MapItem.renderBiomePreviewMap(level, map);
+		net.minecraft.world.level.saveddata.maps.MapItemSavedData.addTargetDecoration(
+				map, pos, "+",
+				org.bukkit.craftbukkit.map.CraftMapCursor.CraftType.bukkitToMinecraftHolder(mapIcon));
+		return CraftItemStack.asBukkitCopy(map);
 	}
 
 	@Override
@@ -2713,13 +2799,16 @@ public class CraftServer extends CardboardAbstractServer implements Server {
 
 	@Override
 	public @NotNull Merchant createMerchant() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.createMerchant((Component) null);
 	}
 
 	@Override
 	public void restart() {
-		// TODO Auto-generated method stub
+		// There is no supervisor here to bring the process back up, and a silent
+		// no-op on a restart request is worse than saying so: the caller believes
+		// the server is coming back.
+		throw new UnsupportedOperationException(
+				"Restarting is not supported; this server is not run under a wrapper that can restart it");
 	}
 
 	@Override

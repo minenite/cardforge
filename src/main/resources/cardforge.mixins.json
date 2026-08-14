@@ -6,6 +6,7 @@
   "mixins": [
     "invoker.AbstractArrowInvoker",
     "invoker.CombatTrackerAccessor",
+    "invoker.StructureTemplateAccessor",
     "invoker.ServerPlayerAccessor",
     "invoker.AbstractWindChargeInvoker",
     "invoker.BlockBehaviourInvoker",
