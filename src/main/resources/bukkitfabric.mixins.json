@@ -98,6 +98,7 @@
     "world.entity.ExperienceOrbMixin",
     "world.entity.ItemBasedSteeringMixin",
     "world.entity.LivingEntityMixin",
+    "world.entity.LivingEntityMixin_VoidDamage",
     "world.entity.LeavesClimbMixin",
     "world.entity.MobMixin",
     "world.entity.ai.attributes.AttributeMapMixin",

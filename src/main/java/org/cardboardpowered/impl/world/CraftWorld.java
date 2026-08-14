@@ -563,14 +563,12 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public boolean getAllowAnimals() {
-		// TODO Auto-generated method stub
-		return true;
+		return this.allowAnimals;
 	}
 
 	@Override
 	public boolean getAllowMonsters() {
-		// TODO Auto-generated method stub
-		return true;
+		return this.allowMonsters;
 	}
 
 	@Override
@@ -909,9 +907,10 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public boolean getKeepSpawnInMemory() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.keepSpawnInMemory;
 	}
+
+	private boolean keepSpawnInMemory = true;
 
 	@Override
 	public List<LivingEntity> getLivingEntities() {
@@ -1688,8 +1687,23 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setKeepSpawnInMemory(boolean arg0) {
-		// TODO Auto-generated method stub
+	public void setKeepSpawnInMemory(boolean keep) {
+		if (this.keepSpawnInMemory == keep) {
+			return;
+		}
+		this.keepSpawnInMemory = keep;
+		// A ticket around spawn is what actually holds those chunks; the flag on its
+		// own held nothing. Radius 11 matches the area the server itself pins.
+		Location spawnLocation = this.getSpawnLocation();
+		net.minecraft.world.level.ChunkPos spawn = new net.minecraft.world.level.ChunkPos(
+				spawnLocation.getBlockX() >> 4, spawnLocation.getBlockZ() >> 4);
+		if (keep) {
+			this.world.getChunkSource().addTicketWithRadius(
+					net.minecraft.server.level.TicketType.PLAYER_SPAWN, spawn, 11);
+		} else {
+			this.world.getChunkSource().removeTicketWithRadius(
+					net.minecraft.server.level.TicketType.PLAYER_SPAWN, spawn, 11);
+		}
 	}
 
 	@Override
@@ -1712,9 +1726,15 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setSpawnFlags(boolean arg0, boolean arg1) {
-		// TODO Auto-generated method stub
+	public void setSpawnFlags(boolean allowMonsters, boolean allowAnimals) {
+		this.world.setSpawnSettings(allowMonsters);
+		this.allowAnimals = allowAnimals;
+		this.allowMonsters = allowMonsters;
 	}
+
+	/** Remembered alongside the server's own flag, which only covers monsters. */
+	private boolean allowAnimals = true;
+	private boolean allowMonsters = true;
 
 	@Override
 	public Location getSpawnLocation() {
@@ -2531,7 +2551,8 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public int getNoTickViewDistance() {
-		return 0;
+		// Chunks kept loaded but not ticked are the gap between the two distances.
+		return Math.max(0, this.getViewDistance() - this.getSimulationDistance());
 	}
 
 	@Override
@@ -2832,8 +2853,9 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public int getSendViewDistance() {
-		// TODO Auto-generated method stub
-		return 0;
+		// The server sends what it simulates unless told otherwise, so this is the
+		// view distance until a separate send distance exists to report.
+		return this.getViewDistance();
 	}
 
 	@Override
@@ -2883,9 +2905,8 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	   }
 
 	@Override
-	public void setSendViewDistance(int i) {
-		// TODO Auto-generated method stub
-
+	public void setSendViewDistance(int distance) {
+		this.setViewDistance(distance);
 	}
 
 	@Override
@@ -3264,38 +3285,48 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public boolean isVoidDamageEnabled() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.voidDamageEnabled;
 	}
+
+	/** True once anything about void damage has been set, so vanilla is left alone until then. */
+	public boolean hasVoidDamageOverride() {
+		return this.voidDamageOverridden;
+	}
+
+	private boolean voidDamageOverridden;
+	private boolean voidDamageEnabled = true;
+	private float voidDamageAmount = 4.0f;
+	private double voidDamageMinBuildHeightOffset = -64.0;
 
 	@Override
 	public void setVoidDamageEnabled(boolean enabled) {
-		// TODO Auto-generated method stub
-		
+		this.voidDamageEnabled = enabled;
+		this.voidDamageOverridden = true;
 	}
 
 	@Override
 	public float getVoidDamageAmount() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.voidDamageAmount;
 	}
 
 	@Override
-	public void setVoidDamageAmount(float voidDamageAmount) {
-		// TODO Auto-generated method stub
-		
+	public void setVoidDamageAmount(float amount) {
+		Preconditions.checkArgument(amount >= 0, "amount cannot be negative");
+		this.voidDamageAmount = amount;
+		this.voidDamageOverridden = true;
 	}
 
 	@Override
 	public double getVoidDamageMinBuildHeightOffset() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.voidDamageMinBuildHeightOffset;
 	}
 
 	@Override
-	public void setVoidDamageMinBuildHeightOffset(double minBuildHeightOffset) {
-		// TODO Auto-generated method stub
-		
+	public void setVoidDamageMinBuildHeightOffset(double offset) {
+		// Only delays the damage. Vanilla decides when to ask at all, so an offset
+		// that would hurt sooner than it does has nothing to hook.
+		this.voidDamageMinBuildHeightOffset = offset;
+		this.voidDamageOverridden = true;
 	}
 
 	@Override
