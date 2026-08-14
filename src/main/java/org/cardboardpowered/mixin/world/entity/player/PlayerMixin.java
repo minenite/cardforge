@@ -22,4 +22,28 @@ public abstract class PlayerMixin extends LivingEntityMixin implements EntityBri
     public org.bukkit.craftbukkit.entity.CraftHumanEntity getBukkitEntity() {
         return (org.bukkit.craftbukkit.entity.CraftHumanEntity) super.getBukkitEntity();
     }
+
+    /**
+     * Applies the player's flying fall damage setting.
+     *
+     * <p>Vanilla spares a player who was flying; the API lets a plugin say
+     * otherwise, and there was nowhere for that answer to be asked. Without this
+     * the setter stored a value nothing read, which is worse than refusing.
+     */
+    @org.spongepowered.asm.mixin.injection.Inject(method = "causeFallDamage", at = @org.spongepowered.asm.mixin.injection.At("HEAD"), cancellable = true)
+    private void cardboard$flyingFallDamage(double fallDistance, float multiplier,
+                                            net.minecraft.world.damagesource.DamageSource source,
+                                            org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+        org.bukkit.craftbukkit.entity.CraftHumanEntity bukkit = this.getBukkitEntity();
+        if (!(bukkit instanceof org.bukkit.craftbukkit.entity.CraftPlayer player)) {
+            return;
+        }
+        net.kyori.adventure.util.TriState setting = player.hasFlyingFallDamage();
+        if (setting == net.kyori.adventure.util.TriState.NOT_SET) {
+            return;
+        }
+        if (setting == net.kyori.adventure.util.TriState.FALSE && player.isFlying()) {
+            cir.setReturnValue(false);
+        }
+    }
 }

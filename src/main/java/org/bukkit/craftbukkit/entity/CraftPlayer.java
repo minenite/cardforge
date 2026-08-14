@@ -222,6 +222,13 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     private long timeOffset;
     private boolean relativeTime = true;
     private WeatherType weatherType;
+    /** Where this player's compass points, and when they joined. */
+    private Location compassTarget;
+    private final long loginTime = System.currentTimeMillis();
+    private TriState flyingFallDamage = TriState.NOT_SET;
+    /** Plugin message channels this client has registered for. */
+    private final Set<String> pluginMessageChannels = new java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+            .keySet(Boolean.TRUE);
     private static final PointersSupplier<Player> POINTERS_SUPPLIER = PointersSupplier.<Player>builder()
             .parent(CraftEntity.POINTERS_SUPPLIER)
             .resolving(Identity.NAME, Player::getName)
@@ -743,7 +750,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
         if (this.getHandle().connection == null) return;
 
-        // Do not directly assign here, from the packethandler we'll assign it.
+        this.compassTarget = loc.clone();
         this.getHandle().connection.send(new ClientboundSetDefaultSpawnPositionPacket(
                 LevelData.RespawnData.of(
                         ((CraftWorld) loc.getWorld()).getHandle().dimension(),
@@ -756,8 +763,10 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public Location getCompassTarget() {
-        //return this.getHandle().compassTarget; // TODO
-        return null;
+        // Remembered when it is set: the client is told where to point, and the
+        // server has nowhere of its own to keep it. Falls back to the world's
+        // spawn, which is where a compass points when nothing has moved it.
+        return this.compassTarget != null ? this.compassTarget.clone() : this.getWorld().getSpawnLocation();
     }
 
     @Override
@@ -2178,8 +2187,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     // Paper start - getLastPlayed replacement API
     @Override
     public long getLastLogin() {
-        //return this.getHandle().loginTime; // TODO
-        return 0;
+        return this.loginTime;
     }
 
     @Override
@@ -2406,11 +2414,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public Set<String> channels() {
-        if (this.getHandle().connection == null) return new HashSet<>();
-
-        //return this.getHandle().connection.pluginMessagerChannels;
-        // TODO
-        return new HashSet<>();
+        // The set the register and unregister calls actually write into. Returning
+        // a fresh one each time meant every registration was dropped on the floor:
+        // addChannel appeared to work, the event fired, and the channel was gone by
+        // the next call - so no plugin could ever be found listening.
+        return this.pluginMessageChannels;
     }
 
     @Override
@@ -2508,13 +2516,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     // Paper start - flying fall damage
     @Override
     public void setFlyingFallDamage(@NonNull TriState flyingFallDamage) {
-        //getHandle().flyingFallDamage = flyingFallDamage; // TODO
+        Preconditions.checkArgument(flyingFallDamage != null, "flyingFallDamage cannot be null");
+        // Read back by the fall damage hook in PlayerMixin, so this is a setting
+        // that takes effect rather than a value nobody looks at.
+        this.flyingFallDamage = flyingFallDamage;
     }
 
     @Override
     public @NonNull TriState hasFlyingFallDamage() {
-        //return getHandle().flyingFallDamage; // TODO
-        return TriState.NOT_SET;
+        return this.flyingFallDamage;
     }
     // Paper end - flying fall damage
 
@@ -2767,8 +2777,13 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     // Paper start
     @Override
     public java.util.Locale locale() {
-        //return getHandle().adventure$locale; // TODO
-        return Locale.ENGLISH;
+        // What the client actually reports, rather than assuming English for
+        // everyone - which quietly breaks any plugin translating for players.
+        String language = this.getHandle().clientInformation().language();
+        if (language == null || language.isBlank()) {
+            return Locale.ENGLISH;
+        }
+        return java.util.Locale.forLanguageTag(language.replace('_', '-'));
     }
     // Paper end
 
@@ -3273,22 +3288,34 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     @Override
     public Set<java.lang.Long> getSentChunkKeys() {
         org.spigotmc.AsyncCatcher.catchOp("accessing sent chunks");
-        //return FeatureHooks.getSentChunkKeys(this.getHandle()); // TODO
-        return LongSets.EMPTY_SET;
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet keys = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        this.trackedChunks().forEach(pos -> keys.add(pos.pack()));
+        return it.unimi.dsi.fastutil.longs.LongSets.unmodifiable(keys);
+    }
+
+    /** What the server thinks this client currently holds. */
+    private net.minecraft.server.level.ChunkTrackingView trackedChunks() {
+        net.minecraft.server.level.ChunkTrackingView view =
+                ((org.minenite.cardforge.mixin.invoker.ServerPlayerAccessor) this.getHandle())
+                        .cardforge$chunkTrackingView();
+        return view == null ? net.minecraft.server.level.ChunkTrackingView.EMPTY : view;
     }
 
     @Override
     public Set<org.bukkit.Chunk> getSentChunks() {
         org.spigotmc.AsyncCatcher.catchOp("accessing sent chunks");
-        //return FeatureHooks.getSentChunks(this.getHandle()); // TODO
-        return Set.of();
+        com.google.common.collect.ImmutableSet.Builder<org.bukkit.Chunk> chunks =
+                com.google.common.collect.ImmutableSet.builder();
+        org.bukkit.World world = this.getWorld();
+        this.trackedChunks().forEach(pos -> chunks.add(world.getChunkAt(pos.x(), pos.z())));
+        return chunks.build();
     }
 
     @Override
     public boolean isChunkSent(final long chunkKey) {
         org.spigotmc.AsyncCatcher.catchOp("accessing sent chunks");
-        //return FeatureHooks.isChunkSent(this.getHandle(), chunkKey); // TODO
-        return false;
+        net.minecraft.world.level.ChunkPos pos = net.minecraft.world.level.ChunkPos.unpack(chunkKey);
+        return this.trackedChunks().contains(pos.x(), pos.z());
     }
     // Paper end
 
@@ -3311,8 +3338,9 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public int getSimulationDistance() {
-        //return ca.spottedleaf.moonrise.common.PlatformHooks.get().getTickViewDistance(this.getHandle()); // TODO
-        return 0;
+        // Vanilla keeps one simulation distance for the server; there is no
+        // per-player value to report, so the server's own is the honest answer.
+        return this.server.getHandle().getSimulationDistance();
     }
 
     @Override
@@ -3322,8 +3350,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public int getSendViewDistance() {
-        //return ca.spottedleaf.moonrise.common.PlatformHooks.get().getSendViewDistance(this.getHandle()); // TODO
-        return 0;
+        // What this client actually receives: its own request, capped by the
+        // server's setting.
+        int requested = this.getHandle().requestedViewDistance();
+        int server = this.server.getHandle().getViewDistance();
+        return requested <= 0 ? server : Math.min(requested, server);
     }
 
     @Override

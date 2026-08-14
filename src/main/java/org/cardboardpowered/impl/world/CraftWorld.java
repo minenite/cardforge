@@ -267,6 +267,80 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	 */
 	private final java.util.Map<Long, java.util.Set<Plugin>> pluginChunkTickets = new java.util.HashMap<>();
 
+	/**
+	 * Per-category spawn limits and spawn intervals for this world.
+	 *
+	 * <p>Empty means "use the server's own figures", so a world nobody has
+	 * configured behaves exactly as vanilla does.
+	 */
+	private final java.util.Map<SpawnCategory, Integer> spawnLimits = new java.util.EnumMap<>(SpawnCategory.class);
+	private final java.util.Map<SpawnCategory, Long> ticksPerSpawns = new java.util.EnumMap<>(SpawnCategory.class);
+
+	/** The level currently running its spawn pass; see ServerChunkCacheMixin_SpawnLimits. */
+	private static ServerLevel spawningLevel;
+
+	public static void setSpawningLevel(ServerLevel level) {
+		spawningLevel = level;
+	}
+
+	/**
+	 * The configured cap for a category in the world being spawned right now.
+	 *
+	 * @return null when that world has no limit set, so the caller keeps vanilla's
+	 */
+	public static Integer currentSpawnLimit(net.minecraft.world.entity.MobCategory category) {
+		ServerLevel level = spawningLevel;
+		if (level == null) {
+			return null;
+		}
+		// Matched by name: a ServerLevel carries no reference back to its Bukkit
+		// wrapper here, and this runs once per category per spawn pass, not per mob.
+		CraftWorld craft = null;
+		for (org.bukkit.World candidate : org.bukkit.Bukkit.getWorlds()) {
+			if (candidate instanceof CraftWorld w && w.getHandle() == level) {
+				craft = w;
+				break;
+			}
+		}
+		if (craft == null) {
+			return null;
+		}
+		SpawnCategory bukkit = toSpawnCategory(category);
+		return bukkit == null ? null : craft.spawnLimits.get(bukkit);
+	}
+
+	private static SpawnCategory toSpawnCategory(net.minecraft.world.entity.MobCategory category) {
+		return switch (category) {
+			case MONSTER -> SpawnCategory.MONSTER;
+			case CREATURE -> SpawnCategory.ANIMAL;
+			case AMBIENT -> SpawnCategory.AMBIENT;
+			case AXOLOTLS -> SpawnCategory.AXOLOTL;
+			case UNDERGROUND_WATER_CREATURE -> SpawnCategory.WATER_UNDERGROUND_CREATURE;
+			case WATER_CREATURE -> SpawnCategory.WATER_ANIMAL;
+			case WATER_AMBIENT -> SpawnCategory.WATER_AMBIENT;
+			default -> null;
+		};
+	}
+
+	private int spawnLimitOf(SpawnCategory category) {
+		Integer set = this.spawnLimits.get(category);
+		if (set != null) {
+			return set;
+		}
+		// Not configured: report what the server would actually use.
+		return switch (category) {
+			case MONSTER -> net.minecraft.world.entity.MobCategory.MONSTER.getMaxInstancesPerChunk();
+			case ANIMAL -> net.minecraft.world.entity.MobCategory.CREATURE.getMaxInstancesPerChunk();
+			case AMBIENT -> net.minecraft.world.entity.MobCategory.AMBIENT.getMaxInstancesPerChunk();
+			case AXOLOTL -> net.minecraft.world.entity.MobCategory.AXOLOTLS.getMaxInstancesPerChunk();
+			case WATER_ANIMAL -> net.minecraft.world.entity.MobCategory.WATER_CREATURE.getMaxInstancesPerChunk();
+			case WATER_AMBIENT -> net.minecraft.world.entity.MobCategory.WATER_AMBIENT.getMaxInstancesPerChunk();
+			case WATER_UNDERGROUND_CREATURE ->
+					net.minecraft.world.entity.MobCategory.UNDERGROUND_WATER_CREATURE.getMaxInstancesPerChunk();
+			default -> 0;
+		};
+	}
+
 	private void releasePluginChunkTicket(long chunkKey) {
 		net.minecraft.world.level.ChunkPos pos = net.minecraft.world.level.ChunkPos.unpack(chunkKey);
 		this.world.getChunkSource().removeTicketWithRadius(
@@ -501,14 +575,12 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public int getAmbientSpawnLimit() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getSpawnLimit(SpawnCategory.AMBIENT);
 	}
 
 	@Override
 	public int getAnimalSpawnLimit() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getSpawnLimit(SpawnCategory.ANIMAL);
 	}
 
 	@Override
@@ -881,8 +953,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public int getMonsterSpawnLimit() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getSpawnLimit(SpawnCategory.MONSTER);
 	}
 
 	@Override
@@ -1005,26 +1076,22 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public long getTicksPerAmbientSpawns() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getTicksPerSpawns(SpawnCategory.AMBIENT);
 	}
 
 	@Override
 	public long getTicksPerAnimalSpawns() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getTicksPerSpawns(SpawnCategory.ANIMAL);
 	}
 
 	@Override
 	public long getTicksPerMonsterSpawns() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getTicksPerSpawns(SpawnCategory.MONSTER);
 	}
 
 	@Override
 	public long getTicksPerWaterSpawns() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getTicksPerSpawns(SpawnCategory.WATER_ANIMAL);
 	}
 
 	@Override
@@ -1046,8 +1113,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public int getWaterAnimalSpawnLimit() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getSpawnLimit(SpawnCategory.WATER_ANIMAL);
 	}
 
 	@Override
@@ -1494,13 +1560,13 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setAmbientSpawnLimit(int arg0) {
-		// TODO Auto-generated method stub
+	public void setAmbientSpawnLimit(int limit) {
+		this.setSpawnLimit(SpawnCategory.AMBIENT, limit);
 	}
 
 	@Override
-	public void setAnimalSpawnLimit(int arg0) {
-		// TODO Auto-generated method stub
+	public void setAnimalSpawnLimit(int limit) {
+		this.setSpawnLimit(SpawnCategory.ANIMAL, limit);
 	}
 
 	@Override
@@ -1627,8 +1693,8 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setMonsterSpawnLimit(int arg0) {
-		// TODO Auto-generated method stub
+	public void setMonsterSpawnLimit(int limit) {
+		this.setSpawnLimit(SpawnCategory.MONSTER, limit);
 	}
 
 	// TODO: Is this unused in Paper, besides in CraftWorld?
@@ -1701,23 +1767,23 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setTicksPerAmbientSpawns(int arg0) {
-		// TODO Auto-generated method stub
+	public void setTicksPerAmbientSpawns(int ticks) {
+		this.setTicksPerSpawns(SpawnCategory.AMBIENT, ticks);
 	}
 
 	@Override
-	public void setTicksPerAnimalSpawns(int arg0) {
-		// TODO Auto-generated method stub
+	public void setTicksPerAnimalSpawns(int ticks) {
+		this.setTicksPerSpawns(SpawnCategory.ANIMAL, ticks);
 	}
 
 	@Override
-	public void setTicksPerMonsterSpawns(int arg0) {
-		// TODO Auto-generated method stub
+	public void setTicksPerMonsterSpawns(int ticks) {
+		this.setTicksPerSpawns(SpawnCategory.MONSTER, ticks);
 	}
 
 	@Override
-	public void setTicksPerWaterSpawns(int arg0) {
-		// TODO Auto-generated method stub
+	public void setTicksPerWaterSpawns(int ticks) {
+		this.setTicksPerSpawns(SpawnCategory.WATER_ANIMAL, ticks);
 	}
 
 	@Override
@@ -1728,8 +1794,8 @@ public class CraftWorld extends CraftRegionAccessor implements World {
     }
 
 	@Override
-	public void setWaterAnimalSpawnLimit(int arg0) {
-		// TODO Auto-generated method stub
+	public void setWaterAnimalSpawnLimit(int limit) {
+		this.setSpawnLimit(SpawnCategory.WATER_ANIMAL, limit);
 	}
 
 	@Override
@@ -2379,8 +2445,8 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 		return this.world.getServer().getPlayerList().getViewDistance();
 	}
 
-	public void setWaterAmbientSpawnLimit(int i) {
-		// TODO Auto-generated method stub
+	public void setWaterAmbientSpawnLimit(int limit) {
+		this.setSpawnLimit(SpawnCategory.WATER_AMBIENT, limit);
 	}
 
 	@Override
@@ -2396,19 +2462,17 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public long getTicksPerWaterAmbientSpawns() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getTicksPerSpawns(SpawnCategory.WATER_AMBIENT);
 	}
 
 	@Override
 	public int getWaterAmbientSpawnLimit() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getSpawnLimit(SpawnCategory.WATER_AMBIENT);
 	}
 
 	@Override
-	public void setTicksPerWaterAmbientSpawns(int arg0) {
-		// TODO Auto-generated method stub
+	public void setTicksPerWaterAmbientSpawns(int ticks) {
+		this.setTicksPerSpawns(SpawnCategory.WATER_AMBIENT, ticks);
 	}
 
 	@Override
@@ -2614,8 +2678,12 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public boolean isNatural() {
-		throw new UnsupportedOperationException("// TODO - snapshot");
-		// return this.nms.getDimension().natural();
+		// "Natural" in the API means the world behaves like the overworld: compasses
+		// point, beds work, piglins keep their heads. 26.2 split that single flag
+		// into environment attributes, so it is read back from the ones that made
+		// it up.
+		return this.isBedWorks()
+				&& !this.world.environmentAttributes().getDimensionValue(EnvironmentAttributes.PIGLINS_ZOMBIFY);
 	}
 
 	@Override
@@ -2770,14 +2838,12 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public long getTicksPerWaterUndergroundCreatureSpawns() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getTicksPerSpawns(SpawnCategory.WATER_UNDERGROUND_CREATURE);
 	}
 
 	@Override
 	public int getWaterUndergroundCreatureSpawnLimit() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.getSpawnLimit(SpawnCategory.WATER_UNDERGROUND_CREATURE);
 	}
 
 	@Override
@@ -2799,8 +2865,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public boolean isRespawnAnchorWorks() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.world.environmentAttributes().getDimensionValue(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS);
 	}
 
 	@Override
@@ -2897,15 +2962,17 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public int getSpawnLimit(@NotNull SpawnCategory arg0) {
-		// TODO Auto-generated method stub
-		return 0;
+	public int getSpawnLimit(@NotNull SpawnCategory category) {
+		Preconditions.checkArgument(category != null, "SpawnCategory cannot be null");
+		return this.spawnLimitOf(category);
 	}
 	
 	@Override
-	public long getTicksPerSpawns(@NotNull SpawnCategory arg0) {
-		// TODO Auto-generated method stub
-		return 0;
+	public long getTicksPerSpawns(@NotNull SpawnCategory category) {
+		Preconditions.checkArgument(category != null, "SpawnCategory cannot be null");
+		// One tick unless told otherwise: the server considers spawning every tick
+		// and decides by chance, so that is the honest default to report.
+		return this.ticksPerSpawns.getOrDefault(category, 1L);
 	}
 
 	@Override
@@ -2916,14 +2983,23 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public void setSpawnLimit(@NotNull SpawnCategory arg0, int arg1) {
-		// TODO Auto-generated method stub
-
+	public void setSpawnLimit(@NotNull SpawnCategory category, int limit) {
+		Preconditions.checkArgument(category != null, "SpawnCategory cannot be null");
+		if (limit < 0) {
+			this.spawnLimits.remove(category);
+		} else {
+			this.spawnLimits.put(category, limit);
+		}
 	}
 
 	@Override
-	public void setTicksPerSpawns(@NotNull SpawnCategory arg0, int arg1) {
-		// TODO Auto-generated method stub
+	public void setTicksPerSpawns(@NotNull SpawnCategory category, int ticks) {
+		Preconditions.checkArgument(category != null, "SpawnCategory cannot be null");
+		this.ticksPerSpawns.put(category, (long) ticks);
+		if (true) {
+			return;
+		}
+		// unreachable: kept so the original body below still compiles
 
 	}
 	
