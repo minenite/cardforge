@@ -38,6 +38,34 @@ public class CraftPotionEffectType extends PotionEffectType implements Holderabl
     }
 
     public static Holder<MobEffect> bukkitToMinecraftHolder(PotionEffectType bukkit) {
+        // Not every PotionEffectType here carries a Holder. Types Cardboard never
+        // mapped are stand-ins - ExtraPotionEffectTypeWrapper, darkness among them
+        // - which know their key and nothing else, and the plain cast in
+        // CraftRegistry threw on them:
+        //
+        //   ClassCastException: ExtraPotionEffectTypeWrapper cannot be cast to
+        //   Holderable   at CraftLivingEntity.addPotionEffect
+        //
+        // That took out whatever was applying the effect. A plugin's explosion
+        // died on the potion it applies to nearby players, so the crater it would
+        // have carved afterwards never happened.
+        //
+        // A stand-in still knows its key, and the registry can find the real
+        // effect from that.
+        if (!(bukkit instanceof io.papermc.paper.util.Holderable)) {
+            org.bukkit.NamespacedKey key = bukkit.getKey();
+            if (key != null) {
+                Holder<MobEffect> holder = CraftRegistry.getMinecraftRegistry(Registries.MOB_EFFECT)
+                        .get(net.minecraft.resources.ResourceKey.create(Registries.MOB_EFFECT,
+                                org.bukkit.craftbukkit.util.CraftNamespacedKey.toMinecraft(key)))
+                        .orElse(null);
+                if (holder != null) {
+                    return holder;
+                }
+            }
+            throw new IllegalArgumentException("No mob effect is registered for " + key
+                    + " (" + bukkit.getClass().getSimpleName() + ")");
+        }
         return CraftRegistry.bukkitToMinecraftHolder(bukkit);
     }
 

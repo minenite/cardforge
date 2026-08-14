@@ -16,6 +16,7 @@ import net.minecraft.network.protocol.common.ClientboundDisconnectPacket;
 import net.minecraft.network.protocol.common.ServerboundResourcePackPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
 import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
+import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerAbilitiesPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
@@ -70,12 +71,22 @@ import io.papermc.paper.connection.PaperPlayerGameConnection;
 import io.papermc.paper.connection.PlayerGameConnection;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 @SuppressWarnings("deprecation")
 @Mixin(value = ServerGamePacketListenerImpl.class, priority = 800)
 public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPacketListenerImpl implements ServerGamePacketListenerImplBridge {
+
+    /**
+     * Tick when the player last right-clicked an entity. handleAnimate used to fire
+     * LEFT_CLICK_AIR for every swing — including the swing after entity use — which
+     * made guns ADS when aiming at mobs.
+     */
+    private static final Map<UUID, Integer> ENTITY_INTERACT_TICK = new ConcurrentHashMap<>();
 
     public ServerGamePacketListenerImplMixin(MinecraftServer server, Connection connection, CommonListenerCookie clientData) {
         super(server, connection, clientData);
@@ -677,7 +688,10 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
         Vec3 vec3d1 = vec3d.add((double) f7 * d3, (double) f6 * d3, (double) f8 * d3);
         HitResult movingobjectposition = ((ServerLevel)this.player.level()).clip(new ClipContext(vec3d, vec3d1, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
 
-        if (movingobjectposition == null || movingobjectposition.getType() != HitResult.Type.BLOCK)
+        Integer entityTick = ENTITY_INTERACT_TICK.get(this.player.getUUID());
+        boolean fromEntityUse = entityTick != null && entityTick == this.player.tickCount;
+        // Only treat as left-click-air when this swing is not the follow-up to entity RMB.
+        if (!fromEntityUse && (movingobjectposition == null || movingobjectposition.getType() != HitResult.Type.BLOCK))
             CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_AIR, this.player.inventory.getSelectedItem(), InteractionHand.MAIN_HAND);
 
         // Arm swing animation
@@ -690,6 +704,27 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
         }
         this.player.swing(packet.getHand());
         return;
+    }
+
+    /**
+     * Fire Bukkit entity interact events. Without this, RMB on mobs never reaches plugins
+     * (guns only saw arm-swing → ADS).
+     */
+    @Inject(at = @At("HEAD"), method = "handleInteract", cancellable = true)
+    private void cardboard$playerInteractEntity(ServerboundInteractPacket packet, CallbackInfo ci) {
+        PacketUtils.ensureRunningOnSameThread(packet, get(), this.player.level());
+        Entity target = this.player.level().getEntityOrPart(packet.entityId());
+        if (target == null) {
+            return;
+        }
+        ENTITY_INTERACT_TICK.put(this.player.getUUID(), this.player.tickCount);
+        InteractionHand hand = packet.hand();
+        // Fire AtEntity (extends Entity) once so listeners are not invoked twice.
+        org.bukkit.event.player.PlayerInteractAtEntityEvent event =
+                CraftEventFactory.callPlayerInteractAtEntityEvent(this.player, target, hand, packet.location());
+        if (event.isCancelled()) {
+            ci.cancel();
+        }
     }
 
     @Inject(at = @At("HEAD"), method = "handleUseItem", cancellable = true)

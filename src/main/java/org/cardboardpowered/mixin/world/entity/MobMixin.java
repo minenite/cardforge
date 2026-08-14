@@ -4,6 +4,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
+import org.bukkit.Bukkit;
+import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.cardboardpowered.bridge.world.entity.MobBridge;
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
@@ -15,6 +17,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Mob.class)
@@ -101,5 +104,20 @@ public abstract class MobMixin extends LivingEntity implements MobBridge, Entity
         this.target = target;
         return true;
         // CraftBukkit end
+    }
+
+    /**
+     * Sunlight ignite has no Bukkit event in vanilla. Paper fires {@link EntityCombustEvent}
+     * (not ByBlock / ByEntity) so plugins can cancel day-burn without blocking lava.
+     */
+    @Redirect(
+            method = "burnUndead",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;igniteForSeconds(F)V"))
+    private void cardforge$sunBurnEntityCombustEvent(Mob mob, float seconds) {
+        EntityCombustEvent event = new EntityCombustEvent(this.getBukkitEntity(), seconds);
+        Bukkit.getPluginManager().callEvent(event);
+        if (!event.isCancelled()) {
+            mob.igniteForSeconds(event.getDuration());
+        }
     }
 }

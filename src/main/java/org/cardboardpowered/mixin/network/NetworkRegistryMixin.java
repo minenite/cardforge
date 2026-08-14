@@ -4,15 +4,28 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import net.minecraft.network.ConnectionProtocol;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ServerCommonPacketListener;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.negotiation.NegotiableNetworkComponent;
 import net.neoforged.neoforge.network.negotiation.NegotiationResult;
 import net.neoforged.neoforge.network.negotiation.NetworkComponentNegotiator;
 import net.neoforged.neoforge.network.registration.NetworkRegistry;
-
+import org.cardboardpowered.network.BukkitPluginChannels;
+import org.cardboardpowered.network.BukkitRawPayload;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Lets a client join carrying mods this server does not have.
@@ -78,5 +91,58 @@ public class NetworkRegistryMixin {
                             + " client channel(s) this server does not have; the mods behind them are not here either");
         }
         return NetworkComponentNegotiator.negotiate(server, mutual);
+    }
+
+    /**
+     * Bukkit plugin channels are not NeoForge payload registrations. Without a
+     * codec their bodies are discarded on the way in and written as empty on
+     * the way out, so companions never see scope / laser / hello packets.
+     */
+    @Inject(method = "getCodec", at = @At("RETURN"), cancellable = true)
+    private static void cardboard$bukkitPluginCodec(
+            Identifier id,
+            ConnectionProtocol protocol,
+            PacketFlow flow,
+            CallbackInfoReturnable<StreamCodec<? super FriendlyByteBuf, ? extends CustomPacketPayload>> cir) {
+        if (cir.getReturnValue() != null) {
+            return;
+        }
+        if (!BukkitPluginChannels.isBukkitChannel(id, flow)) {
+            return;
+        }
+        cir.setReturnValue(BukkitRawPayload.codec(id));
+    }
+
+    /**
+     * Incoming plugin messages (hello, prone_req, …) must reach Bukkit listeners
+     * instead of disconnecting as an unknown NeoForge channel.
+     */
+    @Inject(method = "handleModdedPayload", at = @At("HEAD"), cancellable = true)
+    private static void cardboard$bukkitIncoming(
+            ServerCommonPacketListener listener,
+            ServerboundCustomPayloadPacket packet,
+            CallbackInfo ci) {
+        if (!(packet.payload() instanceof BukkitRawPayload raw)) {
+            return;
+        }
+        BukkitPluginChannels.dispatchIncoming(listener, raw);
+        // Always swallow: during configuration the listener is not play yet, and
+        // falling through lets NeoForge kick "Incompatible client! Please use NeoForge …".
+        ci.cancel();
+    }
+
+    /**
+     * Plugin S2C is allowed even when the channel was dropped from NeoForge
+     * negotiation (client-only companion mods).
+     */
+    @Inject(
+            method = "checkPacket(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/protocol/common/ServerCommonPacketListener;)V",
+            at = @At("HEAD"),
+            cancellable = true)
+    private static void cardboard$allowBukkitPluginSend(Packet<?> packet, ServerCommonPacketListener listener, CallbackInfo ci) {
+        if (packet instanceof ClientboundCustomPayloadPacket custom
+                && custom.payload() instanceof BukkitRawPayload) {
+            ci.cancel();
+        }
     }
 }

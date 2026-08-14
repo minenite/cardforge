@@ -2245,15 +2245,20 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
         StandardMessenger.validatePluginMessage(this.server.getMessenger(), source, channel, message);
         if (this.getHandle().connection == null) return;
 
-        if (this.channels().contains(channel)) {
-            Identifier id = Identifier.parse(StandardMessenger.validateAndCorrectChannel(channel));
-            this.sendCustomPayload(id, message);
-        }
+        Identifier id = Identifier.parse(StandardMessenger.validateAndCorrectChannel(channel));
+        this.sendCustomPayload(id, message);
     }
 
     private void sendCustomPayload(Identifier id, byte[] message) {
-       // ClientboundCustomPayloadPacket packet = new ClientboundCustomPayloadPacket(new DiscardedPayload(id, message));
-       // this.getHandle().connection.send(packet); // TODO
+        if (this.getHandle().connection == null || id == null) {
+            return;
+        }
+        if ("minecraft".equals(id.getNamespace())) {
+            return;
+        }
+        byte[] copy = message == null ? new byte[0] : message.clone();
+        this.getHandle().connection.send(new net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket(
+                new org.cardboardpowered.network.BukkitRawPayload(id, copy)));
     }
 
     @Override

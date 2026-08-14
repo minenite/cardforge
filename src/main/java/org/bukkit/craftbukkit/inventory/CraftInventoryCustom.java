@@ -157,10 +157,11 @@ public class CraftInventoryCustom extends CraftInventory {
 
         @Override
         public void setItem(int slot, ItemStack stack) {
-            this.items.set(slot, stack);
-            if (stack != ItemStack.EMPTY && this.getMaxStackSize() > 0 && stack.getCount() > this.getMaxStackSize()) {
+            this.items.set(slot, stack == null ? ItemStack.EMPTY : stack);
+            if (stack != ItemStack.EMPTY && stack != null && this.getMaxStackSize() > 0 && stack.getCount() > this.getMaxStackSize()) {
                 stack.setCount(this.getMaxStackSize());
             }
+            this.setChanged();
         }
 
         @Override
@@ -174,7 +175,17 @@ public class CraftInventoryCustom extends CraftInventory {
         }
 
         @Override
-        public void setChanged() {}
+        public void setChanged() {
+            for (HumanEntity viewer : this.viewers) {
+                if (!(viewer instanceof CraftHumanEntity craft)) {
+                    continue;
+                }
+                net.minecraft.world.entity.player.Player nms = craft.getHandle();
+                if (nms instanceof net.minecraft.server.level.ServerPlayer sp && sp.containerMenu != null) {
+                    sp.containerMenu.broadcastChanges();
+                }
+            }
+        }
 
         @Override
         public boolean stillValid(Player player) {

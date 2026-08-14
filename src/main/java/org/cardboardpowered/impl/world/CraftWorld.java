@@ -879,7 +879,10 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	@Override
 	public Collection<Entity> getNearbyEntities(BoundingBox boundingBox, Predicate<? super Entity> filter) {
 		AABB bb = new AABB(boundingBox.getMinX(), boundingBox.getMinY(), boundingBox.getMinZ(), boundingBox.getMaxX(), boundingBox.getMaxY(), boundingBox.getMaxZ());
-		List<net.minecraft.world.entity.Entity> entityList = world.getEntities((net.minecraft.world.entity.Entity) null, bb, null);
+		// NeoForge/vanilla Level.getEntities requires a non-null Predicate; null NPE's
+		// Predicate.test and breaks rayTraceEntities / medical RMB / many plugins.
+		List<net.minecraft.world.entity.Entity> entityList = world.getEntities(
+				(net.minecraft.world.entity.Entity) null, bb, e -> true);
 		List<Entity> bukkitEntityList = new ArrayList<org.bukkit.entity.Entity>(entityList.size());
 
 		for(net.minecraft.world.entity.Entity entity : entityList) {

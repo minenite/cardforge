@@ -123,9 +123,9 @@ public class ServerGamePacketListenerImplMixin_InventoryClickEvent {
                 break;
             case QUICK_MOVE:
                 if(packet.buttonNum() == 0) {
-                    click = ClickType.LEFT;
+                    click = ClickType.SHIFT_LEFT;
                 } else if(packet.buttonNum() == 1) {
-                    click = ClickType.RIGHT;
+                    click = ClickType.SHIFT_RIGHT;
                 }
                 if(packet.buttonNum() == 0 || packet.buttonNum() == 1) {
                     if(packet.slotNum() < 0) {

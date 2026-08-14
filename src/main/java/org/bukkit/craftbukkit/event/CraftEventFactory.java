@@ -77,6 +77,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitResult.Type;
+import net.minecraft.world.phys.Vec3;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -127,12 +128,12 @@ import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.EntityBlockFormEvent;
 import org.bukkit.event.entity.*;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.event.entity.VillagerCareerChangeEvent.ChangeReason;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.event.world.LootGenerateEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
@@ -271,6 +272,30 @@ public class CraftEventFactory {
             event.setUseInteractedBlock(Event.Result.DENY);
         craftServer.getPluginManager().callEvent(event);
 
+        return event;
+    }
+
+    /**
+     * RMB / use on an entity. CardForge historically had no handleInteract hook, so this
+     * never fired and plugins (guns) could not see entity right-clicks.
+     */
+    public static PlayerInteractEntityEvent callPlayerInteractEntityEvent(ServerPlayer who, Entity entity, InteractionHand hand) {
+        Player player = (Player) ((ServerPlayerBridge) (Object) who).getBukkitEntity();
+        org.bukkit.entity.Entity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntity();
+        EquipmentSlot slot = hand == InteractionHand.OFF_HAND ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND;
+        PlayerInteractEntityEvent event = new PlayerInteractEntityEvent(player, bukkitEntity, slot);
+        Bukkit.getPluginManager().callEvent(event);
+        return event;
+    }
+
+    public static PlayerInteractAtEntityEvent callPlayerInteractAtEntityEvent(ServerPlayer who, Entity entity,
+                                                                              InteractionHand hand, Vec3 location) {
+        Player player = (Player) ((ServerPlayerBridge) (Object) who).getBukkitEntity();
+        org.bukkit.entity.Entity bukkitEntity = ((EntityBridge) (Object) entity).getBukkitEntity();
+        EquipmentSlot slot = hand == InteractionHand.OFF_HAND ? EquipmentSlot.OFF_HAND : EquipmentSlot.HAND;
+        org.bukkit.util.Vector clicked = new org.bukkit.util.Vector(location.x, location.y, location.z);
+        PlayerInteractAtEntityEvent event = new PlayerInteractAtEntityEvent(player, bukkitEntity, clicked, slot);
+        Bukkit.getPluginManager().callEvent(event);
         return event;
     }
 

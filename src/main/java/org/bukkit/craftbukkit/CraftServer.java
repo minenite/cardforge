@@ -2163,17 +2163,18 @@ public class CraftServer extends CardboardAbstractServer implements Server {
     }
 
     @Override
-    public @NotNull Inventory createInventory(@Nullable InventoryHolder arg0, @NotNull InventoryType arg1,
-            @NotNull Component arg2) {
-        // TODO Auto-generated method stub
-        return null;
+    public @NotNull Inventory createInventory(@Nullable InventoryHolder holder, @NotNull InventoryType type,
+            @NotNull Component title) {
+        Preconditions.checkArgument(type != null, "InventoryType cannot be null");
+        Preconditions.checkArgument(title != null, "title cannot be null");
+        return CraftInventoryCreator.INSTANCE.createInventory(holder, type, title);
     }
 
     @Override
-    public @NotNull Inventory createInventory(@Nullable InventoryHolder arg0, int arg1, @NotNull Component arg2)
+    public @NotNull Inventory createInventory(@Nullable InventoryHolder holder, int size, @NotNull Component title)
             throws IllegalArgumentException {
-        // TODO Auto-generated method stub
-        return null;
+        Preconditions.checkArgument(title != null, "title cannot be null");
+        return CraftInventoryCreator.INSTANCE.createInventory(holder, size, title);
     }
 
     @Override
