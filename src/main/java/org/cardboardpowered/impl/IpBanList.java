@@ -76,7 +76,7 @@ public class IpBanList implements org.bukkit.BanList {
         public IpBanEntry(String target, IpBanListEntry entry, net.minecraft.server.players.IpBanList list) {
             this.list = list;
             this.target = target;
-            this.created = null; // TODO Cardboard
+            this.created = entry.getCreated() != null ? new Date(entry.getCreated().getTime()) : null;
             this.source = entry.getSource();
             this.expiration = entry.getExpires() != null ? new Date(entry.getExpires().getTime()) : null;
             this.reason = entry.getReason();
@@ -152,29 +152,43 @@ public class IpBanList implements org.bukkit.BanList {
 
 	@Override
 	public @Nullable BanEntry getBanEntry(@NotNull Object target) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.getBanEntry(toTarget(target));
+	}
+
+	/**
+	 * The generic BanList API passes the target as an InetAddress while the
+	 * underlying list is keyed by string. Every one of these overloads used to
+	 * return null or do nothing, so CraftServer#banIP - which routes through
+	 * here - banned nobody.
+	 */
+	private static String toTarget(Object target) {
+		com.google.common.base.Preconditions.checkArgument(target != null, "Target cannot be null");
+		if (target instanceof InetAddress address) {
+			return InetAddresses.toAddrString(address);
+		}
+		if (target instanceof InetSocketAddress socket) {
+			return InetAddresses.toAddrString(socket.getAddress());
+		}
+		return target.toString();
 	}
 
 	@Override
 	public @Nullable BanEntry addBan(@NotNull Object target, @Nullable String reason, @Nullable Date expires,
 			@Nullable String source) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.addBan(toTarget(target), reason, expires, source);
 	}
 
 	@Override
 	public @Nullable BanEntry addBan(@NotNull Object target, @Nullable String reason, @Nullable Instant expires,
 			@Nullable String source) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.addBan(toTarget(target), reason, expires == null ? null : Date.from(expires), source);
 	}
 
 	@Override
 	public @Nullable BanEntry addBan(@NotNull Object target, @Nullable String reason, @Nullable Duration duration,
 			@Nullable String source) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.addBan(toTarget(target), reason,
+				duration == null ? null : Date.from(Instant.now().plus(duration)), source);
 	}
 
 	public Set<BanEntry<InetAddress>> getEntries() {
@@ -189,14 +203,12 @@ public class IpBanList implements org.bukkit.BanList {
 
 	@Override
 	public boolean isBanned(@NotNull Object target) {
-		// TODO Auto-generated method stub
-		return false;
+		return this.isBanned(toTarget(target));
 	}
 
 	@Override
 	public void pardon(@NotNull Object target) {
-		// TODO Auto-generated method stub
-		
+		this.pardon(toTarget(target));
 	}
 	
 	

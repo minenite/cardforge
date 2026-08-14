@@ -59,9 +59,20 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.ticks.LevelTickAccess;
 
+/**
+ * A world that isn't one. This is handed to code that insists on a LevelAccessor
+ * for a query that must not touch the real world - draining a bucket to find out
+ * what it would produce, for instance. Everything here is deliberately inert:
+ * the point is that nothing observes it and nothing it is asked to change
+ * actually changes. The methods below say that plainly instead of leaving nulls
+ * for a caller to trip over.
+ */
 public class FakeWorldAccess implements LevelAccessor {
 
     public static final LevelAccessor INSTANCE = new FakeWorldAccess();
+
+    /** Seeded per instance so repeated queries do not share a sequence. */
+    private final net.minecraft.util.RandomSource random = net.minecraft.util.RandomSource.create();
 
     protected FakeWorldAccess() {
     }
@@ -226,56 +237,55 @@ public class FakeWorldAccess implements LevelAccessor {
     @Override
     public <T extends Entity> List<T> getEntities(EntityTypeTest<Entity, T> filter, AABB box,
             Predicate<? super T> predicate) {
-        // TODO Auto-generated method stub
-        return null;
+        // Nothing lives here. An empty list beats the null this returned, which
+        // any caller iterating the result would have died on.
+        return List.of();
     }
 
     @Override
     public boolean isFluidAtPosition(BlockPos pos, Predicate<FluidState> state) {
-        // TODO Auto-generated method stub
+        // No blocks, so no fluids.
         return false;
     }
 
     // @Override
-    public void emitGameEvent(Entity arg0, GameEvent arg1, BlockPos arg2) {
-        // TODO Auto-generated method stub
-        
+    public void emitGameEvent(Entity entity, GameEvent event, BlockPos pos) {
+        // Deliberately silent: a query against this world must not make sculk
+        // sensors elsewhere react.
     }
 
     @Override
     public MinecraftServer getServer() {
-        // TODO Auto-generated method stub
         return CraftServer.server;
     }
 
-    // TODO
     public long nextSubTickCount() {
-        // TODO Auto-generated method stub
+        // Scheduled ticks are never run here, so the ordering counter is constant.
         return 0;
     }
 
 	// @Override
 	public void emitGameEvent(GameEvent event, Vec3 emitterPos, Context emitter) {
-		// TODO Auto-generated method stub
-		
+		// Silent, as above.
 	}
 
 	@Override
 	public net.minecraft.util.RandomSource getRandom() {
-		// TODO Auto-generated method stub
-		return null;
+		// Returned null, and anything that rolled a random number against this
+		// world - which block-drain logic does - died on it.
+		return this.random;
 	}
 
 	@Override
 	public FeatureFlagSet enabledFeatures() {
-		// TODO Auto-generated method stub
-		return null;
+		// The real server's flag set, so feature-gated blocks behave the same way
+		// in a query as they would in the world it stands in for.
+		return CraftServer.server == null ? FeatureFlagSet.of() : CraftServer.server.getWorldData().enabledFeatures();
 	}
 
 	// @Override
 	public void gameEvent(Holder<GameEvent> event, Vec3 emitterPos, Context emitter) {
-		// TODO Auto-generated method stub
-		
+		// Silent, as above.
 	}
 
 	@Override

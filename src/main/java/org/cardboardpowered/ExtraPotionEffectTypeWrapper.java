@@ -25,13 +25,13 @@ public class ExtraPotionEffectTypeWrapper extends PotionEffectType {
 
     @Override
     public double getDurationModifier() {
-        return getType().getDurationModifier();
+        return this.requireType().getDurationModifier();
     }
 
     @NotNull
     @Override
     public String getName() {
-        return getType().getName();
+        return this.requireType().getName();
     }
 
     /**
@@ -41,43 +41,52 @@ public class ExtraPotionEffectTypeWrapper extends PotionEffectType {
      */
     @NotNull
     public PotionEffectType getType() {
-        return this;
-    	//return PotionEffectType.getById(getId());
+        // Resolve the real registered effect from the key. This used to return
+        // "this", which made getName, isInstant, getColor and getDurationModifier
+        // recurse into themselves forever the moment anyone called one.
+        PotionEffectType resolved = org.bukkit.Registry.POTION_EFFECT_TYPE.get(this.key);
+        return (resolved == null || resolved == this) ? null : resolved;
+    }
+
+    /** The registered effect, or a failure naming the key that could not be found. */
+    @NotNull
+    private PotionEffectType requireType() {
+        PotionEffectType resolved = this.getType();
+        if (resolved == null) {
+            throw new IllegalStateException("No potion effect registered under " + this.key);
+        }
+        return resolved;
     }
 
     @Override
     public boolean isInstant() {
-        return getType().isInstant();
+        return this.requireType().isInstant();
     }
 
     @NotNull
     @Override
     public Color getColor() {
-        return getType().getColor();
+        return this.requireType().getColor();
     }
 
 	@Override
 	public @NotNull String translationKey() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.requireType().translationKey();
 	}
 
 	@Override
-	public double getAttributeModifierAmount(@NotNull Attribute arg0, int arg1) {
-		// TODO Auto-generated method stub
-		return 0;
+	public double getAttributeModifierAmount(@NotNull Attribute attribute, int effectAmplifier) {
+		return this.requireType().getAttributeModifierAmount(attribute, effectAmplifier);
 	}
 
 	@Override
 	public @NotNull Map<Attribute, AttributeModifier> getEffectAttributes() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.requireType().getEffectAttributes();
 	}
 
 	@Override
 	public @NotNull Category getEffectCategory() {
-		// TODO Auto-generated method stub
-		return Category.NEUTRAL;
+		return this.requireType().getEffectCategory();
 	}
 
 	@Override
@@ -97,13 +106,11 @@ public class ExtraPotionEffectTypeWrapper extends PotionEffectType {
 
 	@Override
 	public @NotNull String getTranslationKey() {
-		// TODO Auto-generated method stub
-		return this.key.value();
+		return this.translationKey();
 	}
 
 	@Override
 	public @NotNull PotionEffectTypeCategory getCategory() {
-		// TODO Auto-generated method stub
-		return PotionEffectTypeCategory.NEUTRAL;
+		return this.requireType().getCategory();
 	}
 }

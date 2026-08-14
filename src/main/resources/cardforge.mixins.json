@@ -6,6 +6,8 @@
   "mixins": [
     "invoker.AbstractArrowInvoker",
     "invoker.CombatTrackerAccessor",
+    "invoker.EnderDragonFightAccessor",
+    "invoker.EnderDragonFightMutator",
     "invoker.StructureTemplateAccessor",
     "invoker.ServerPlayerAccessor",
     "invoker.AbstractWindChargeInvoker",

@@ -26,9 +26,6 @@ import net.minecraft.world.effect.MobEffect;
 public class CardboardPotionEffectType extends PotionEffectType implements Handleable<MobEffect> {
 
 	public static Holder<MobEffect> bukkitToMinecraftHolder(PotionEffectType type) {
-		// TODO Auto-generated method stub
-		// return CraftRegistry.bukkitToMinecraftHolder(..);
-
 		Optional<Reference<MobEffect>> opt = BuiltInRegistries.MOB_EFFECT.get(type.getId());
 		
 		if (opt.isPresent()) {
@@ -169,21 +166,34 @@ public class CardboardPotionEffectType extends PotionEffectType implements Handl
 	}
 
 	@Override
-	public double getAttributeModifierAmount(@NotNull Attribute arg0, int arg1) {
-		// TODO Auto-generated method stub
-		return 0;
+	public double getAttributeModifierAmount(@NotNull Attribute attribute, int effectAmplifier) {
+		// Answered zero for every attribute, so a plugin reading how much an
+		// effect changes an attribute got nothing.
+		com.google.common.base.Preconditions.checkArgument(effectAmplifier >= 0,
+				"effectAmplifier must be greater than or equal to 0");
+		Holder<net.minecraft.world.entity.ai.attributes.Attribute> nmsAttribute =
+				org.bukkit.craftbukkit.attribute.CraftAttribute.bukkitToMinecraftHolder(attribute);
+		com.google.common.base.Preconditions.checkArgument(
+				this.getHandle().attributeModifiers.containsKey(nmsAttribute),
+				attribute + " is not present on " + this.getKey());
+		return this.getHandle().attributeModifiers.get(nmsAttribute).create(effectAmplifier).amount();
 	}
 
 	@Override
 	public @NotNull Map<Attribute, AttributeModifier> getEffectAttributes() {
-		// TODO Auto-generated method stub
-		return null;
+		// Rebuilt each call: a MobEffect's attribute set can be changed by a
+		// datapack reload, so caching it would go stale.
+		final Map<Attribute, AttributeModifier> attributes = new java.util.HashMap<>();
+		this.getHandle().attributeModifiers.forEach((attribute, template) -> attributes.put(
+				org.bukkit.craftbukkit.attribute.CraftAttribute.minecraftHolderToBukkit(attribute),
+				// Amplifier zero gives the base amount: amount = base * (amplifier + 1).
+				org.bukkit.craftbukkit.attribute.CraftAttributeInstance.convert(template.create(0))));
+		return Map.copyOf(attributes);
 	}
 
 	@Override
 	public @NotNull Category getEffectCategory() {
-		// TODO Auto-generated method stub
-		return null;
+		return org.bukkit.craftbukkit.potion.CraftPotionEffectType.fromNMS(this.getHandle().getCategory());
 	}
 	
 	// 1.20.3 API:
@@ -200,14 +210,12 @@ public class CardboardPotionEffectType extends PotionEffectType implements Handl
 
 	@Override
 	public int getId() {
-		// TODO Auto-generated method stub
 		return this.id;
 	}
 
 	@Override
 	public @NotNull String getTranslationKey() {
-		// TODO Auto-generated method stub
-		return this.key.toString();
+		return this.translationKey();
 	}
 
 	@Override
