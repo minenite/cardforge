@@ -17,6 +17,17 @@ import net.minecraft.world.phys.AABB;
 
 public interface EntityBridge {
 
+    /**
+     * Overrides how long this entity can hold its breath; -1 keeps the vanilla
+     * value. getMaxAirSupply lives on Entity, so the storage has to live here too.
+     */
+    default void cardboard$setMaxAirSupply(int ticks) {
+    }
+
+    /** Whether other entities can push this one. Vanilla has no per-entity switch. */
+    default void cardboard$setCollidable(boolean collidable) {
+    }
+
     default public CraftEntity getBukkitEntity() {
 		System.out.println("getBukkitEntity not implemented for " + this.getClass().getName());
     	return null;

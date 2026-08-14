@@ -17,4 +17,9 @@ public interface LivingEntityBridge {
     @Nullable ItemEntity cardboard$drop(ItemStack stack, boolean randomizeMotion, boolean includeThrower);
 
     @Nullable ItemEntity cardboard$drop(ItemStack stack, boolean randomizeMotion, boolean includeThrower, boolean callEvent, java.util.function.@Nullable Consumer<org.bukkit.entity.Item> entityOperation);
+
+    /** How long damage immunity lasts after a hit. Vanilla hardcodes twenty ticks. */
+    void cardboard$setInvulnerableDuration(int ticks);
+
+    int cardboard$getInvulnerableDuration();
 }

@@ -63,6 +63,29 @@ import java.util.ArrayList;
 @Mixin(Entity.class)
 public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
 
+    /** Bukkit's maximum air has no vanilla field, so it is stored alongside. */
+    @org.spongepowered.asm.mixin.Unique
+    private int cardboard$maxAirSupply = -1;
+
+    /** Bukkit's collidable flag, likewise absent from vanilla. */
+    @org.spongepowered.asm.mixin.Unique
+    private boolean cardboard$collidable = true;
+
+    @Override
+    public void cardboard$setCollidable(boolean collidable) {
+        this.cardboard$collidable = collidable;
+    }
+
+    @Override
+    public void cardboard$setMaxAirSupply(int ticks) {
+        this.cardboard$maxAirSupply = ticks;
+    }
+
+    @Inject(method = "getMaxAirSupply", at = @At("HEAD"), cancellable = true)
+    private void cardboard$getMaxAirSupply(CallbackInfoReturnable<Integer> cir) {
+        if (this.cardboard$maxAirSupply >= 0) cir.setReturnValue(this.cardboard$maxAirSupply);
+    }
+
     public CraftEntity bukkitEntity;
     public org.bukkit.projectiles.ProjectileSource projectileSource;
     private ArrayList<org.bukkit.inventory.ItemStack> drops = new ArrayList<org.bukkit.inventory.ItemStack>();
@@ -393,14 +416,16 @@ public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
 
     @Inject(method = "isPushable", at = @At("HEAD"), cancellable = true)
     public void isPushablePaper(CallbackInfoReturnable<Boolean> cir) {
-        // Paper start - Climbing should not bypass cramming gamerule
-        cir.setReturnValue(cardboard$isCollidable(false));
+        // This used to return cardboard$isCollidable(false) unconditionally, and
+        // that method was hardcoded to false - so nothing in the game was pushable.
+        // Mobs walked through each other and cramming never applied. Only an
+        // explicit setCollidable(false) short-circuits vanilla now.
+        if (!this.cardboard$collidable) cir.setReturnValue(false);
     }
 
     @Override
     public boolean cardboard$isCollidable(boolean ignoreClimbing) {
-        // Paper end - Climbing should not bypass cramming gamerule
-        return false;
+        return this.cardboard$collidable && ((Entity) (Object) this).isPushable();
     }
 
     // CraftBukkit start - collidable API

@@ -161,13 +161,17 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public double getMaxHealth() {
-        // TODO Auto-generated method stub
         return this.getHandle().getMaxHealth();
     }
 
     @Override
     public void resetMaxHealth() {
-        // TODO Auto-generated method stub
+        // Back to the attribute's own base value, undoing any setMaxHealth.
+        net.minecraft.world.entity.ai.attributes.AttributeInstance attribute =
+                this.getHandle().getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        if (attribute != null) {
+            this.setMaxHealth(attribute.getAttribute().value().getDefaultValue());
+        }
     }
 
     @Override
@@ -343,8 +347,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public int getMaximumNoDamageTicks() {
-    	return 0; // TODO
-    	// return this.getHandle().invulnerableDuration;
+    	return ((org.cardboardpowered.bridge.world.entity.LivingEntityBridge) this.getHandle()).cardboard$getInvulnerableDuration();
     }
 
     @SuppressWarnings("unchecked")
@@ -376,8 +379,8 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public boolean getRemoveWhenFarAway() {
-        // TODO Auto-generated method stub
-        return false;
+        // The inverse of persistenceRequired, and the read side of the setter.
+        return this.getHandle() instanceof Mob mob && !mob.isPersistenceRequired();
     }
 
     @Override
@@ -418,14 +421,14 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public boolean isCollidable() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.getHandle().isPushable();
     }
 
     @Override
     public boolean isGliding() {
-        // TODO Auto-generated method stub
-        return false;
+        // setGliding wrote shared flag 7 while this always answered false, so a
+        // plugin could never read back what it had just set.
+        return this.getHandle().isFallFlying();
     }
 
     @Override
@@ -478,13 +481,15 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public void setCanPickupItems(boolean arg0) {
-        // TODO Auto-generated method stub
+    public void setCanPickupItems(boolean pickup) {
+        if (this.getHandle() instanceof Mob mob) {
+            mob.setCanPickUpLoot(pickup);
+        }
     }
 
     @Override
-    public void setCollidable(boolean arg0) {
-        // TODO Auto-generated method stub
+    public void setCollidable(boolean collidable) {
+        ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle()).cardboard$setCollidable(collidable);
     }
 
     @Override
@@ -524,13 +529,13 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public void setMaximumAir(int arg0) {
-        // TODO Auto-generated method stub
+    public void setMaximumAir(int ticks) {
+        ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) this.getHandle()).cardboard$setMaxAirSupply(ticks);
     }
 
     @Override
-    public void setMaximumNoDamageTicks(int arg0) {
-        // TODO Auto-generated method stub
+    public void setMaximumNoDamageTicks(int ticks) {
+        ((org.cardboardpowered.bridge.world.entity.LivingEntityBridge) this.getHandle()).cardboard$setInvulnerableDuration(ticks);
     }
 
     @Override
@@ -539,13 +544,15 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public void setNoDamageTicks(int arg0) {
-        // TODO Auto-generated method stub
+    public void setNoDamageTicks(int ticks) {
+        // The read side already returned invulnerableTime; writing it was missing,
+        // so plugins could not clear or extend damage immunity at all.
+        this.getHandle().invulnerableTime = ticks;
     }
 
     @Override
-    public void setRemainingAir(int arg0) {
-        // TODO Auto-generated method stub
+    public void setRemainingAir(int ticks) {
+        this.getHandle().setAirSupply(ticks);
     }
 
     @Override
@@ -582,16 +589,24 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public EntityCategory getCategory() {
-        // TODO Auto-generated method stub
+        // Bukkit's categories are the enchantment-damage groups, which modern
+        // Minecraft expresses as entity type tags rather than a mob-type field.
+        net.minecraft.core.Holder<net.minecraft.world.entity.EntityType<?>> type =
+                this.getHandle().getType().builtInRegistryHolder();
+        if (type.is(net.minecraft.tags.EntityTypeTags.UNDEAD)) return EntityCategory.UNDEAD;
+        if (type.is(net.minecraft.tags.EntityTypeTags.ARTHROPOD)) return EntityCategory.ARTHROPOD;
+        if (type.is(net.minecraft.tags.EntityTypeTags.ILLAGER)) return EntityCategory.ILLAGER;
+        if (type.is(net.minecraft.tags.EntityTypeTags.AQUATIC)) return EntityCategory.WATER;
         return EntityCategory.NONE;
     }
 
-    public void setArrowsInBody(int i) {
-        // TODO
+    public void setArrowsInBody(int count) {
+        Preconditions.checkArgument(count >= 0, "New arrow amount must be >= 0");
+        this.getHandle().setArrowCount(count);
     }
 
     public int getArrowsInBody() {
-        return -1; // TODO
+        return this.getHandle().getArrowCount();
     }
 
     public void setArrowCooldown(int i) {}
@@ -638,62 +653,52 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
 
     @Override
     public boolean isInBubbleColumn() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.getHandle().getInBlockState().is(net.minecraft.world.level.block.Blocks.BUBBLE_COLUMN);
     }
 
     @Override
     public boolean isInWaterOrBubbleColumn() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.getHandle().isInWater() || this.isInBubbleColumn();
     }
 
     @Override
     public boolean isInWaterOrRain() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.getHandle().isInWaterOrRain();
     }
 
     @Override
     public boolean isInWaterOrRainOrBubbleColumn() {
-        // TODO Auto-generated method stub
-        return false;
+        return this.getHandle().isInWaterOrRain() || this.isInBubbleColumn();
     }
 
     @Override
     public void clearActiveItem() {
-        // TODO Auto-generated method stub
-        
+        this.getHandle().stopUsingItem();
     }
 
     @Override
     public ItemStack getActiveItem() {
-        // TODO Auto-generated method stub
-        return null;
+        return org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(this.getHandle().getUseItem());
     }
 
     @Override
     public int getArrowsStuck() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.getHandle().getArrowCount();
     }
 
     @Override
     public int getHandRaisedTime() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.getHandle().getTicksUsingItem();
     }
 
     @Override
     public float getHurtDirection() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.getHandle().getHurtDir();
     }
 
     @Override
     public int getItemUseRemainingTime() {
-        // TODO Auto-generated method stub
-        return 0;
+        return this.getHandle().getUseItemRemainingTicks();
     }
 
     @Override
@@ -703,9 +708,8 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public Block getTargetBlock(int arg0, FluidMode arg1) {
-        // TODO Auto-generated method stub
-        return null;
+    public Block getTargetBlock(int maxDistance, FluidMode fluidMode) {
+        return this.getTargetBlockExact(maxDistance, fluidMode.bukkit);
     }
 
     @Override

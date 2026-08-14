@@ -18,10 +18,12 @@ import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import net.minecraft.server.level.ServerLevel;
@@ -47,6 +49,28 @@ public abstract class LivingEntityMixin extends EntityMixin implements LivingEnt
     private AttributeMap attributes;
 
     private boolean PICE_canceled = false;
+
+    /**
+     * Bukkit's collidable, collidable and invulnerability duration have no vanilla
+     * storage - CraftBukkit adds fields for them. They live here instead, and are
+     * consulted by the hooks below.
+     */
+    @Unique
+    private boolean cardboard$collidable = true;
+    @Unique
+    private int cardboard$invulnerableDuration = 20;
+
+    @Override
+    public void cardboard$setInvulnerableDuration(int ticks) {
+        this.cardboard$invulnerableDuration = ticks;
+    }
+
+    @Override
+    public int cardboard$getInvulnerableDuration() {
+        return this.cardboard$invulnerableDuration;
+    }
+
+
     // private CardboardAttributable craftAttributes;
     private CraftAttributeMap craftAttributes;
 
