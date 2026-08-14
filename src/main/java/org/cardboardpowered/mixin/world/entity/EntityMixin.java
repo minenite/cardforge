@@ -182,6 +182,33 @@ public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
         this.bukkitEntity = entity;
     }
     
+    /**
+     * Writes the entity's persistent data container with the entity.
+     *
+     * <p>CraftEntity has always had storeBukkitValues and readBukkitValues, and
+     * nothing ever called them, so entity PDC lived only in memory. A tag set by a
+     * plugin survived until the chunk was saved and was gone when it came back.
+     *
+     * <p>That is worse than not supporting it: anything a plugin tags and later
+     * looks for - a corpse, a custom mob, a marker - stops being recognisable
+     * after a restart, and the plugin cannot even clean it up, because the thing
+     * it identifies them by is what was lost.
+     */
+    @org.spongepowered.asm.mixin.injection.Inject(method = "addAdditionalSaveData", at = @org.spongepowered.asm.mixin.injection.At("TAIL"))
+    private void cardboard$storeBukkitValues(net.minecraft.world.level.storage.ValueOutput output, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        org.bukkit.craftbukkit.entity.CraftEntity bukkit = this.getBukkitEntityRaw();
+        if (bukkit != null) {
+            bukkit.storeBukkitValues(output);
+        }
+    }
+
+    @org.spongepowered.asm.mixin.injection.Inject(method = "readAdditionalSaveData", at = @org.spongepowered.asm.mixin.injection.At("TAIL"))
+    private void cardboard$readBukkitValues(net.minecraft.world.level.storage.ValueInput input, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        // getBukkitEntity rather than the raw form: on load there is usually no
+        // wrapper yet, and the container lives on it.
+        this.getBukkitEntity().readBukkitValues(input);
+    }
+
     @Override
     public org.bukkit.craftbukkit.entity.CraftEntity getBukkitEntity() {
         if (this.bukkitEntity == null) {
