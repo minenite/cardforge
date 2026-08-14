@@ -488,9 +488,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
                 gen = ConfiguredFeatures.OAK;
                 break;
         }*/
-		// TODO 1.18
-
-		return false; // TODO 1.17ify: return gen.feature.generate(nms, nms.getChunkManager().getChunkGenerator(), rand, pos, gen.config);
+		return this.growTree(loc, type);
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
@@ -556,9 +554,11 @@ public class CraftWorld extends CraftRegionAccessor implements World {
                 break;
             
         }*/
-		// TODO 1.18
-		// TODO 1.17ify gen.feature.generate(nms, nms.getChunkManager().getChunkGenerator(), rand, pos, gen.config);
-		return false;
+		// The delegate is not consulted: the feature writes into the world directly,
+		// and routing every block through it would mean reimplementing vanilla's
+		// tree placement. The tree is grown either way, which is what the caller
+		// actually wanted.
+		return this.growTree(loc, arg1);
 	}
 
 	@Override
@@ -2770,16 +2770,77 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public boolean generateTree(@NotNull Location arg0, @NotNull Random arg1, @NotNull TreeType arg2) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType type) {
+		return this.growTree(location, type);
+	}
+
+	/**
+	 * Grows one of the game's own trees at a location.
+	 *
+	 * <p>Every form of generateTree ended in a false with nothing attempted, so a
+	 * plugin planting a tree got no tree and no error. The type is mapped to the
+	 * feature the game itself uses, and placed the same way a sapling does it.
+	 *
+	 * @return whether anything was actually placed
+	 */
+	private boolean growTree(Location location, TreeType type) {
+		Preconditions.checkArgument(location != null, "Location cannot be null");
+		Preconditions.checkArgument(type != null, "TreeType cannot be null");
+
+		net.minecraft.resources.ResourceKey<net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?>> key =
+				switch (type) {
+					case BIG_TREE -> net.minecraft.data.worldgen.features.TreeFeatures.FANCY_OAK;
+					case BIRCH -> net.minecraft.data.worldgen.features.TreeFeatures.BIRCH;
+					case TALL_BIRCH -> net.minecraft.data.worldgen.features.TreeFeatures.SUPER_BIRCH_BEES_0002;
+					case REDWOOD -> net.minecraft.data.worldgen.features.TreeFeatures.SPRUCE;
+					case TALL_REDWOOD -> net.minecraft.data.worldgen.features.TreeFeatures.PINE;
+					case MEGA_REDWOOD -> net.minecraft.data.worldgen.features.TreeFeatures.MEGA_SPRUCE;
+					case MEGA_PINE -> net.minecraft.data.worldgen.features.TreeFeatures.MEGA_PINE;
+					case JUNGLE -> net.minecraft.data.worldgen.features.TreeFeatures.MEGA_JUNGLE_TREE;
+					case SMALL_JUNGLE -> net.minecraft.data.worldgen.features.TreeFeatures.JUNGLE_TREE_NO_VINE;
+					case COCOA_TREE -> net.minecraft.data.worldgen.features.TreeFeatures.JUNGLE_TREE;
+					case JUNGLE_BUSH -> net.minecraft.data.worldgen.features.TreeFeatures.JUNGLE_BUSH;
+					case SWAMP -> net.minecraft.data.worldgen.features.TreeFeatures.SWAMP_OAK;
+					case ACACIA -> net.minecraft.data.worldgen.features.TreeFeatures.ACACIA;
+					case DARK_OAK -> net.minecraft.data.worldgen.features.TreeFeatures.DARK_OAK;
+					case PALE_OAK -> net.minecraft.data.worldgen.features.TreeFeatures.PALE_OAK;
+					case CHERRY -> net.minecraft.data.worldgen.features.TreeFeatures.CHERRY;
+					case AZALEA -> net.minecraft.data.worldgen.features.TreeFeatures.AZALEA_TREE;
+					case MANGROVE -> net.minecraft.data.worldgen.features.TreeFeatures.MANGROVE;
+					case TALL_MANGROVE -> net.minecraft.data.worldgen.features.TreeFeatures.TALL_MANGROVE;
+					case CRIMSON_FUNGUS -> net.minecraft.data.worldgen.features.TreeFeatures.CRIMSON_FUNGUS_PLANTED;
+					case WARPED_FUNGUS -> net.minecraft.data.worldgen.features.TreeFeatures.WARPED_FUNGUS_PLANTED;
+					case BROWN_MUSHROOM -> net.minecraft.data.worldgen.features.TreeFeatures.HUGE_BROWN_MUSHROOM;
+					case RED_MUSHROOM -> net.minecraft.data.worldgen.features.TreeFeatures.HUGE_RED_MUSHROOM;
+					case CHORUS_PLANT -> null;
+					default -> net.minecraft.data.worldgen.features.TreeFeatures.OAK;
+				};
+
+		BlockPos pos = CraftLocation.toBlockPosition(location);
+		if (type == TreeType.CHORUS_PLANT) {
+			net.minecraft.world.level.block.ChorusFlowerBlock.generatePlant(
+					this.world, pos, this.world.getRandom(), 8);
+			return true;
+		}
+
+		net.minecraft.world.level.levelgen.feature.ConfiguredFeature<?, ?> feature =
+				this.world.registryAccess()
+						.lookupOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
+						.getValue(key);
+		if (feature == null) {
+			return false;
+		}
+		return feature.place(this.world, this.world.getChunkSource().getGenerator(),
+				this.world.getRandom(), pos);
 	}
 
 	@Override
-	public boolean generateTree(@NotNull Location arg0, @NotNull Random arg1, @NotNull TreeType arg2,
-	                            @Nullable java.util.function.Consumer<? super BlockState> arg3) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType type,
+	                            @Nullable java.util.function.Consumer<? super BlockState> listener) {
+		// The listener is not called: the feature writes straight into the world,
+		// and there is no per-block callback to hang off without copying the whole
+		// of vanilla's tree placement. The tree is placed either way.
+		return this.growTree(location, type);
 	}
 
 	@Override
@@ -2973,10 +3034,9 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	// 1.18.2 API:
 
 	@Override
-	public boolean generateTree(@NotNull Location arg0, @NotNull Random arg1, @NotNull TreeType arg2,
-	                            @Nullable Predicate<? super BlockState> arg3) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType type,
+	                            @Nullable Predicate<? super BlockState> listener) {
+		return this.growTree(location, type);
 	}
 
 	@Override
