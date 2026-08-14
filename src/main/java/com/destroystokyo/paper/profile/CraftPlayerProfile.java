@@ -481,9 +481,20 @@ public class CraftPlayerProfile implements PlayerProfile, SharedPlayerProfile {
 	}
 
     public GameProfile buildGameProfile() {
-        GameProfile profile = new GameProfile(this.profile.id(), this.profile.name());
-        profile.properties().putAll((Multimap)this.profile.properties());
-        return profile;
+        // GameProfile is a record here and the two-argument constructor gives it an
+        // immutable property map, so filling it afterwards threw:
+        //
+        //   UnsupportedOperationException at ImmutableMultimap.putAll
+        //
+        // which took out anything carrying a skin - a player head, a skull, the
+        // mannequin a corpse is made of - leaving the default texture and an
+        // exception several layers from the caller. The properties go in at
+        // construction instead.
+        com.google.common.collect.Multimap<String, com.mojang.authlib.properties.Property> copied =
+                com.google.common.collect.LinkedHashMultimap.create();
+        copied.putAll(this.profile.properties());
+        return new GameProfile(this.profile.id(), this.profile.name(),
+                new com.mojang.authlib.properties.PropertyMap(copied));
     }
 
     static final String PROPERTY_NAME = "textures";
