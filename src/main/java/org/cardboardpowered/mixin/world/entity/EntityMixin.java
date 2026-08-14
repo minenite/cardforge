@@ -194,7 +194,10 @@ public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
      * after a restart, and the plugin cannot even clean it up, because the thing
      * it identifies them by is what was lost.
      */
-    @org.spongepowered.asm.mixin.injection.Inject(method = "addAdditionalSaveData", at = @org.spongepowered.asm.mixin.injection.At("TAIL"))
+    // saveWithoutId, not addAdditionalSaveData: the latter is abstract on Entity,
+    // so there is no body to inject into and mod loading fails outright with
+    // "TAIL could not locate a valid RETURN in the target method".
+    @org.spongepowered.asm.mixin.injection.Inject(method = "saveWithoutId", at = @org.spongepowered.asm.mixin.injection.At("TAIL"))
     private void cardboard$storeBukkitValues(net.minecraft.world.level.storage.ValueOutput output, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         org.bukkit.craftbukkit.entity.CraftEntity bukkit = this.getBukkitEntityRaw();
         if (bukkit != null) {
@@ -202,7 +205,7 @@ public abstract class EntityMixin implements CommandSourceBridge, EntityBridge {
         }
     }
 
-    @org.spongepowered.asm.mixin.injection.Inject(method = "readAdditionalSaveData", at = @org.spongepowered.asm.mixin.injection.At("TAIL"))
+    @org.spongepowered.asm.mixin.injection.Inject(method = "load", at = @org.spongepowered.asm.mixin.injection.At("TAIL"))
     private void cardboard$readBukkitValues(net.minecraft.world.level.storage.ValueInput input, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         // getBukkitEntity rather than the raw form: on load there is usually no
         // wrapper yet, and the container lives on it.
