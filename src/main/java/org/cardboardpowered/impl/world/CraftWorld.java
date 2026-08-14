@@ -2021,7 +2021,42 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 		if(entity != null)
 			return entity;
+
+		// The chain above is hand-written and stops at the entities Cardboard knew.
+		// Anything added since falls through it - Mannequin among them, which is
+		// what a corpse is made of, so every death logged "Cannot spawn an entity
+		// for org.bukkit.entity.Mannequin" and left no body.
+		//
+		// CraftEntityTypes already maps every entity type the server has, so it is
+		// asked before giving up. Kept as a fallback rather than a replacement: the
+		// chain above builds several entities with constructor arguments this
+		// registry has no way to supply.
+		entity = createEntityFromRegistry(location, clazz);
+		if(entity != null)
+			return entity;
+
 		throw new IllegalArgumentException("Cannot spawn an entity for " + clazz.getName());
+	}
+
+	/**
+	 * Builds an entity through the modern type registry.
+	 *
+	 * @return null when the registry has no spawn function for this class, so the
+	 *         caller can report the failure in its own terms
+	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private net.minecraft.world.entity.Entity createEntityFromRegistry(Location location, Class<? extends Entity> clazz) {
+		try {
+			org.bukkit.craftbukkit.entity.CraftEntityTypes.EntityTypeData data =
+					org.bukkit.craftbukkit.entity.CraftEntityTypes.getEntityTypeData((Class) clazz);
+			if(data == null || data.spawnFunction() == null)
+				return null;
+			return (net.minecraft.world.entity.Entity) data.spawnFunction().apply(
+					new org.bukkit.craftbukkit.entity.CraftEntityTypes.SpawnData(
+							this.getHandle(), location, false, false));
+		} catch(Throwable notSpawnable) {
+			return null;
+		}
 	}
 
 	public <T extends Entity> T addEntity(net.minecraft.world.entity.Entity entity, SpawnReason reason) throws IllegalArgumentException {
