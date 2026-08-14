@@ -231,6 +231,52 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     /** Read by SleepStatusMixin when it counts who is holding up the night. */
     private boolean sleepingIgnored;
     private boolean affectsSpawning = true;
+    /** Tab list sort key. Vanilla has no setter, so ServerPlayerMixin reads it back out. */
+    private int listOrder;
+
+    public int getListOrder() {
+        return this.listOrder;
+    }
+    /** The last thing this client said about the server's resource pack. */
+    private PlayerResourcePackStatusEvent.Status resourcePackStatus;
+
+    /**
+     * Recreates a stored shoulder entity in the world next to its rider. Returns
+     * null if the tag no longer names an entity type this server knows about.
+     */
+    private org.bukkit.entity.Entity spawnShoulderEntity(CompoundTag tag) {
+        try (ProblemReporter.ScopedCollector collector = new ProblemReporter.ScopedCollector(this.getHandle().problemPath(), LOGGER)) {
+            return net.minecraft.world.entity.EntityType.create(
+                    TagValueInput.create(collector.forChild(() -> ".shoulder"), this.getHandle().registryAccess(), tag),
+                    this.getHandle().level(),
+                    new net.minecraft.world.entity.EntitySpawnRequest(EntitySpawnReason.LOAD, false)
+            ).map(entity -> {
+                entity.setPos(this.getHandle().getX(), this.getHandle().getY() + 0.7D, this.getHandle().getZ());
+                this.getHandle().level().addFreshEntity(entity);
+                return ((org.cardboardpowered.bridge.world.entity.EntityBridge) (Object) entity).getBukkitEntity();
+            }).orElse(null);
+        }
+    }
+
+    /**
+     * Builds a one-entry UPDATE_LISTED packet for an arbitrary player. Vanilla only
+     * assembles these from live ServerPlayers with the same listed flag for
+     * everybody, so the entry list is written directly to make it per-viewer.
+     */
+    private static ClientboundPlayerInfoUpdatePacket listedPacket(UUID id, boolean listed) {
+        ClientboundPlayerInfoUpdatePacket packet = new ClientboundPlayerInfoUpdatePacket(
+                java.util.EnumSet.noneOf(ClientboundPlayerInfoUpdatePacket.Action.class), List.of());
+        org.cardboardpowered.mixin.network.protocol.game.ClientboundPlayerInfoUpdatePacketAccessor accessor =
+                (org.cardboardpowered.mixin.network.protocol.game.ClientboundPlayerInfoUpdatePacketAccessor) (Object) packet;
+        accessor.cardboard$setActions(java.util.EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED));
+        accessor.cardboard$setEntries(List.of(new ClientboundPlayerInfoUpdatePacket.Entry(
+                id, null, listed, 0, null, null, false, 0, null)));
+        return packet;
+    }
+
+    public void setResourcePackStatus(PlayerResourcePackStatusEvent.Status status) {
+        this.resourcePackStatus = status;
+    }
     /** Plugin message channels this client has registered for. */
     private final Set<String> pluginMessageChannels = new java.util.concurrent.ConcurrentHashMap<String, Boolean>()
             .keySet(Boolean.TRUE);
@@ -630,23 +676,22 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
 
     @Override
     public int getPlayerListOrder() {
-        //return this.getHandle().listOrder; // TODO
-        return this.getHandle().getTabListOrder();
+        return this.listOrder;
     }
 
     @Override
     public void setPlayerListOrder(int order) {
         Preconditions.checkArgument(order >= 0, "order cannot be negative");
 
-       /* this.getHandle().listOrder = order;
-        // Paper start - Send update packet
-        if (getHandle().connection == null) return; // Updates are possible before the player has fully joined
-        for (ServerPlayer player : server.getHandle().players) {
-            if (player.getBukkitEntity().canSee(this)) {
-                player.connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LIST_ORDER, getHandle()));
+        this.listOrder = order;
+        // Updates are possible before the player has fully joined, in which case
+        // the value simply rides along on the join packet.
+        if (this.getHandle().connection == null) return;
+        for (ServerPlayer player : this.server.getHandle().players) {
+            if (((EntityBridge) (Object) player).getBukkitEntity() instanceof Player viewer && viewer.canSee(this)) {
+                player.connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LIST_ORDER, this.getHandle()));
             }
-        }*/ // TODO
-        // Paper end - Send update packet
+        }
     }
 
     private net.kyori.adventure.text.Component playerListHeader; // Paper - Adventure
@@ -2135,7 +2180,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
         if (!this.canSee(other)) return false;
 
         if (unlistedEntities.add(other.getUniqueId())) {
-            //this.getHandle().connection.send(ClientboundPlayerInfoUpdatePacket.updateListed(other.getUniqueId(), false)); // TODO
+            this.getHandle().connection.send(listedPacket(other.getUniqueId(), false));
             return true;
         } else {
             return false;
@@ -2149,7 +2194,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
         if (!this.canSee(other)) throw new IllegalStateException("Player cannot see other player");
 
         if (this.unlistedEntities.remove(other.getUniqueId())) {
-            //this.getHandle().connection.send(ClientboundPlayerInfoUpdatePacket.updateListed(other.getUniqueId(), true)); // TODO
+            this.getHandle().connection.send(listedPacket(other.getUniqueId(), true));
             return true;
         } else {
             return false;
@@ -2390,9 +2435,9 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     @Override
     public org.bukkit.event.player.PlayerResourcePackStatusEvent.Status getResourcePackStatus() {
         if (this.getHandle().connection == null) throw new UnsupportedOperationException("Too early to call this method at this stage");
-        //return this.getHandle().connection.connection.resourcePackStatus;
-        // TODO
-        return PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED;
+        // What this client actually reported. It used to claim success for
+        // everybody, including players who had declined the pack outright.
+        return this.resourcePackStatus;
     }
     // Paper end - more resource pack API
 
@@ -3452,11 +3497,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     @Override
     public org.bukkit.entity.Entity releaseLeftShoulderEntity() {
         if (!getHandle().getShoulderEntityLeft().isEmpty()) {
-            //Entity entity = getHandle().releaseLeftShoulderEntity();
-            //if (entity != null) {
-            //    return entity.getBukkitEntity();
-            //}
-            // TODO
+            // Rebuild the parrot from its stored tag, drop it beside the player
+            // and clear the shoulder, the way dismounting does it in vanilla.
+            org.bukkit.entity.Entity released = spawnShoulderEntity(getHandle().getShoulderEntityLeft());
+            getHandle().setShoulderEntityLeft(new CompoundTag());
+            return released;
         }
 
         return null;
@@ -3465,11 +3510,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
     @Override
     public org.bukkit.entity.Entity releaseRightShoulderEntity() {
         if (!getHandle().getShoulderEntityRight().isEmpty()) {
-            //Entity entity = getHandle().releaseRightShoulderEntity();
-            //if (entity != null) {
-            //    return entity.getBukkitEntity();
-            //}
-            // TODO
+            // Rebuild the parrot from its stored tag, drop it beside the player
+            // and clear the shoulder, the way dismounting does it in vanilla.
+            org.bukkit.entity.Entity released = spawnShoulderEntity(getHandle().getShoulderEntityRight());
+            getHandle().setShoulderEntityRight(new CompoundTag());
+            return released;
         }
 
         return null;

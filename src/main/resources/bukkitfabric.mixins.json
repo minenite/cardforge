@@ -33,6 +33,7 @@
     "network.FriendlyByteBufMixin",
     "network.chat.StyleMixin",
     "network.chat.TextColorMixin",
+    "network.protocol.game.ClientboundPlayerInfoUpdatePacketAccessor",
     "network.protocol.game.ClientboundSectionBlocksUpdatePacketMixin",
     "network.protocol.game.ClientboundSystemChatPacketMixin",
     "network.syncher.SynchedEntityDataMixin",

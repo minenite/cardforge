@@ -830,7 +830,13 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
     public void handleResourcePackResponse(ServerboundResourcePackPacket packet) {
         super.handleResourcePackResponse(packet);
         int statusOrdinal = packet.action().ordinal();
-        PlayerResourcePackStatusEvent event = new PlayerResourcePackStatusEvent(getPlayer(), packet.id(), PlayerResourcePackStatusEvent.Status.values()[statusOrdinal]);
+        PlayerResourcePackStatusEvent.Status status = PlayerResourcePackStatusEvent.Status.values()[statusOrdinal];
+        // Remembered, so a plugin can ask later what this client did with the pack.
+        // The API had nowhere to read it from and always claimed success.
+        if (getPlayer() instanceof org.bukkit.craftbukkit.entity.CraftPlayer player) {
+            player.setResourcePackStatus(status);
+        }
+        PlayerResourcePackStatusEvent event = new PlayerResourcePackStatusEvent(getPlayer(), packet.id(), status);
         Bukkit.getPluginManager().callEvent(event);
     }
 

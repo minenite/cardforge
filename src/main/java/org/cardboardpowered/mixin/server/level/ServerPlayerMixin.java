@@ -838,6 +838,20 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
         // Paper end - Add PlayerSetSpawnEvent
     }
 
+    /**
+     * Vanilla has no way to set a tab list sort order, so the value lives on the
+     * Bukkit wrapper and is read back here. Without this the order would only
+     * ever reach clients through explicit UPDATE_LIST_ORDER packets and would be
+     * lost again the moment a player rejoined or the list was rebuilt.
+     */
+    @Inject(method = "getTabListOrder", at = @At("HEAD"), cancellable = true)
+    private void cardboard$tabListOrder(CallbackInfoReturnable<Integer> cir) {
+        if (this.getBukkitEntity() instanceof CraftPlayer player) {
+            int order = player.getListOrder();
+            if (order != 0) cir.setReturnValue(order);
+        }
+    }
+
     @Inject(method = "readAdditionalSaveData", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/storage/ValueInput;read(Ljava/lang/String;Lcom/mojang/serialization/Codec;)Ljava/util/Optional;", ordinal = 2, shift = At.Shift.AFTER))
     protected void readAdditionalSaveDataPaper(ValueInput valueInput, CallbackInfo ci) {
         ((CraftPlayer)this.getBukkitEntity()).readExtraData(valueInput); // CraftBukkit
