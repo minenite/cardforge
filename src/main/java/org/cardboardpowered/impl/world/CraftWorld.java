@@ -1224,9 +1224,12 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public Raid locateNearestRaid(Location arg0, int arg1) {
-		// TODO Auto-generated method stub
-		return null;
+	public Raid locateNearestRaid(Location location, int radius) {
+		Preconditions.checkArgument(location != null, "Location cannot be null");
+		Preconditions.checkArgument(radius >= 0, "radius cannot be negative");
+		net.minecraft.world.entity.raid.Raid raid = this.world.getRaids()
+				.getNearbyRaid(CraftLocation.toBlockPosition(location), radius * radius);
+		return raid == null ? null : new org.bukkit.craftbukkit.CraftRaid(raid, this.world);
 	}
 
 	@Override
@@ -1675,9 +1678,26 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public boolean setGameRuleValue(String arg0, String arg1) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean setGameRuleValue(String rule, String value) {
+		// The deprecated string form, routed through the typed API so both agree.
+		if (rule == null || value == null) {
+			return false;
+		}
+		GameRule<?> found = GameRule.getByName(rule);
+		if (found == null) {
+			return false;
+		}
+		if (found.getType() == Boolean.class) {
+			if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
+				return false;
+			}
+			return this.setGameRule((GameRule<Boolean>) found, Boolean.parseBoolean(value));
+		}
+		try {
+			return this.setGameRule((GameRule<Integer>) found, Integer.parseInt(value));
+		} catch (NumberFormatException notANumber) {
+			return false;
+		}
 	}
 
 	@Override
@@ -2648,8 +2668,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public double getCoordinateScale() {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.world.dimensionType().coordinateScale();
 	}
 
 	@Override
@@ -2659,8 +2678,10 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public @NotNull Collection<Material> getInfiniburn() {
-		// TODO Auto-generated method stub
-		return null;
+		com.google.common.collect.ImmutableList.Builder<Material> burns = com.google.common.collect.ImmutableList.builder();
+		this.world.dimensionType().infiniburn().forEach(block ->
+				burns.add(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(block.value())));
+		return burns.build();
 	}
 
 	@Override
@@ -2723,21 +2744,29 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public boolean lineOfSightExists(@NotNull Location arg0, @NotNull Location arg1) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean lineOfSightExists(@NotNull Location from, @NotNull Location to) {
+		Preconditions.checkArgument(from != null, "from cannot be null");
+		Preconditions.checkArgument(to != null, "to cannot be null");
+		Preconditions.checkArgument(from.getWorld() == to.getWorld(), "Locations must be in the same world");
+		net.minecraft.world.phys.HitResult hit = this.world.clip(new net.minecraft.world.level.ClipContext(
+				new net.minecraft.world.phys.Vec3(from.getX(), from.getY(), from.getZ()),
+				new net.minecraft.world.phys.Vec3(to.getX(), to.getY(), to.getZ()),
+				net.minecraft.world.level.ClipContext.Block.COLLIDER,
+				net.minecraft.world.level.ClipContext.Fluid.NONE,
+				net.minecraft.world.phys.shapes.CollisionContext.empty()));
+		return hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS;
 	}
 
 	@Override
-	public @Nullable Location locateNearestBiome(@NotNull Location arg0, @NotNull Biome arg1, int arg2) {
-		// TODO Auto-generated method stub
-		return null;
+	public @Nullable Location locateNearestBiome(@NotNull Location origin, @NotNull Biome biome, int radius) {
+		return this.locateNearestBiome(origin, biome, radius, 8);
 	}
 
 	@Override
-	public @Nullable Location locateNearestBiome(@NotNull Location arg0, @NotNull Biome arg1, int arg2, int arg3) {
-		// TODO Auto-generated method stub
-		return null;
+	public @Nullable Location locateNearestBiome(@NotNull Location origin, @NotNull Biome biome,
+			int radius, int step) {
+		BiomeSearchResult found = this.locateNearestBiome(origin, radius, step, step, biome);
+		return found == null ? null : found.getLocation();
 	}
 
 	@Override
@@ -2770,9 +2799,9 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public @NotNull BlockState getBlockState(@NotNull Location arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public @NotNull BlockState getBlockState(@NotNull Location location) {
+		Preconditions.checkArgument(location != null, "Location cannot be null");
+		return this.getBlockAt(location).getState();
 	}
 
 	@Override
@@ -2829,22 +2858,44 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	}
 
 	@Override
-	public @Nullable Location findLightningRod(@NotNull Location arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public @Nullable Location findLightningRod(@NotNull Location location) {
+		Preconditions.checkArgument(location != null, "Location cannot be null");
+		// The same search the game runs when a strike is aimed at a spot: a rod
+		// within range takes the hit.
+		BlockPos at = CraftLocation.toBlockPosition(location);
+		java.util.Optional<BlockPos> rod = this.world.getPoiManager().findClosest(
+				holder -> holder.is(net.minecraft.world.entity.ai.village.poi.PoiTypes.LIGHTNING_ROD),
+				pos -> pos.getY() == this.world.getHeight(
+						net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, pos.getX(), pos.getZ()) - 1,
+				at, 128, net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy.ANY);
+		return rod.map(pos -> CraftLocation.toBukkit(pos.above(), this)).orElse(null);
 	}
 
 	@Override
-	public @Nullable Location findLightningTarget(@NotNull Location arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public @Nullable Location findLightningTarget(@NotNull Location location) {
+		Preconditions.checkArgument(location != null, "Location cannot be null");
+		// Where a strike aimed here would actually land: a rod if one is in reach,
+		// otherwise the surface.
+		Location rod = this.findLightningRod(location);
+		if (rod != null) {
+			return rod;
+		}
+		// No rod: the strike lands on the surface at that column.
+		BlockPos at = CraftLocation.toBlockPosition(location);
+		return CraftLocation.toBukkit(
+				this.world.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, at),
+				this);
 	}
 
 	@Override
 	public @Nullable BiomeProvider getBiomeProvider() {
-		// TODO Auto-generated method stub
-		return null;
+		// Null means "the generator's own", which is the case for every world here:
+		// a provider is only present when a plugin supplied one at creation, and
+		// this port cannot create worlds yet.
+		return this.biomeProvider;
 	}
+
+	private BiomeProvider biomeProvider;
 
 	@Override
 	public int getLogicalHeight() {
@@ -2870,14 +2921,12 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public boolean hasCeiling() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.world.dimensionType().hasCeiling();
 	}
 
 	@Override
 	public boolean hasSkyLight() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.world.dimensionType().hasSkyLight();
 	}
 
 	@Override
@@ -3200,8 +3249,10 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public @NotNull FluidData getFluidData(int x, int y, int z) {
-		// TODO Auto-generated method stub
-		return null;
+		// Not implemented: there is no FluidData implementation in this port to
+		// build one from, and returning null would hand back something a caller
+		// cannot tell from a real answer.
+		throw new UnsupportedOperationException("FluidData is not implemented");
 	}
 
 	@Override
@@ -3233,8 +3284,8 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 
 	@Override
 	public @Nullable Raid getRaid(int id) {
-		// TODO Auto-generated method stub
-		return null;
+		net.minecraft.world.entity.raid.Raid raid = this.world.getRaids().get(id);
+		return raid == null ? null : new org.bukkit.craftbukkit.CraftRaid(raid, this.world);
 	}
 
 	@Override
