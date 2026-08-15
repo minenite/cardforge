@@ -83,6 +83,23 @@ public final class AdventureComponent implements net.minecraft.network.chat.Comp
 
     @Override
     public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        // Both sides have to be converted before comparing. This used to convert
+        // only its own side and hand the wrapper straight to the vanilla
+        // component's equals, which compares against MutableComponent and so was
+        // false for every pair - two wrappers around identical text never matched.
+        //
+        // Item lore is stored as these wrappers, so ItemMeta#equals failed for any
+        // two separately built items carrying lore, and with it ItemStack#isSimilar.
+        // Nothing a plugin gave out with a lore line would stack: not ammo, not
+        // food, not medical supplies. Vanilla items were unaffected, which is what
+        // made it look like a plugin bug.
+        if (obj instanceof AdventureComponent other) {
+            return this.adventure.equals(other.adventure)
+                    || this.deepConverted().equals(other.deepConverted());
+        }
         return this.deepConverted().equals(obj);
     }
 }
