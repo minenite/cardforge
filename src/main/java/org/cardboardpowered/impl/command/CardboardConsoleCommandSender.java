@@ -30,8 +30,20 @@ public class CardboardConsoleCommandSender implements ConsoleCommandSender, Comm
      * addAttachment here returned null, so a plugin that attached a permission
      * and later removed it died on the null it was given back.
      */
-    private final org.bukkit.permissions.PermissibleBase perm =
-            new org.bukkit.permissions.PermissibleBase(this);
+    private org.bukkit.permissions.PermissibleBase perm;
+
+    /**
+     * Built on first use, not in the constructor: this sender is created from
+     * CraftServer's own constructor, and PermissibleBase immediately calls
+     * Bukkit.getServer(), which is still null that early. Constructing it eagerly
+     * crashed the server before it finished starting.
+     */
+    private org.bukkit.permissions.PermissibleBase perm() {
+        if (this.perm == null) {
+            this.perm = new org.bukkit.permissions.PermissibleBase(this);
+        }
+        return this.perm;
+    }
 
     @Override
     public String getName() {
@@ -59,27 +71,27 @@ public class CardboardConsoleCommandSender implements ConsoleCommandSender, Comm
 
     @Override
     public PermissionAttachment addAttachment(Plugin plugin) {
-        return this.perm.addAttachment(plugin);
+        return this.perm().addAttachment(plugin);
     }
 
     @Override
     public PermissionAttachment addAttachment(Plugin plugin, int ticks) {
-        return this.perm.addAttachment(plugin, ticks);
+        return this.perm().addAttachment(plugin, ticks);
     }
 
     @Override
     public PermissionAttachment addAttachment(Plugin plugin, String name, boolean value) {
-        return this.perm.addAttachment(plugin, name, value);
+        return this.perm().addAttachment(plugin, name, value);
     }
 
     @Override
     public PermissionAttachment addAttachment(Plugin plugin, String name, boolean value, int ticks) {
-        return this.perm.addAttachment(plugin, name, value, ticks);
+        return this.perm().addAttachment(plugin, name, value, ticks);
     }
 
     @Override
     public Set<PermissionAttachmentInfo> getEffectivePermissions() {
-        return this.perm.getEffectivePermissions();
+        return this.perm().getEffectivePermissions();
     }
 
     @Override
@@ -104,12 +116,12 @@ public class CardboardConsoleCommandSender implements ConsoleCommandSender, Comm
 
     @Override
     public void recalculatePermissions() {
-        this.perm.recalculatePermissions();
+        this.perm().recalculatePermissions();
     }
 
     @Override
     public void removeAttachment(PermissionAttachment attachment) {
-        this.perm.removeAttachment(attachment);
+        this.perm().removeAttachment(attachment);
     }
 
     @Override
