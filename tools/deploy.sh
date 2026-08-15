@@ -92,6 +92,9 @@ trap - EXIT
 echo "deployed $(basename "$JAR") -> $TARGET"
 if unzip -p "$TARGET" cardforge-build.properties 2>/dev/null | sed 's/^/  /'; then
     :
+elif unzip -p "$TARGET" META-INF/MANIFEST.MF 2>/dev/null | grep -E '^Build-(Commit|Branch|Dirty|Time):' | sed 's/^/  /' | grep -q .; then
+    # Plugin jars stamp the manifest rather than shipping a properties file.
+    unzip -p "$TARGET" META-INF/MANIFEST.MF 2>/dev/null | grep -E '^Build-(Commit|Branch|Dirty|Time):' | sed 's/^/  /'
 else
     echo "  (no build stamp in this jar)"
 fi
