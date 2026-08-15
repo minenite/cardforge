@@ -160,8 +160,6 @@ public interface RegistryEntry<M, B extends Keyed> extends RegistryEntryInfo<M, 
 	public static <M, B extends Keyed, T extends PaperRegistryBuilder<M, B>> RegistryEntry<M, B> writable(net.minecraft.registry.RegistryKey<Registry<M>> a,
 			RegistryKey<B> b, Class<?> c, BiFunction<NamespacedKey, M, B> d,
 			io.papermc.paper.registry.PaperRegistryBuilder.Filler<M, B, T> e) {
-		// TODO Auto-generated method stub
-		
         return start(a, b).craft(c, d).writable(e);
 	}
 

@@ -27,9 +27,8 @@ public class CraftIllager extends CraftRaider implements Illager {
 	}
 
 	@Override
-	public void setCelebrating(boolean arg0) {
-		// TODO Auto-generated method stub
-		
+	public void setCelebrating(boolean celebrating) {
+		this.getHandle().setCelebrating(celebrating);
 	}
 
 }

@@ -75,7 +75,6 @@ public class PaperPlayerLoginConnection extends ReadablePlayerCookieConnectionIm
 
 	@Override
 	public boolean isConnected() {
-		// TODO Auto-generated method stub
 		return packetListener_connection().isConnected();
 	}
 

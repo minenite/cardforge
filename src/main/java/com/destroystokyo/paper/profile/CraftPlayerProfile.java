@@ -431,7 +431,6 @@ public class CraftPlayerProfile implements PlayerProfile, SharedPlayerProfile {
 
 	@Override
 	public @Nullable UUID getUniqueId() {
-		// TODO Auto-generated method stub
 		return getId();
 	}
 

@@ -241,13 +241,13 @@ public class CardboardMixinPlugin implements IMixinConfigPlugin, IEnvironmentTok
 
 	@Override
 	public int getPriority() {
-		// TODO Auto-generated method stub
 		return 500;
 	}
 
 	@Override
 	public Integer getToken(String token, MixinEnvironment env) {
-		// TODO Auto-generated method stub
+		// This plugin defines no preprocessor tokens for mixin constraints; null
+		// is the documented answer for "not mine", not a missing implementation.
 		return null;
 	}
 

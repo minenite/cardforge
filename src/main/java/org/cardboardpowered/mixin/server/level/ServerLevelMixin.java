@@ -92,7 +92,6 @@ public class ServerLevelMixin extends LevelMixin implements ServerLevelBridge {
 
 	@Override
 	public CraftServer getCraftServer() {
-		// TODO Auto-generated method stub
 		return CraftServer.INSTANCE;
 	}
 	

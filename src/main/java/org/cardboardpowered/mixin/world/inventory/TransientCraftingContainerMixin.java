@@ -46,8 +46,9 @@ public abstract class TransientCraftingContainerMixin implements Container, Cont
 
     @Override
     public InventoryHolder getOwner() {
-        // TODO Auto-generated method stub
-        return null;
+        // A crafting grid belongs to whoever has the menu open; there is no block
+        // behind it to own it.
+        return this.transaction.isEmpty() ? null : this.transaction.get(0);
     }
 
     @Override
@@ -57,7 +58,8 @@ public abstract class TransientCraftingContainerMixin implements Container, Cont
 
     @Override
     public Location getLocation() {
-        // TODO Auto-generated method stub
+        // A crafting grid is not placed anywhere: it lives inside a menu. Null is
+        // the honest answer, and the API documents it.
         return null;
     }
 

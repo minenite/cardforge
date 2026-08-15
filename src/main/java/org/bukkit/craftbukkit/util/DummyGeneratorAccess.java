@@ -117,9 +117,11 @@ implements WorldGenLevel {
 	}
 
 	@Override
-	public void levelEvent(Entity arg0, int arg1, BlockPos arg2, int arg3) {
-		// TODO Auto-generated method stub
-		
+	public void levelEvent(Entity source, int type, BlockPos pos, int data) {
+		// Every other method here refuses; this one silently accepted. Nothing in
+		// a dummy world can play an effect, and pretending otherwise hides the
+		// fact that a caller reached a world that does not exist.
+		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
     @Override

@@ -103,7 +103,6 @@ public class CraftDataPackManager /* implements DataPackManager */ {
     
 	// @Override
 	public boolean isEnabledByFeature(@NotNull ItemType itemType, @NotNull World world) {
-		// TODO Auto-generated method stub
         return CraftItemType.bukkitToMinecraftNew((ItemType)itemType.typed()).isEnabled( ((CraftWorld)world) .getHandle().enabledFeatures());
 	}
 

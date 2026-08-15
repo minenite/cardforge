@@ -191,16 +191,20 @@ public final class ChunkDataImpl implements ChunkGenerator.ChunkData {
     }
 
     @Override
-    public @NotNull Biome getBiome(int arg0, int arg1, int arg2) {
-        // TODO Auto-generated method stub
-        return null;
+    public @NotNull Biome getBiome(int x, int y, int z) {
+        // This is the older chunk-generator API's snapshot: it holds block state
+        // sections only, and the biome containers are filled in by the generator
+        // afterwards. Returning null let that read like a real answer; there is
+        // genuinely nothing to report here.
+        throw new UnsupportedOperationException(
+                "Biomes are not carried by ChunkData; use BiomeProvider or World#getBiome");
     }
 
 	@Override
 	public int getHeight(@NotNull HeightMap heightMap, @Range(from = 0, to = 15) int x,
 			@Range(from = 0, to = 15) int z) {
-		// TODO Auto-generated method stub
-		
+		// Heightmaps are computed once the chunk is built; a generator writing
+		// into this snapshot has none yet.
 		throw new UnsupportedOperationException("Unsupported, in older chunk generator api");
 		//return getHandle().sampleHeightmap(CraftHeightMap.toNMS(heightMap), x, z);
 	}

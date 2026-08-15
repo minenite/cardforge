@@ -270,42 +270,38 @@ public final class ItemComponentTypesBridgesImpl implements ItemComponentTypesBr
 		return new PaperResolvableProfile.PaperSkinPatch(null, null, null, null);
 	}
 
-	// TODO: Update this
-	
+	// These six returned null while their builders and wrappers already existed
+	// alongside every other component here - so the six newest item components
+	// were the only ones a plugin could not construct.
 	@Override
 	public io.papermc.paper.datacomponent.item.KineticWeapon.Builder kineticWeapon() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PaperKineticWeapon.BuilderImpl();
 	}
 
 	@Override
-	public Condition kineticWeaponCondition(int arg0, float arg1, float arg2) {
-		// TODO Auto-generated method stub
-		return null;
+	public Condition kineticWeaponCondition(int maxDurationTicks, float minSpeed, float minRelativeSpeed) {
+		return new PaperKineticWeapon.PaperKineticWeaponCondition(
+				new net.minecraft.world.item.component.KineticWeapon.Condition(maxDurationTicks, minSpeed, minRelativeSpeed));
 	}
 
 	@Override
 	public io.papermc.paper.datacomponent.item.PiercingWeapon.Builder piercingWeapon() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PaperPiercingWeapon.BuilderImpl();
 	}
 
 	@Override
 	public io.papermc.paper.datacomponent.item.SwingAnimation.Builder swingAnimation() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PaperSwingAnimation.BuilderImpl();
 	}
 
 	@Override
 	public io.papermc.paper.datacomponent.item.UseEffects.Builder useEffects() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PaperUseEffects.BuilderImpl();
 	}
 
 	@Override
 	public io.papermc.paper.datacomponent.item.AttackRange.Builder attackRange() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PaperAttackRange.BuilderImpl();
 	}
 
     // 26.2: new component type bridge

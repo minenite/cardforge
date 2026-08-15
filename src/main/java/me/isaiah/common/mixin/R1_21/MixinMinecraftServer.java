@@ -123,7 +123,6 @@ public class MixinMinecraftServer implements IMixinMinecraftServer {
 	@Override
 	public MerchantOffer create_new_trade_offer(ItemStack result, int uses, int maxUses, boolean experienceReward,
 			int experience, float priceMultiplier, int demand, int specialPrice) {
-		// TODO Auto-generated method stub
 		return new net.minecraft.world.item.trading.MerchantOffer(
                 new ItemCost(Items.AIR),
                 Optional.empty(),

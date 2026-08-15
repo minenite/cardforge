@@ -791,13 +791,20 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
     }
 
     @Override
-    public void setKiller(Player arg0) {
-        // TODO Auto-generated method stub
+    public void setKiller(Player killer) {
+        // Ignored its argument, so a plugin could not attribute a kill - death
+        // messages and "killed by" statistics stayed with whoever vanilla thought
+        // it was. The memory time is vanilla's own hundred-tick window.
+        this.getHandle().setLastHurtByPlayer(
+                killer == null ? null : ((CraftPlayer) killer).getHandle(), 100);
     }
 
     @Override
-    public void setShieldBlockingDelay(int arg0) {
-    	// this.getHandle().setShieldBlockingDelay(arg0);
+    public void setShieldBlockingDelay(int ticks) {
+    	// Not implemented: the delay comes from the blocks_attacks component on the
+    	// item being raised, not from the entity, so it cannot be set per mob.
+    	throw new UnsupportedOperationException(
+    			"Shield blocking delay is a property of the item's blocks_attacks component, not the entity");
     }
     // PaperAPI - end
 

@@ -2479,7 +2479,15 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	@Override
 	public Spigot spigot() {
 		return new Spigot() {
-			// TODO Auto-generated method stub
+			@Override
+			public LightningStrike strikeLightning(Location loc, boolean isSilent) {
+				return CraftWorld.this.strikeLightning(loc);
+			}
+
+			@Override
+			public LightningStrike strikeLightningEffect(Location loc, boolean isSilent) {
+				return CraftWorld.this.strikeLightningEffect(loc);
+			}
 		};
 	}
 
@@ -3523,20 +3531,28 @@ public class CraftWorld extends CraftRegionAccessor implements World {
 	@Override
 	public @Nullable RayTraceResult rayTrace(
 			java.util.function.@NotNull Consumer<PositionedRayTraceConfigurationBuilder> builderConsumer) {
-		// TODO Auto-generated method stub
-		
-		// PositionedRayTraceConfigurationBuilderImpl builder = new PositionedRayTraceConfigurationBuilderImpl();
-		/*
-		final double maxDistance = builder.maxDistance.getAsDouble();
-        if (builder.targets.contains(RayTraceTarget.ENTITY)) {
-            if (builder.targets.contains(RayTraceTarget.BLOCK)) {
-                return this.rayTrace(builder.start, builder.direction, maxDistance, builder.fluidCollisionMode, builder.ignorePassableBlocks, builder.raySize, builder.entityFilter, builder.blockFilter);
-            }
-            return this.rayTraceEntities(builder.start, builder.direction, maxDistance, builder.raySize, builder.entityFilter);
-        }
-        return this.rayTraceBlocks(builder.start, builder.direction, maxDistance, builder.fluidCollisionMode, builder.ignorePassableBlocks, builder.blockFilter);
-		*/
-		return null;
+		Preconditions.checkArgument(builderConsumer != null, "Builder consumer cannot be null");
+		// Returned null for every configuration. The single-shot overloads it
+		// needs already existed; only the plumbing from the builder was missing.
+		io.papermc.paper.raytracing.PositionedRayTraceConfigurationBuilderImpl builder =
+				new io.papermc.paper.raytracing.PositionedRayTraceConfigurationBuilderImpl();
+		builderConsumer.accept(builder);
+
+		Preconditions.checkArgument(builder.start() != null, "Start location must be set");
+		Preconditions.checkArgument(builder.direction() != null, "Direction must be set");
+
+		java.util.Set<io.papermc.paper.raytracing.RayTraceTarget> targets = builder.targets();
+		if (targets.contains(io.papermc.paper.raytracing.RayTraceTarget.ENTITY)) {
+			if (targets.contains(io.papermc.paper.raytracing.RayTraceTarget.BLOCK)) {
+				return this.rayTrace(builder.start(), builder.direction(), builder.maxDistance(),
+						builder.fluidCollisionMode(), builder.ignorePassableBlocks(), builder.raySize(),
+						builder.entityFilter(), builder.blockFilter());
+			}
+			return this.rayTraceEntities(builder.start(), builder.direction(), builder.maxDistance(),
+					builder.raySize(), builder.entityFilter());
+		}
+		return this.rayTraceBlocks(builder.start(), builder.direction(), builder.maxDistance(),
+				builder.fluidCollisionMode(), builder.ignorePassableBlocks(), builder.blockFilter());
 	}
 
 	@Override

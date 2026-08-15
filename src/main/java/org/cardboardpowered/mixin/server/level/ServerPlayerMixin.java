@@ -151,8 +151,9 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements CommandSo
 
 			@Override
 			public boolean acceptsFailure() {
-				// TODO Auto-generated method stub
-				return false;
+				// Hardcoded false, so command failure messages were swallowed for
+				// this sender while success messages went through.
+				return out.acceptsFailure();
 			}
 			
 			// @Override

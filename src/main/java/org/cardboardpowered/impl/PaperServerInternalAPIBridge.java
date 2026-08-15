@@ -121,8 +121,18 @@ public class PaperServerInternalAPIBridge implements InternalAPIBridge {
 
 	@Override
 	public Occupancy createOccupancy(String enumNameEntry) {
-		// TODO Auto-generated method stub
-		return null;
+		// PoiType.Occupancy's own static initialiser calls this to build its three
+		// constants, so returning null made HAS_SPACE, IS_OCCUPIED and ANY all
+		// null - every POI search argument was null before anyone touched it.
+		return new CardboardOccupancy(enumNameEntry);
+	}
+
+	/** A named POI occupancy filter. The API type carries nothing but its name. */
+	private record CardboardOccupancy(String name) implements Occupancy {
+		@Override
+		public String toString() {
+			return this.name;
+		}
 	}
 
 
